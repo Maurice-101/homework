@@ -30,7 +30,7 @@ app.include_router(admin.router,           prefix="/api")
 app.include_router(course_content.router,  prefix="/api")
 
 
-@app.get("/api/health")
+@app.get("/health")
 def health():
     return {"status": "ok", "platform": "Homework"}
 
