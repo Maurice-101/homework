@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard – Homework</title>
+<link rel="stylesheet" href="student.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
+      <span class="sb-logo">Homework</span>
+    </div>
+    <div class="sb-profile">
+      <img src="../Assets/avatars/student-male avatar.avif" id="sbAvatar" alt="avatar">
+      <div class="sb-info">
+        <strong id="sbName">Loading…</strong>
+        <span id="sbSub">—</span>
+      </div>
+    </div>
+    <ul class="menu">
+      <li class="active" data-sec="dashboard">  <span class="ico">🏠</span><span class="lbl">Dashboard</span></li>
+      <li data-sec="courses">     <span class="ico">📚</span><span class="lbl">Courses</span></li>
+      <li data-sec="assignments"> <span class="ico">📄</span><span class="lbl">Assignments</span></li>
+      <li data-sec="progress">    <span class="ico">📈</span><span class="lbl">Progress</span></li>
+      <li data-sec="resources">   <span class="ico">📖</span><span class="lbl">Resources</span></li>
+      <li data-sec="messages">    <span class="ico">✉️</span><span class="lbl">Messages</span></li>
+      <li data-sec="notifications"><span class="ico">🔔</span><span class="lbl">Notifications <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="canvas">      <span class="ico">✏️</span><span class="lbl">Canvas</span></li>
+      <li data-sec="settings">    <span class="ico">⚙️</span><span class="lbl">Settings</span></li>
+    </ul>
+    <div class="sb-foot">
+      <select class="lang-sel" id="langSel">
+        <option value="en">🌐 English</option>
+        <option value="fr">🌐 French</option>
+        <option value="rw">🌐 Kinyarwanda</option>
+      </select>
+      <button class="logout-btn" id="logoutBtn">⬅ Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-area">
+    <header class="topbar">
+      <h2 id="pageTitle">Dashboard</h2>
+      <div class="tb-right">
+        <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
+        <span class="tb-icon" onclick="goTo('messages')">✉️</span>
+        <img src="../Assets/avatars/student-male avatar.avif" id="tbAvatar" class="tb-avatar" alt="">
+        <span id="tbName" class="tb-name">—</span>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="sec active" id="sec-dashboard">
+      <div class="welcome">
+        <h1 id="welcomeMsg">Welcome back! 👋</h1>
+        <p id="welcomeSub">Here's your academic overview for today.</p>
+      </div>
+      <div class="stat-cards">
+        <div class="stat blue"><h3 id="stCourses">0</h3><p>Active Courses</p></div>
+        <div class="stat green"><h3 id="stPending">0</h3><p>Upcoming Assignments</p></div>
+        <div class="stat orange"><h3 id="stSubmitted">0</h3><p>Submitted</p></div>
+        <div class="stat purple"><h3 id="stNotifs">0</h3><p>Notifications</p></div>
+      </div>
+      <div class="dash-grid">
+        <div class="panel"><h3>📄 Upcoming Assignments</h3><ul class="plist" id="dUpcoming"><li class="empty">Loading…</li></ul></div>
+        <div class="panel"><h3>🔔 Notifications</h3><ul class="plist" id="dNotifs"><li class="empty">Loading…</li></ul></div>
+        <div class="panel"><h3>📚 My Courses</h3><ul class="plist" id="dCourses"><li class="empty">Loading…</li></ul></div>
+        <div class="panel"><h3>📖 Quick Resources</h3><div class="qr-grid" id="dResources"></div></div>
+      </div>
+    </section>
+
+    <!-- COURSES -->
+    <section class="sec" id="sec-courses">
+      <div class="sec-head"><h2>Courses</h2>
+        <div class="tabs">
+          <button class="tab active" data-tab="enrolled">Enrolled</button>
+          <button class="tab" data-tab="browse">Browse</button>
+          <button class="tab" data-tab="public">Public</button>
+          <button class="tab" data-tab="invitations">Invitations <span class="badge" id="inviteBadge" style="display:none"></span></button>
+        </div>
+      </div>
+      <div class="tab-body active" id="tab-enrolled"><div class="cgrid" id="enrolledGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body" id="tab-browse">
+        <div class="search-row">
+          <input type="text" id="csearch" placeholder="Search courses…">
+          <select id="csubject"><option value="">All Subjects</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option></select>
+          <select id="cgrade"><option value="">All Grades</option><option>S4</option><option>S5</option><option>S6</option></select>
+          <button onclick="loadAllCourses()">Search</button>
+        </div>
+        <div class="cgrid" id="browseGrid"><p class="empty">Loading…</p></div>
+      </div>
+      <div class="tab-body" id="tab-public"><div class="cgrid" id="publicGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body" id="tab-invitations"><div class="cgrid" id="invitationsGrid"><p class="empty">Loading…</p></div></div>
+
+      <!-- Course Detail Panel -->
+      <div class="course-detail-panel hidden" id="courseDetailPanel">
+
+        <!-- Canvas-style topbar -->
+        <div class="cd-topbar">
+          <button class="cd-back-btn" onclick="closeCourseDetail()">&#8592; Courses</button>
+          <span class="cd-breadcrumb" id="cdBreadcrumb"></span>
+        </div>
+
+        <!-- Body: sidebar + content -->
+        <div class="cd-body">
+
+          <!-- Styled left nav -->
+          <nav class="cd-sidenav" id="cdTabBar">
+            <div class="cd-course-label" id="cdSideTitle">Course</div>
+            <div class="cd-nav-list">
+              <button class="cdtab active" data-tab="home"          data-color="home">        <span class="cdtab-icon">🏠</span><span class="cdtab-lbl">Home</span></button>
+              <button class="cdtab"        data-tab="syllabus"      data-color="syllabus">    <span class="cdtab-icon">📅</span><span class="cdtab-lbl">Syllabus</span></button>
+              <button class="cdtab"        data-tab="modules"       data-color="modules">     <span class="cdtab-icon">📘</span><span class="cdtab-lbl">Modules</span></button>
+              <button class="cdtab"        data-tab="assignments"   data-color="assignments"> <span class="cdtab-icon">📝</span><span class="cdtab-lbl">Assignments</span></button>
+              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-icon">📊</span><span class="cdtab-lbl">Grades</span></button>
+              <button class="cdtab"        data-tab="people"        data-color="people">      <span class="cdtab-icon">👥</span><span class="cdtab-lbl">People</span></button>
+              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-icon">💬</span><span class="cdtab-lbl">Discussions</span></button>
+              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-icon">📢</span><span class="cdtab-lbl">Announcements</span></button>
+              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-icon">✉️</span><span class="cdtab-lbl">Course Chat</span></button>
+            </div>
+          </nav>
+
+          <!-- Right content -->
+          <div class="cd-content">
+
+            <!-- HOME -->
+            <div class="cdpane active" id="cdpane-home">
+              <div class="cdpane-inner">
+                <div id="cdHomeContent"><p class="empty">Loading…</p></div>
+              </div>
+            </div>
+
+            <!-- ANNOUNCEMENTS -->
+            <div class="cdpane" id="cdpane-announcements">
+              <div class="cdpane-inner">
+                <div class="cdpane-header"><h3>📢 Announcements</h3></div>
+                <div id="cdAnnList"><p class="empty">Loading…</p></div>
+              </div>
+            </div>
+
+            <!-- ASSIGNMENTS -->
+            <div class="cdpane" id="cdpane-assignments">
+              <div class="cdpane-inner">
+                <!-- List view -->
+                <div id="cdAsgListWrap">
+                  <div class="cdpane-header"><h3>Assignments</h3></div>
+                  <div id="cdAsgList"><p class="empty">Loading…</p></div>
+                </div>
+                <!-- Detail view -->
+                <div id="cdAsgDetail" class="hidden"></div>
+              </div>
+            </div>
+
+            <!-- DISCUSSIONS -->
+            <div class="cdpane" id="cdpane-discussions">
+              <div class="cdpane-inner">
+                <div class="cdpane-header">
+                  <h3>💬 Discussions</h3>
+                  <button class="btn-sm" onclick="document.getElementById('discNewForm').classList.toggle('hidden')">+ New Discussion</button>
+                </div>
+                <div class="disc-new hidden" id="discNewForm">
+                  <input type="text" id="discTitle" placeholder="Discussion title…">
+                  <textarea id="discBody" placeholder="What's on your mind?…" rows="3"></textarea>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn-sm" onclick="postDiscussion()">Post</button>
+                    <button class="btn-s" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('discNewForm').classList.add('hidden')">Cancel</button>
+                  </div>
+                </div>
+                <div id="cdDiscList"><p class="empty">Loading…</p></div>
+              </div>
+            </div>
+
+            <!-- GRADES -->
+            <div class="cdpane" id="cdpane-grades">
+              <div class="cdpane-inner">
+                <div class="cdpane-header"><h3>📊 Grades</h3></div>
+                <div id="cdGradeList"><p class="empty">Loading…</p></div>
+              </div>
+            </div>
+
+            <!-- SYLLABUS -->
+            <div class="cdpane" id="cdpane-syllabus">
+              <div class="cdpane-inner" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+                <div class="cdpane-header" style="padding:20px 28px 16px;border-radius:12px 12px 0 0;flex-shrink:0"><h3>📅 Syllabus &amp; Books</h3></div>
+                <div class="syl-split">
+                  <div class="syl-list" id="cdSylList"><p class="empty" style="padding:16px">Loading…</p></div>
+                  <div class="syl-detail" id="cdSylDetail" style="display:flex;flex-direction:column">
+                    <div class="syl-detail-empty">← Select a week or book</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MODULES -->
+            <div class="cdpane" id="cdpane-modules">
+              <div class="cdpane-inner">
+                <div class="cdpane-header"><h3>📘 Modules</h3></div>
+                <ul class="module-list" id="studentModuleList"></ul>
+              </div>
+            </div>
+
+            <!-- PEOPLE & GROUPS -->
+            <div class="cdpane" id="cdpane-people">
+              <div class="cdpane-inner">
+                <div class="cdpane-header"><h3>👥 People &amp; Groups</h3></div>
+                <div class="people-subtabs">
+                  <button class="ptab active" data-ptab="members" onclick="switchPeopleTab('members')">Members</button>
+                  <button class="ptab" data-ptab="groups" onclick="switchPeopleTab('groups')">Groups</button>
+                </div>
+                <div class="ppane active" id="ppane-members">
+                  <div id="cdPeopleList"><p class="empty">Loading…</p></div>
+                </div>
+                <div class="ppane" id="ppane-groups">
+                  <div id="cdGroupsList"><p class="empty">Loading…</p></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COURSE CHAT -->
+            <div class="cdpane" id="cdpane-chats">
+              <div class="cdpane-inner cd-chat-panel">
+                <div class="cdpane-header" style="flex-shrink:0"><h3>✉️ Course Chat</h3></div>
+                <div id="cdChatMessages" class="cd-chat-messages"></div>
+                <div class="cd-chat-input">
+                  <textarea id="cdChatText" placeholder="Write a message… (Enter to post, Shift+Enter for new line)" rows="2"></textarea>
+                  <button class="cd-chat-post-btn" id="cdChatPostBtn" onclick="postCourseChat()">Post</button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- cd-content -->
+        </div><!-- cd-body -->
+      </div>
+    </section>
+
+    <!-- ASSIGNMENTS -->
+    <section class="sec" id="sec-assignments">
+      <div class="sec-head"><h2>Assignments &amp; Tests</h2>
+        <div class="tabs">
+          <button class="tab active" data-tab="upcoming-a">Upcoming</button>
+          <button class="tab" data-tab="submitted-a">Submitted</button>
+        </div>
+      </div>
+      <div class="tab-body active" id="tab-upcoming-a"><div class="alist" id="upcomingList"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body" id="tab-submitted-a"><div class="alist" id="submittedList"><p class="empty">Loading…</p></div></div>
+
+      <!-- Assignment Detail Panel -->
+      <div class="assignment-detail-panel hidden" id="assignmentDetailPanel">
+        <button class="back-btn" onclick="closeAssignmentDetail()">← Back to Assignments</button>
+        <div id="assignmentDetailContent"></div>
+        <div class="adetail-grid">
+          <div class="adetail-submit">
+            <h3>📤 Your Submission</h3>
+            <div id="existingSubmission" style="display:none" class="existing-sub"></div>
+            <div id="submitForm">
+              <div class="sub-type-row">
+                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')">📝 Text</button>
+                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')">🔗 Link / Drive</button>
+                <button class="sub-type-btn" data-type="pdf" onclick="selectSubType(this,'pdf')">📄 Upload PDF</button>
+              </div>
+              <div id="sub-text-area">
+                <label>Your Answer</label>
+                <textarea id="submitContent" rows="8" placeholder="Write your answer here…"></textarea>
+              </div>
+              <div id="sub-link-area" style="display:none">
+                <label>Website / Google Drive Link</label>
+                <input type="url" id="submitLink" placeholder="https://…">
+              </div>
+              <div id="sub-pdf-area" style="display:none">
+                <label>Upload PDF</label>
+                <input type="file" id="submitFile" accept=".pdf">
+              </div>
+              <button class="btn-p" style="margin-top:12px;width:100%" onclick="doSubmit()">Submit Assignment</button>
+            </div>
+          </div>
+          <div class="adetail-resources">
+            <h3>📖 Course Resources</h3>
+            <div id="courseResourcesForAssignment"><p class="empty">Loading resources…</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="sec" id="sec-progress">
+      <h2>Progress Tracking</h2>
+      <div class="pgrid" id="progressGrid"><p class="empty">Loading…</p></div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="sec" id="sec-resources">
+      <div class="sec-head"><h2>Resources &amp; Library</h2>
+        <div class="tabs">
+          <button class="tab active" data-tab="textbooks">Textbooks</button>
+          <button class="tab" data-tab="pastpapers">Past Papers</button>
+          <button class="tab" data-tab="uploaded">Uploaded</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <input type="text" id="rsearch" placeholder="Search by title…" oninput="loadResources()">
+        <select id="rsubject" onchange="loadResources()">
+          <option value="">All Subjects</option>
+          <option>Biology</option><option>Chemistry</option><option>Physics</option>
+          <option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option>
+        </select>
+        <select id="rgrade" onchange="loadResources()">
+          <option value="">All Grades</option>
+          <option>S4</option><option>S5</option><option>S6</option>
+        </select>
+      </div>
+      <div class="res-summary" id="resSummary"></div>
+      <div class="tab-body active" id="tab-textbooks"><div class="rgrid" id="tbGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body" id="tab-pastpapers"><div class="rgrid" id="ppGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body" id="tab-uploaded"><div class="rgrid" id="uploadedGrid"><p class="empty">Loading…</p></div></div>
+    </section>
+
+    <!-- MESSAGES (WhatsApp-style) -->
+    <section class="sec" id="sec-messages">
+      <div class="chat-layout">
+        <!-- Left: contacts sidebar -->
+        <div class="chat-sidebar" id="chatSidebar">
+          <div class="chat-sidebar-head">
+            <h3>Messages</h3>
+            <button class="btn-sm" onclick="openNewChat()">+ New</button>
+          </div>
+          <div class="chat-search-row">
+            <input type="text" id="chatContactSearch" placeholder="Search…" oninput="filterContacts()" class="chat-search-input">
+          </div>
+          <div class="contacts-list" id="contactsList"><div class="empty-state">Loading…</div></div>
+        </div>
+        <!-- Right: conversation thread -->
+        <div class="chat-main" id="chatMain">
+          <div class="chat-empty-state" id="chatEmptyState">
+            <div style="font-size:48px;margin-bottom:12px">💬</div>
+            <p>Select a conversation or start a new one</p>
+          </div>
+          <div class="chat-thread hidden" id="chatThread">
+            <div class="chat-thread-head" id="chatThreadHead">
+              <button class="btn-back-chat" onclick="closeThread()">←</button>
+              <div class="chat-partner-info" id="chatPartnerInfo"></div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-bar">
+              <textarea id="chatInput" rows="1" placeholder="Type a message…" onkeydown="chatKeyDown(event)"></textarea>
+              <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- New Chat modal: pick recipient -->
+      <div class="modal-overlay hidden" id="modalNewChat">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-head">
+            <h3>New Message</h3>
+            <button class="modal-close" onclick="closeModal('modalNewChat')">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row">
+              <label>Search person</label>
+              <input type="text" id="newChatSearch" placeholder="Name or email…" oninput="searchNewChatPeople()" autocomplete="off">
+            </div>
+            <div id="newChatPeopleList" style="max-height:260px;overflow-y:auto;margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section class="sec" id="sec-notifications">
+      <h2>Notifications</h2>
+      <div style="margin-bottom:12px">
+        <button class="btn-s" onclick="markAllRead()" style="font-size:12px">Mark All Read</button>
+      </div>
+      <div class="nlist" id="notifList"><p class="empty">Loading…</p></div>
+    </section>
+
+    <!-- CANVAS -->
+    <section class="sec" id="sec-canvas">
+      <div class="canvas-head">
+        <h2>✏️ Canvas – Virtual Notebook</h2>
+        <div class="canvas-btns">
+          <button class="btn-p" onclick="createBook()">+ New Book</button>
+          <button class="btn-s" onclick="saveNote()">💾 Save</button>
+          <span id="saveIndicator" style="color:#27ae60;font-size:13px;margin-left:8px;opacity:0;transition:opacity .5s"></span>
+        </div>
+      </div>
+      <div class="canvas-layout">
+        <!-- Left: books list -->
+        <div class="canvas-books">
+          <h4>Books</h4>
+          <ul id="booksList"></ul>
+        </div>
+        <!-- Right: page editor -->
+        <div class="canvas-editor">
+          <!-- Page nav -->
+          <div class="page-nav" id="pageNav">
+            <button class="pnav-btn" onclick="prevPage()" id="btnPrevPage">&#8592;</button>
+            <span id="pageIndicator">— / —</span>
+            <button class="pnav-btn" onclick="nextPage()" id="btnNextPage">&#8594;</button>
+            <button class="btn-tiny danger" onclick="deletePage()" title="Delete this page" id="btnDeletePage">🗑 Delete page</button>
+            <button class="btn-tiny" onclick="addPageToBook()" title="Add page" id="btnAddPage">+ Add page</button>
+          </div>
+          <input type="text" id="noteTitle" class="note-title" placeholder="Page title…">
+          <!-- Symbol bar with categories -->
+          <div class="sym-bar">
+            <span class="sym-cat">Greek</span>
+            <span title="Pi"      onclick="ins('π')">π</span><span title="Sigma"  onclick="ins('Σ')">Σ</span>
+            <span title="Delta"   onclick="ins('Δ')">Δ</span><span title="Alpha"  onclick="ins('α')">α</span>
+            <span title="Beta"    onclick="ins('β')">β</span><span title="Theta"  onclick="ins('θ')">θ</span>
+            <span title="Omega"   onclick="ins('Ω')">Ω</span><span title="Lambda" onclick="ins('λ')">λ</span>
+            <span title="Mu"      onclick="ins('μ')">μ</span><span title="Phi"    onclick="ins('φ')">φ</span>
+            <span title="Gamma"   onclick="ins('γ')">γ</span><span title="Eta"    onclick="ins('η')">η</span>
+            <span title="Kappa"   onclick="ins('κ')">κ</span><span title="Nu"     onclick="ins('ν')">ν</span>
+            <span title="Rho"     onclick="ins('ρ')">ρ</span><span title="Tau"    onclick="ins('τ')">τ</span>
+            <span title="Psi"     onclick="ins('ψ')">ψ</span><span title="Chi"    onclick="ins('χ')">χ</span>
+            <span title="Epsilon" onclick="ins('ε')">ε</span><span title="Zeta"   onclick="ins('ζ')">ζ</span>
+            <span class="sym-sep"></span>
+            <span class="sym-cat">Math</span>
+            <span title="Infinity"    onclick="ins('∞')">∞</span><span title="Sqrt"   onclick="ins('√')">√</span>
+            <span title="±"           onclick="ins('±')">±</span><span title="≈"       onclick="ins('≈')">≈</span>
+            <span title="≠"           onclick="ins('≠')">≠</span><span title="≤"       onclick="ins('≤')">≤</span>
+            <span title="≥"           onclick="ins('≥')">≥</span><span title="×"       onclick="ins('×')">×</span>
+            <span title="÷"           onclick="ins('÷')">÷</span><span title="²"       onclick="ins('²')">²</span>
+            <span title="³"           onclick="ins('³')">³</span><span title="∑"       onclick="ins('∑')">∑</span>
+            <span title="∏"           onclick="ins('∏')">∏</span><span title="∫"       onclick="ins('∫')">∫</span>
+            <span title="∂"           onclick="ins('∂')">∂</span><span title="∇"       onclick="ins('∇')">∇</span>
+            <span title="∈"           onclick="ins('∈')">∈</span><span title="∉"       onclick="ins('∉')">∉</span>
+            <span title="⊂"           onclick="ins('⊂')">⊂</span><span title="⊃"       onclick="ins('⊃')">⊃</span>
+            <span title="∪"           onclick="ins('∪')">∪</span><span title="∩"       onclick="ins('∩')">∩</span>
+            <span title="∀"           onclick="ins('∀')">∀</span><span title="∃"       onclick="ins('∃')">∃</span>
+            <span title="⇒"           onclick="ins('⇒')">⇒</span><span title="⟺"       onclick="ins('⟺')">⟺</span>
+            <span class="sym-sep"></span>
+            <span class="sym-cat">Physics</span>
+            <span title="Degree"  onclick="ins('°')">°</span><span title="Angstrom" onclick="ins('Å')">Å</span>
+            <span title="→"       onclick="ins('→')">→</span><span title="←"        onclick="ins('←')">←</span>
+            <span title="↑"       onclick="ins('↑')">↑</span><span title="↓"        onclick="ins('↓')">↓</span>
+            <span title="⇌"       onclick="ins('⇌')">⇌</span><span title="⊕"        onclick="ins('⊕')">⊕</span>
+            <span title="⊗"       onclick="ins('⊗')">⊗</span><span title="ħ"        onclick="ins('ħ')">ħ</span>
+            <span title="μ₀"      onclick="ins('μ₀')">μ₀</span><span title="ε₀"     onclick="ins('ε₀')">ε₀</span>
+            <span class="sym-sep"></span>
+            <span class="sym-cat">Chem</span>
+            <span title="₀" onclick="ins('₀')">₀</span><span title="₁" onclick="ins('₁')">₁</span>
+            <span title="₂" onclick="ins('₂')">₂</span><span title="₃" onclick="ins('₃')">₃</span>
+            <span title="₄" onclick="ins('₄')">₄</span><span title="₅" onclick="ins('₅')">₅</span>
+            <span title="₆" onclick="ins('₆')">₆</span><span title="₇" onclick="ins('₇')">₇</span>
+            <span title="₈" onclick="ins('₈')">₈</span><span title="₉" onclick="ins('₉')">₉</span>
+            <span title="⁺" onclick="ins('⁺')">⁺</span><span title="⁻" onclick="ins('⁻')">⁻</span>
+            <span title="→" onclick="ins(' → ')"> → </span>
+            <span title="⇌" onclick="ins(' ⇌ ')"> ⇌ </span>
+            <span title="Δ"  onclick="ins('Δ')">Δ</span>
+          </div>
+          <textarea id="noteContent" class="note-body" placeholder="Start writing…"></textarea>
+          <input type="hidden" id="currentNoteId">
+          <input type="hidden" id="currentBookId">
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="sec" id="sec-settings">
+      <h2>Settings &amp; Profile</h2>
+      <div class="settings-grid">
+        <div class="settings-panel">
+          <h3>Profile</h3>
+          <form id="profileForm">
+            <label>First Name</label><input type="text" id="sFirst">
+            <label>Last Name</label><input type="text" id="sLast">
+            <label>School</label><input type="text" id="sSchool">
+            <label>Grade</label><input type="text" id="sGrade">
+            <label>Bio</label><textarea id="sBio" rows="3"></textarea>
+            <button type="submit" class="btn-p" style="margin-top:14px">Save Changes</button>
+          </form>
+          <p class="form-msg" id="profileMsg"></p>
+        </div>
+
+        <!-- Change Password -->
+        <div class="settings-panel">
+          <h3>Change Password</h3>
+          <p style="font-size:12px;color:#888;margin-bottom:12px">A 6-digit verification code will be sent to your email. It expires in 15 minutes.</p>
+
+          <!-- Step 1 -->
+          <div id="pwStep1">
+            <label>Your Email</label>
+            <input type="email" id="pwEmail" placeholder="your@email.com">
+            <button class="btn-p" style="margin-top:10px;width:100%" onclick="requestOTP()">Send Verification Code</button>
+            <p class="form-msg" id="pwMsg1"></p>
+          </div>
+
+          <!-- Step 2 -->
+          <div id="pwStep2" style="display:none">
+            <label>6-Digit Code</label>
+            <input type="text" id="pwCode" maxlength="6" placeholder="123456" style="letter-spacing:6px;font-size:18px;text-align:center">
+            <label style="margin-top:10px">New Password</label>
+            <input type="password" id="pwNew" placeholder="Min. 8 characters">
+            <label>Confirm Password</label>
+            <input type="password" id="pwConfirm" placeholder="Repeat new password">
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-s" onclick="resetPwSteps()">← Back</button>
+              <button class="btn-p" style="flex:1" onclick="verifyOTP()">Update Password</button>
+            </div>
+            <p class="form-msg" id="pwMsg2"></p>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <h3>Language</h3>
+          <label>Display Language</label>
+          <select><option value="en">English</option><option value="fr">French</option><option value="rw">Kinyarwanda</option></select>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- PDF VIEWER MODAL -->
+<div class="modal-overlay hidden" id="modalPdfViewer">
+  <div class="modal" style="max-width:860px;width:95%;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-head">
+      <h3 id="pdfViewerTitle">Document</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">⬇ Download</a>
+        <button class="modal-close" onclick="closeModal('modalPdfViewer')">✕</button>
+      </div>
+    </div>
+    <iframe id="pdfViewerFrame" src="" style="flex:1;border:none;width:100%"></iframe>
+  </div>
+</div>
+
+<!-- NOTIFICATION DETAIL MODAL -->
+<div class="modal-overlay hidden" id="modalNotifDetail">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h3 id="notifDetailTitle">Notification</h3>
+      <button class="modal-close" onclick="closeModal('modalNotifDetail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="notifDetailMsg" style="line-height:1.6;color:#333"></p>
+      <p id="notifDetailTime" style="font-size:12px;color:#aaa;margin-top:12px"></p>
+      <div id="notifDetailActions" style="margin-top:16px"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="student.js"></script>
+</body>
+</html>

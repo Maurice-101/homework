@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facilitator Dashboard – Homework</title>
+<link rel="stylesheet" href="facilitator.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
+      <span class="sb-logo">Homework</span>
+    </div>
+    <div class="sb-profile">
+      <div class="sb-avatar-wrap">
+        <span id="sbInitials" class="sb-initials">--</span>
+      </div>
+      <div class="sb-info">
+        <strong id="sbName">Loading…</strong>
+        <span id="sbSub">Facilitator</span>
+      </div>
+    </div>
+    <ul class="menu">
+      <li class="active" data-sec="dashboard">    <span class="ico">🏠</span><span class="lbl">Dashboard</span></li>
+      <li data-sec="subjects">                    <span class="ico">📚</span><span class="lbl">My Subjects</span></li>
+      <li data-sec="assignments">                 <span class="ico">📄</span><span class="lbl">Assignments</span></li>
+      <li data-sec="students">                    <span class="ico">👥</span><span class="lbl">My Students</span></li>
+      <li data-sec="progress">                    <span class="ico">📈</span><span class="lbl">Progress</span></li>
+      <li data-sec="resources">                   <span class="ico">📖</span><span class="lbl">Resources</span></li>
+      <li data-sec="messages">                    <span class="ico">✉️</span><span class="lbl">Messages</span></li>
+      <li data-sec="notifications">               <span class="ico">🔔</span><span class="lbl">Notifications <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="settings">                    <span class="ico">⚙️</span><span class="lbl">Settings</span></li>
+    </ul>
+    <div class="sb-foot">
+      <button class="logout-btn" id="logoutBtn">⬅ Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-area">
+    <header class="topbar">
+      <h2 id="pageTitle">Dashboard</h2>
+      <div class="tb-right">
+        <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
+        <span class="tb-icon" onclick="goTo('messages')">✉️</span>
+        <span id="tbInitials" class="tb-initials">--</span>
+        <span id="tbName" class="tb-name">—</span>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="sec active" id="sec-dashboard">
+      <div class="welcome">
+        <h1>Welcome back, <span id="welcomeName">Facilitator</span>!</h1>
+        <p>Manage your subjects, assignments, and monitor student progress.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-info"><span class="stat-num" id="statCourses">0</span><span class="stat-lbl">My Subjects</span></div></div>
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-info"><span class="stat-num" id="statStudents">0</span><span class="stat-lbl">My Students</span></div></div>
+        <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-info"><span class="stat-num" id="statAssignments">0</span><span class="stat-lbl">Active Assignments</span></div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><span class="stat-num" id="statPending">0</span><span class="stat-lbl">Pending Grading</span></div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-panel">
+          <h3>Recent Submissions</h3>
+          <ul class="dash-list" id="recentSubmissions"><li class="empty">No recent submissions.</li></ul>
+        </div>
+        <div class="dash-panel">
+          <h3>Upcoming Due Dates</h3>
+          <ul class="dash-list" id="upcomingDue"><li class="empty">No upcoming assignments.</li></ul>
+        </div>
+        <div class="dash-panel">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <button class="qa-btn" onclick="goTo('subjects'); openCreateCourse()">+ New Subject</button>
+            <button class="qa-btn" onclick="goTo('assignments'); openCreateAssignment()">+ New Assignment</button>
+            <button class="qa-btn" onclick="goTo('messages')">✉ Message Students</button>
+            <button class="qa-btn" onclick="goTo('resources')">📖 Browse Resources</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MY SUBJECTS -->
+    <section class="sec" id="sec-subjects">
+      <div class="sec-header">
+        <h2>My Subjects</h2>
+        <button class="btn-primary" onclick="openCreateCourse()">+ Create Subject</button>
+      </div>
+      <div class="course-grid" id="courseGrid">
+        <div class="empty-state">Loading subjects…</div>
+      </div>
+
+      <!-- Course Detail Panel (tabbed) -->
+      <div class="detail-panel hidden" id="courseDetail">
+        <div class="cd-topbar" style="padding:12px 16px;border-bottom:2px solid #e5e8ef;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#fff;z-index:5">
+          <button class="back-btn" onclick="closeDetail()">← Back to Subjects</button>
+          <div id="courseDetailContent" style="flex:1"></div>
+        </div>
+        <!-- Facilitator course tabs -->
+        <nav style="display:flex;gap:2px;padding:0 12px;border-bottom:2px solid #e5e8ef;background:#f8f9fd;overflow-x:auto;white-space:nowrap;flex-shrink:0">
+          <button class="cdtab active" data-ftab="overview" onclick="switchFTab('overview')">📋 Overview</button>
+          <button class="cdtab" data-ftab="modules" onclick="switchFTab('modules')">📘 Modules</button>
+          <button class="cdtab" data-ftab="announcements" onclick="switchFTab('announcements')">📢 Announcements</button>
+          <button class="cdtab" data-ftab="syllabus" onclick="switchFTab('syllabus')">📅 Syllabus</button>
+          <button class="cdtab" data-ftab="students" onclick="switchFTab('students')">👥 Students</button>
+          <button class="cdtab" data-ftab="groups" onclick="switchFTab('groups')">🗂️ Groups</button>
+        </nav>
+        <!-- Overview -->
+        <div class="fpane active" id="fpane-overview" style="padding:18px">
+          <p style="color:#aaa;font-size:13px">Click a tab to manage the course.</p>
+        </div>
+        <!-- Modules -->
+        <div class="fpane" id="fpane-modules" style="padding:18px">
+          <ul class="module-list" id="moduleList"></ul>
+          <div class="add-module" style="margin-top:12px">
+            <input type="text" id="moduleTitle" placeholder="Module title">
+            <textarea id="moduleContent" placeholder="Module content/description"></textarea>
+            <button class="btn-primary" onclick="addModule()">Add Module</button>
+          </div>
+        </div>
+        <!-- Announcements -->
+        <div class="fpane" id="fpane-announcements" style="padding:18px">
+          <div class="add-ann" style="background:#f8f9fd;border-radius:10px;padding:14px;margin-bottom:16px">
+            <h4 style="margin-bottom:10px;font-size:14px">Post Announcement</h4>
+            <input type="text" id="annTitle" placeholder="Title…" style="width:100%;margin-bottom:8px;padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px">
+            <textarea id="annContent" rows="3" placeholder="Message…" style="width:100%;padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
+            <button class="btn-sm" onclick="postAnnouncement()">Post</button>
+          </div>
+          <div id="annList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
+        </div>
+        <!-- Syllabus -->
+        <div class="fpane" id="fpane-syllabus" style="padding:18px">
+          <div class="add-syl" style="background:#f8f9fd;border-radius:10px;padding:14px;margin-bottom:16px">
+            <h4 style="margin-bottom:10px;font-size:14px">Add Week</h4>
+            <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;margin-bottom:8px">
+              <input type="number" id="sylWeekNum" placeholder="Week #" min="1" style="padding:8px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px">
+              <input type="text" id="sylTitle" placeholder="Week title…" style="padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px">
+            </div>
+            <textarea id="sylDesc" rows="2" placeholder="Description / objectives…" style="width:100%;padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
+            <textarea id="sylTopics" rows="3" placeholder="Topics (one per line)…" style="width:100%;padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
+            <button class="btn-sm" onclick="addSyllabusWeek()">Add Week</button>
+          </div>
+          <div id="sylList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
+        </div>
+        <!-- Students -->
+        <div class="fpane" id="fpane-students" style="padding:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h3 style="margin:0;font-size:15px">Enrolled Students (<span id="enrolledCount">0</span>)</h3>
+            <button class="btn-sm" onclick="openInviteModal()" id="btnInviteStudent">+ Add Student</button>
+          </div>
+          <div class="students-grid" id="enrolledStudentsGrid"></div>
+        </div>
+        <!-- Groups -->
+        <div class="fpane" id="fpane-groups" style="padding:18px">
+          <div style="background:#f8f9fd;border-radius:10px;padding:14px;margin-bottom:16px">
+            <h4 style="margin:0 0 10px;font-size:14px">Create Group</h4>
+            <input type="text" id="groupName" placeholder="Group name…" style="width:100%;margin-bottom:8px;padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px">
+            <textarea id="groupDesc" rows="2" placeholder="Description (optional)…" style="width:100%;padding:8px 11px;border:1px solid #d0d6e8;border-radius:6px;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
+            <button class="btn-sm" onclick="createGroup()">Create Group</button>
+          </div>
+          <div id="fGroupsList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASSIGNMENTS -->
+    <section class="sec" id="sec-assignments">
+      <div class="sec-header">
+        <h2>Assignments</h2>
+        <button class="btn-primary" onclick="openCreateAssignment()">+ Create Assignment</button>
+      </div>
+      <div class="tab-bar">
+        <button class="tab active" data-tab="asgn-all">All</button>
+        <button class="tab" data-tab="asgn-grade">Needs Grading</button>
+      </div>
+      <div class="tab-content active" id="asgn-all">
+        <div class="assignment-list" id="allAssignments"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="tab-content" id="asgn-grade">
+        <div class="assignment-list" id="gradingList"><div class="empty-state">No submissions to grade.</div></div>
+      </div>
+    </section>
+
+    <!-- MY STUDENTS -->
+    <section class="sec" id="sec-students">
+      <div class="sec-header">
+        <h2>My Students</h2>
+        <input type="text" id="studentSearch" class="search-input" placeholder="Search students…" oninput="filterStudents()">
+      </div>
+      <div class="students-grid" id="studentsGrid">
+        <div class="empty-state">Loading students…</div>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="sec" id="sec-progress">
+      <div class="sec-header"><h2>Student Progress</h2></div>
+      <div class="progress-filters">
+        <select id="progressCourseFilter" onchange="loadProgressData()">
+          <option value="">All Subjects</option>
+        </select>
+      </div>
+      <div class="progress-list" id="progressList">
+        <div class="empty-state">Loading progress data…</div>
+      </div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="sec" id="sec-resources">
+      <div class="sec-header"><h2>Resources & Library</h2></div>
+      <!-- Upload Panel -->
+      <div class="upload-panel">
+        <h3>📤 Upload Resource</h3>
+        <div class="upload-form-row">
+          <input type="text" id="upTitle" placeholder="Resource title" style="flex:2">
+          <input type="text" id="upSubject" placeholder="Subject">
+          <input type="text" id="upGrade" placeholder="Grade (S4/S5/S6)">
+          <select id="upType">
+            <option value="textbook">Textbook</option>
+            <option value="past_paper">Past Paper</option>
+            <option value="uploaded">Other</option>
+          </select>
+          <input type="file" id="upFile" accept=".pdf">
+          <button class="btn-primary" onclick="uploadResource()">Upload PDF</button>
+        </div>
+        <p class="upload-msg hidden" id="uploadMsg"></p>
+      </div>
+      <div class="tab-bar" style="margin-top:16px">
+        <button class="tab active" data-tab="res-textbooks">Textbooks</button>
+        <button class="tab" data-tab="res-papers">Past Papers</button>
+        <button class="tab" data-tab="res-uploaded">Uploaded</button>
+      </div>
+      <div class="tab-content active" id="res-textbooks">
+        <div class="resource-grid" id="textbookGrid"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="tab-content" id="res-papers">
+        <div class="resource-grid" id="paperGrid"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="tab-content" id="res-uploaded">
+        <div class="resource-grid" id="uploadedGrid"><div class="empty-state">Loading…</div></div>
+      </div>
+    </section>
+
+    <!-- MESSAGES (WhatsApp-style) -->
+    <section class="sec" id="sec-messages">
+      <div class="chat-layout">
+        <!-- Left: contacts sidebar -->
+        <div class="chat-sidebar" id="chatSidebar">
+          <div class="chat-sidebar-head">
+            <h3>Messages</h3>
+            <button class="btn-sm" onclick="openNewChat()">+ New</button>
+          </div>
+          <div class="chat-search-row">
+            <input type="text" id="chatContactSearch" placeholder="Search…" oninput="filterContacts()" class="chat-search-input">
+          </div>
+          <div class="contacts-list" id="contactsList"><div class="empty-state">Loading…</div></div>
+        </div>
+        <!-- Right: conversation thread -->
+        <div class="chat-main" id="chatMain">
+          <div class="chat-empty-state" id="chatEmptyState">
+            <div style="font-size:48px;margin-bottom:12px">💬</div>
+            <p>Select a conversation or start a new one</p>
+          </div>
+          <div class="chat-thread hidden" id="chatThread">
+            <div class="chat-thread-head" id="chatThreadHead">
+              <button class="btn-back-chat" onclick="closeThread()">←</button>
+              <div class="chat-partner-info" id="chatPartnerInfo"></div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-bar">
+              <textarea id="chatInput" rows="1" placeholder="Type a message…" onkeydown="chatKeyDown(event)"></textarea>
+              <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- New Chat modal: pick recipient -->
+      <div class="modal-overlay hidden" id="modalNewChat">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-head">
+            <h3>New Message</h3>
+            <button class="modal-close" onclick="closeModal('modalNewChat')">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row">
+              <label>Search person</label>
+              <input type="text" id="newChatSearch" placeholder="Name or email…" oninput="searchNewChatPeople()" autocomplete="off">
+            </div>
+            <div id="newChatPeopleList" style="max-height:260px;overflow-y:auto;margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section class="sec" id="sec-notifications">
+      <div class="sec-header">
+        <h2>Notifications</h2>
+        <button class="btn-outline" onclick="markAllRead()">Mark All Read</button>
+      </div>
+      <div class="notif-list" id="notifList"><div class="empty-state">No notifications.</div></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="sec" id="sec-settings">
+      <div class="sec-header"><h2>Settings</h2></div>
+      <div class="settings-wrap">
+        <div class="settings-card">
+          <h3>Profile Information</h3>
+          <form id="profileForm" onsubmit="saveProfile(event)">
+            <div class="form-row">
+              <label>First Name</label>
+              <input type="text" id="setFirstName" required>
+            </div>
+            <div class="form-row">
+              <label>Last Name</label>
+              <input type="text" id="setLastName" required>
+            </div>
+            <div class="form-row">
+              <label>Email</label>
+              <input type="email" id="setEmail" required>
+            </div>
+            <div class="form-row">
+              <label>School</label>
+              <input type="text" id="setSchool">
+            </div>
+            <div class="form-row">
+              <label>Bio</label>
+              <textarea id="setBio" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Save Changes</button>
+          </form>
+          <p class="save-msg hidden" id="saveMsg">Profile updated!</p>
+        </div>
+
+        <!-- Change Password -->
+        <div class="settings-card">
+          <h3>Change Password</h3>
+          <p style="font-size:12px;color:#888;margin-bottom:12px">A 6-digit verification code will be sent to your email. It expires in 15 minutes.</p>
+          <div id="fPwStep1">
+            <div class="form-row"><label>Your Email</label><input type="email" id="fPwEmail"></div>
+            <button class="btn-primary" style="margin-top:10px;width:100%" onclick="facilitatorRequestOTP()">Send Verification Code</button>
+            <p class="save-msg hidden" id="fPwMsg1"></p>
+          </div>
+          <div id="fPwStep2" style="display:none">
+            <div class="form-row"><label>6-Digit Code</label><input type="text" id="fPwCode" maxlength="6" placeholder="123456" style="letter-spacing:6px;font-size:18px;text-align:center"></div>
+            <div class="form-row"><label>New Password</label><input type="password" id="fPwNew" placeholder="Min. 8 characters"></div>
+            <div class="form-row"><label>Confirm Password</label><input type="password" id="fPwConfirm"></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-outline" onclick="resetFPwSteps()">← Back</button>
+              <button class="btn-primary" style="flex:1" onclick="facilitatorVerifyOTP()">Update Password</button>
+            </div>
+            <p class="save-msg hidden" id="fPwMsg2"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL: Create Course -->
+<div class="modal-overlay hidden" id="modalCreateCourse">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Create New Subject</h3>
+      <button class="modal-close" onclick="closeModal('modalCreateCourse')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>Subject Title</label><input type="text" id="ccTitle" required></div>
+      <div class="form-row"><label>Description</label><textarea id="ccDesc" rows="3"></textarea></div>
+      <div class="form-row"><label>Subject / Category</label><input type="text" id="ccSubject" placeholder="e.g. Biology, Mathematics"></div>
+      <div class="form-row"><label>Grade Level</label><input type="text" id="ccGrade" placeholder="e.g. S4, S5, S6"></div>
+      <div class="form-row">
+        <label>Visibility</label>
+        <select id="ccPublic">
+          <option value="false">Private (Enrolled only)</option>
+          <option value="true">Public</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="submitCreateCourse()">Create Subject</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Create Assignment -->
+<div class="modal-overlay hidden" id="modalCreateAssignment">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Create Assignment</h3>
+      <button class="modal-close" onclick="closeModal('modalCreateAssignment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>Title</label><input type="text" id="caTitle"></div>
+      <div class="form-row"><label>Description</label><textarea id="caDesc" rows="3"></textarea></div>
+      <div class="form-row">
+        <label>Subject</label>
+        <select id="caCourse"><option value="">Select subject…</option></select>
+      </div>
+      <div class="form-row"><label>Type</label>
+        <select id="caType">
+          <option value="homework">Homework</option>
+          <option value="test">Test</option>
+          <option value="project">Project</option>
+          <option value="quiz">Quiz</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Due Date</label><input type="datetime-local" id="caDue"></div>
+      <div class="form-row"><label>Max Score</label><input type="number" id="caScore" value="100"></div>
+      <div class="form-row"><label>Attachment URL <small style="color:#888">(optional link / Google Doc)</small></label><input type="url" id="caAttachUrl" placeholder="https://…"></div>
+      <div class="form-row"><label>Attachment PDF <small style="color:#888">(optional)</small></label><input type="file" id="caAttachFile" accept=".pdf"></div>
+      <button class="btn-primary" onclick="submitCreateAssignment()">Create Assignment</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Assignment -->
+<div class="modal-overlay hidden" id="modalEditAssignment">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit Assignment</h3>
+      <button class="modal-close" onclick="closeModal('modalEditAssignment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editAsgnId">
+      <div class="form-row"><label>Title</label><input type="text" id="editTitle"></div>
+      <div class="form-row"><label>Description</label><textarea id="editDesc" rows="3"></textarea></div>
+      <div class="form-row"><label>Type</label>
+        <select id="editType">
+          <option value="homework">Homework</option>
+          <option value="test">Test</option>
+          <option value="project">Project</option>
+          <option value="quiz">Quiz</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Due Date</label><input type="datetime-local" id="editDue"></div>
+      <div class="form-row"><label>Max Score</label><input type="number" id="editScore"></div>
+      <div class="form-row"><label>Published</label>
+        <select id="editPublished">
+          <option value="true">Published</option>
+          <option value="false">Draft</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Attachment URL <small style="color:#888">(optional link / Google Doc)</small></label><input type="url" id="editAttachUrl" placeholder="https://…"></div>
+      <div class="form-row"><label>Replace Attachment PDF <small style="color:#888">(leave empty to keep existing)</small></label><input type="file" id="editAttachFile" accept=".pdf"></div>
+      <div id="editCurrentAttach" style="font-size:12px;color:#666;margin-top:-4px;margin-bottom:8px"></div>
+      <button class="btn-primary" onclick="submitEditAssignment()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Grade Submission -->
+<div class="modal-overlay hidden" id="modalGrade">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Grade Submission</h3>
+      <button class="modal-close" onclick="closeModal('modalGrade')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="gradeStudentName" style="font-weight:600;margin-bottom:8px"></p>
+      <div id="gradeSubmissionPreview" style="margin-bottom:12px"></div>
+      <div class="form-row"><label>Score (max: <span id="gradeMaxScore">100</span>)</label><input type="number" id="gradeScore" min="0"></div>
+      <div class="form-row"><label>Feedback</label><textarea id="gradeFeedback" rows="3"></textarea></div>
+      <input type="hidden" id="gradeSubId">
+      <button class="btn-primary" onclick="submitGrade()">Submit Grade</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: View Submissions for Assignment -->
+<div class="modal-overlay hidden" id="modalSubmissions">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3 id="submissionsTitle">Submissions</h3>
+      <button class="modal-close" onclick="closeModal('modalSubmissions')">✕</button>
+    </div>
+    <div class="modal-body" id="submissionsBody"><div class="empty-state">Loading…</div></div>
+  </div>
+</div>
+
+<!-- MODAL: Add Student to Course -->
+<div class="modal-overlay hidden" id="modalInviteStudent">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <h3>Add Student to Course</h3>
+      <button class="modal-close" onclick="closeModal('modalInviteStudent')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub);margin-bottom:12px">Search and add students directly — they will be enrolled immediately.</p>
+      <div class="form-row">
+        <label>Search student</label>
+        <input type="text" id="inviteSearch" placeholder="Name or email…" oninput="searchInviteStudents()" autocomplete="off">
+      </div>
+      <div id="inviteStudentList" style="max-height:300px;overflow-y:auto;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PDF Viewer -->
+<div class="modal-overlay hidden" id="modalPdfViewer">
+  <div class="modal" style="max-width:860px;width:95%;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-head">
+      <h3 id="pdfViewerTitle">Document</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">⬇ Download</a>
+        <button class="modal-close" onclick="closeModal('modalPdfViewer')">✕</button>
+      </div>
+    </div>
+    <iframe id="pdfViewerFrame" src="" style="flex:1;border:none;width:100%"></iframe>
+  </div>
+</div>
+
+<!-- MODAL: Notification Detail -->
+<div class="modal-overlay hidden" id="modalNotifDetail">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h3 id="notifDetailTitle">Notification</h3>
+      <button class="modal-close" onclick="closeModal('modalNotifDetail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="notifDetailMsg" style="line-height:1.6;color:#333"></p>
+      <p id="notifDetailTime" style="font-size:12px;color:#aaa;margin-top:12px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Compose Message -->
+<div class="modal-overlay hidden" id="modalCompose">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Compose Message</h3>
+      <button class="modal-close" onclick="closeModal('modalCompose')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="composeToName" style="font-size:13px;color:var(--primary);margin-bottom:8px"></p>
+      <input type="hidden" id="compRecipient">
+      <div class="form-row"><label>Subject</label><input type="text" id="compSubject"></div>
+      <div class="form-row"><label>Message</label><textarea id="compBody" rows="4"></textarea></div>
+      <button class="btn-primary" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="facilitator.js"></script>
+</body>
+</html>

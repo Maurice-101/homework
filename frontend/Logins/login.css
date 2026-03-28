@@ -1,0 +1,55 @@
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;min-height:100vh}
+
+.login-container{display:flex;min-height:100vh}
+
+/* LEFT */
+.login-left{
+  flex:1;background:linear-gradient(135deg,#2c62f6,#5a8dff);
+  color:white;display:flex;flex-direction:column;justify-content:center;padding:60px 50px
+}
+.logo{font-size:48px;font-weight:bold;margin-bottom:8px}
+.subtitle{font-size:16px;opacity:.9;margin-bottom:40px}
+.feature-list{display:flex;flex-direction:column;gap:12px}
+.feature-item{font-size:14px;background:rgba(255,255,255,.14);padding:12px 16px;border-radius:10px;opacity:.95}
+
+/* RIGHT */
+.login-right{
+  flex:1;background:white;display:flex;flex-direction:column;
+  justify-content:center;padding:50px 70px;overflow-y:auto
+}
+
+.auth-tabs{display:flex;margin-bottom:28px;border:2px solid #2c62f6;border-radius:10px;overflow:hidden}
+.auth-tab{flex:1;padding:11px;border:none;background:white;color:#2c62f6;font-size:15px;font-weight:bold;cursor:pointer}
+.auth-tab.active{background:#2c62f6;color:white}
+.auth-tab:hover:not(.active){background:#eef1fb}
+
+h2{font-size:22px;margin-bottom:4px;color:#1a1a2e}
+.sub{font-size:13px;color:#777;margin-bottom:18px}
+
+label{display:block;font-size:13px;font-weight:bold;color:#333;margin-top:12px;margin-bottom:5px}
+input,select{width:100%;padding:11px 13px;border:1px solid #ccc;border-radius:8px;font-size:14px;transition:border .15s}
+input:focus,select:focus{outline:none;border-color:#2c62f6}
+
+.name-row{display:flex;gap:14px}
+.name-row>div{flex:1}
+
+button[type="submit"]{
+  width:100%;margin-top:20px;padding:13px;background:#2c62f6;color:white;
+  border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;transition:background .15s
+}
+button[type="submit"]:hover{background:#1c4cd6}
+button[type="submit"]:disabled{background:#8ab0f8;cursor:not-allowed}
+
+.extra-links{margin-top:14px;text-align:center}
+.extra-links a{color:#2c62f6;text-decoration:none;font-size:13px}
+.extra-links a:hover{text-decoration:underline}
+
+.err{color:#e74c3c;font-size:13px;margin-top:8px;min-height:18px}
+
+@media(max-width:768px){
+  .login-container{flex-direction:column}
+  .login-left{padding:40px 28px}
+  .login-right{padding:40px 28px}
+  .name-row{flex-direction:column;gap:0}
+}

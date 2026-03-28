@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homework Platform – Login</title>
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="login-container">
+
+  <div class="login-left">
+    <h1 class="logo">Homework</h1>
+    <p class="subtitle">Digital Learning Platform</p>
+    <div class="feature-list">
+      <div class="feature-item">📚 Curriculum textbooks &amp; past papers</div>
+      <div class="feature-item">📝 Assignments &amp; online tests</div>
+      <div class="feature-item">📊 Track your academic progress</div>
+      <div class="feature-item">✉️ Message teachers &amp; classmates</div>
+      <div class="feature-item">✏️ Canvas virtual notebook</div>
+    </div>
+  </div>
+
+  <div class="login-right">
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="loginTabBtn" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" id="registerTabBtn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPanel">
+      <h2>Welcome Back</h2>
+      <p class="sub">Sign in to continue learning</p>
+      <form id="loginForm">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@school.com" required>
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" required>
+        <p class="err" id="loginErr"></p>
+        <button type="submit" id="loginBtn">Login</button>
+      </form>
+      <div class="extra-links"><a href="#">Forgot password?</a></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerPanel" style="display:none">
+      <h2>Create Account</h2>
+      <p class="sub">Join the Homework platform</p>
+      <form id="registerForm">
+        <div class="name-row">
+          <div><label>First Name</label><input type="text" id="regFirst" placeholder="First name" required></div>
+          <div><label>Last Name</label><input type="text" id="regLast" placeholder="Last name" required></div>
+        </div>
+        <label>Email Address</label>
+        <input type="email" id="regEmail" placeholder="you@school.com" required>
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min 8 characters" required>
+        <label>Role</label>
+        <select id="regRole">
+          <option value="student">Student</option>
+          <option value="facilitator">Facilitator (Teacher)</option>
+          <option value="admin">Administrator</option>
+        </select>
+        <label>School <span style="font-weight:normal;color:#999">(optional)</span></label>
+        <input type="text" id="regSchool" placeholder="Your school name">
+        <label>Grade <span style="font-weight:normal;color:#999">(optional)</span></label>
+        <input type="text" id="regGrade" placeholder="e.g. S4">
+        <p class="err" id="registerErr"></p>
+        <button type="submit" id="registerBtn">Create Account</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="login.js"></script>
+</body>
+</html>

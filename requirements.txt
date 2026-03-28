@@ -1,4 +1,0 @@
-uvicorn[standard]
-fastapi[standard]
-pydantic[standard]
-python-dotenv

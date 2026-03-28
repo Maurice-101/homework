@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard – Homework</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
+      <span class="sb-logo">Homework</span>
+    </div>
+    <div class="sb-profile">
+      <div class="sb-avatar-wrap">
+        <span id="sbInitials" class="sb-initials">--</span>
+      </div>
+      <div class="sb-info">
+        <strong id="sbName">Loading…</strong>
+        <span id="sbSub">Administrator</span>
+      </div>
+    </div>
+    <ul class="menu">
+      <li class="active" data-sec="dashboard">   <span class="ico">🏠</span><span class="lbl">Dashboard</span></li>
+      <li data-sec="users">                      <span class="ico">👤</span><span class="lbl">User Management</span></li>
+      <li data-sec="courses">                    <span class="ico">📚</span><span class="lbl">Courses</span></li>
+      <li data-sec="assignments">                <span class="ico">📄</span><span class="lbl">Assignments</span></li>
+      <li data-sec="resources">                  <span class="ico">📖</span><span class="lbl">Resources</span></li>
+      <li data-sec="messages">                   <span class="ico">✉️</span><span class="lbl">Messages</span></li>
+      <li data-sec="notifications">              <span class="ico">🔔</span><span class="lbl">Notifications <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="settings">                   <span class="ico">⚙️</span><span class="lbl">Platform Settings</span></li>
+    </ul>
+    <div class="sb-foot">
+      <button class="logout-btn" id="logoutBtn">⬅ Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-area">
+    <header class="topbar">
+      <h2 id="pageTitle">Dashboard</h2>
+      <div class="tb-right">
+        <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
+        <span class="tb-icon" onclick="goTo('messages')">✉️</span>
+        <span id="tbInitials" class="tb-initials">--</span>
+        <span id="tbName" class="tb-name">—</span>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="sec active" id="sec-dashboard">
+      <div class="welcome">
+        <h1>Admin Control Panel</h1>
+        <p>Manage users, courses, and monitor platform activity.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👤</div>
+          <div class="stat-info"><span class="stat-num" id="statUsers">0</span><span class="stat-lbl">Total Users</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-info"><span class="stat-num" id="statStudents">0</span><span class="stat-lbl">Students</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧑‍🏫</div>
+          <div class="stat-info"><span class="stat-num" id="statFacilitators">0</span><span class="stat-lbl">Facilitators</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📚</div>
+          <div class="stat-info"><span class="stat-num" id="statCourses">0</span><span class="stat-lbl">Courses</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📄</div>
+          <div class="stat-info"><span class="stat-num" id="statAssignments">0</span><span class="stat-lbl">Assignments</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📝</div>
+          <div class="stat-info"><span class="stat-num" id="statSubmissions">0</span><span class="stat-lbl">Submissions</span></div>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-panel">
+          <h3>Pending Approvals</h3>
+          <ul class="dash-list" id="pendingCourses"><li class="empty">Loading…</li></ul>
+        </div>
+        <div class="dash-panel">
+          <h3>Recent Users</h3>
+          <ul class="dash-list" id="recentUsers"><li class="empty">Loading…</li></ul>
+        </div>
+        <div class="dash-panel">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <button class="qa-btn" onclick="goTo('users')">👤 Manage Users</button>
+            <button class="qa-btn" onclick="goTo('courses')">📚 Review Courses</button>
+            <button class="qa-btn" onclick="goTo('messages')">✉ Send Announcement</button>
+            <button class="qa-btn" onclick="goTo('resources')">📖 View Resources</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- USER MANAGEMENT -->
+    <section class="sec" id="sec-users">
+      <div class="sec-header">
+        <h2>User Management</h2>
+        <div class="filter-row">
+          <select id="userRoleFilter" onchange="loadUsers()">
+            <option value="">All Roles</option>
+            <option value="student">Students</option>
+            <option value="facilitator">Facilitators</option>
+            <option value="admin">Admins</option>
+          </select>
+          <input type="text" id="userSearch" class="search-input" placeholder="Search users…" oninput="filterUsers()">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Name</th><th>Email</th><th>Role</th><th>School</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody">
+            <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- COURSES -->
+    <section class="sec" id="sec-courses">
+      <div class="sec-header">
+        <h2>Course Management</h2>
+        <div class="filter-row">
+          <select id="courseStatusFilter" onchange="loadAdminCourses()">
+            <option value="">All Status</option>
+            <option value="pending">Pending Approval</option>
+            <option value="approved">Approved</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="coursesTable">
+          <thead>
+            <tr><th>Title</th><th>Facilitator</th><th>Subject</th><th>Grade</th><th>Enrolled</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="coursesBody">
+            <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ASSIGNMENTS -->
+    <section class="sec" id="sec-assignments">
+      <div class="sec-header"><h2>Assignment Oversight</h2></div>
+      <div class="assignment-list" id="adminAssignments">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="sec" id="sec-resources">
+      <div class="sec-header"><h2>Resources & Library</h2></div>
+      <div class="tab-bar">
+        <button class="tab active" data-tab="res-textbooks">Textbooks</button>
+        <button class="tab" data-tab="res-papers">Past Papers</button>
+      </div>
+      <div class="tab-content active" id="res-textbooks">
+        <div class="resource-grid" id="textbookGrid"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="tab-content" id="res-papers">
+        <div class="resource-grid" id="paperGrid"><div class="empty-state">Loading…</div></div>
+      </div>
+    </section>
+
+    <!-- MESSAGES -->
+    <section class="sec" id="sec-messages">
+      <div class="sec-header">
+        <h2>Messages</h2>
+        <button class="btn-primary" onclick="openCompose()">+ Compose</button>
+      </div>
+      <div class="tab-bar">
+        <button class="tab active" data-tab="msg-inbox">Inbox</button>
+        <button class="tab" data-tab="msg-sent">Sent</button>
+      </div>
+      <div class="tab-content active" id="msg-inbox">
+        <div class="msg-list" id="inboxList"><div class="empty-state">No messages.</div></div>
+      </div>
+      <div class="tab-content" id="msg-sent">
+        <div class="msg-list" id="sentList"><div class="empty-state">No sent messages.</div></div>
+      </div>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section class="sec" id="sec-notifications">
+      <div class="sec-header">
+        <h2>Notifications</h2>
+        <button class="btn-outline" onclick="markAllRead()">Mark All Read</button>
+      </div>
+      <div class="notif-list" id="notifList"><div class="empty-state">No notifications.</div></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="sec" id="sec-settings">
+      <div class="sec-header"><h2>Platform Settings</h2></div>
+      <div class="settings-wrap">
+        <div class="settings-card">
+          <h3>Admin Profile</h3>
+          <form id="profileForm" onsubmit="saveProfile(event)">
+            <div class="form-row"><label>First Name</label><input type="text" id="setFirstName" required></div>
+            <div class="form-row"><label>Last Name</label><input type="text" id="setLastName" required></div>
+            <div class="form-row"><label>Email</label><input type="email" id="setEmail" required></div>
+            <div class="form-row"><label>School</label><input type="text" id="setSchool"></div>
+            <div class="form-row"><label>Bio</label><textarea id="setBio" rows="3"></textarea></div>
+            <button type="submit" class="btn-primary">Save Changes</button>
+          </form>
+          <p class="save-msg hidden" id="saveMsg">Profile updated!</p>
+        </div>
+        <div class="settings-card" style="margin-top:20px">
+          <h3>Platform Info</h3>
+          <p style="font-size:14px;color:var(--text-sub)">Homework Platform – National Digital Education System for Secondary Education in Rwanda</p>
+          <p style="font-size:13px;color:var(--text-sub);margin-top:8px">Version 1.0.0</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL: Edit User -->
+<div class="modal-overlay hidden" id="modalEditUser">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit User</h3>
+      <button class="modal-close" onclick="closeModal('modalEditUser')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editUserId">
+      <div class="form-row"><label>First Name</label><input type="text" id="euFirstName"></div>
+      <div class="form-row"><label>Last Name</label><input type="text" id="euLastName"></div>
+      <div class="form-row"><label>Email</label><input type="email" id="euEmail"></div>
+      <div class="form-row">
+        <label>Role</label>
+        <select id="euRole">
+          <option value="student">Student</option>
+          <option value="facilitator">Facilitator</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-row"><label>School</label><input type="text" id="euSchool"></div>
+      <button class="btn-primary" onclick="submitEditUser()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Compose Message -->
+<div class="modal-overlay hidden" id="modalCompose">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Compose Message</h3>
+      <button class="modal-close" onclick="closeModal('modalCompose')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>To (User ID)</label><input type="number" id="compRecipient"></div>
+      <div class="form-row"><label>Subject</label><input type="text" id="compSubject"></div>
+      <div class="form-row"><label>Message</label><textarea id="compBody" rows="4"></textarea></div>
+      <button class="btn-primary" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="adim.js"></script>
+</body>
+</html>

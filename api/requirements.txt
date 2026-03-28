@@ -1,0 +1,12 @@
+uvicorn[standard]
+fastapi[standard]
+pydantic[standard]
+python-dotenv
+sqlalchemy
+python-jose[cryptography]
+bcrypt
+python-multipart
+aiofiles
+boto3
+requests
+
