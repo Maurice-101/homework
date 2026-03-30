@@ -3,10 +3,11 @@ fastapi[standard]
 pydantic[standard]
 python-dotenv
 sqlalchemy
+psycopg2-binary
 python-jose[cryptography]
 bcrypt
 python-multipart
 aiofiles
 boto3
 requests
-psycopg2-binary
+
