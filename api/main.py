@@ -30,9 +30,9 @@ app.include_router(admin.router,           prefix="/api")
 app.include_router(course_content.router,  prefix="/api")
 
 
-@app.get("/api/health")
+@app.get("/health")
 def health():
-    return {"message": "API is healthy"}
+    return {"status": "ok"}
 
 
 @app.on_event("startup")
