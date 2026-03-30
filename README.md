@@ -51,11 +51,11 @@ home_2/
 ### 1. Clone & set up environment
 
 ```bash
-git clone https://github.com/BodeMurairi2/home_2.git
-cd home_2
+git clone https://github.com/Maurice-101/homework.git
+cd homework
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r api/requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 2. Configure environment variables
@@ -65,8 +65,8 @@ Copy `.env.example` to `.env` and fill in your values:
 ```env
 # Core
 SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
+ALGORITHM=jwt-algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES=number-of-minutes
 DATABASE_URL=sqlite:///./homework.db
 UPLOAD_DIR=./uploads
 
@@ -91,8 +91,8 @@ R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com/bucket
 ### 3. Run
 
 ```bash
-cd api
-python main.py
+cd homework/
+python api.main.py
 # or
 uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
