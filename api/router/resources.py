@@ -7,7 +7,7 @@ from jose import jwt, JWTError
 from api.database import get_db
 from api.controller import resource_controller
 from api.utils.auth import get_current_user, require_role
-from api.config import SECRET_KEY, ALGORITHM
+from api.settings import settings
 from api.utils import r2
 from api.model.user import User
 
@@ -24,7 +24,7 @@ def _auth_serve(request: Request, token: Optional[str] = Query(None)):
     if not raw:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        jwt.decode(raw, SECRET_KEY, algorithms=[ALGORITHM])
+        jwt.decode(raw, settings.secret_key, algorithms=[settings.algorithm])
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -38,23 +38,22 @@ def serve_resource(
     """Proxy an R2 object through FastAPI so the browser can open/download it."""
     _auth_serve(request, token)
     try:
-        r2_resp = r2.fetch_object(key)
+        content_type, stream = r2.fetch_object(key)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Object not found: {e}")
 
-    content_type = r2_resp.headers.get("Content-Type", "application/pdf")
-
-    def _iter():
-        for chunk in r2_resp.iter_content(chunk_size=65536):
-            if chunk:
-                yield chunk
-
     filename = urllib.parse.quote(key.rsplit("/", 1)[-1])
     return StreamingResponse(
-        _iter(),
+        stream,
         media_type=content_type,
         headers={"Content-Disposition": f"inline; filename*=UTF-8''{filename}"},
     )
+
+
+@router.get("/subjects")
+def get_subject_catalog(current_user: User = Depends(get_current_user)):
+    """Library grouped by subject, with the grade levels available for each."""
+    return resource_controller.get_subject_catalog()
 
 
 @router.get("/")

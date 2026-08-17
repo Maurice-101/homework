@@ -8,7 +8,7 @@ from api.schemas.assignment import AssignmentCreate, AssignmentUpdate, Submissio
 from api.controller import assignment_controller
 from api.utils.auth import get_current_user, require_role
 from api.model.user import User
-from api.config import UPLOAD_DIR
+from api.settings import settings
 
 router = APIRouter(prefix="/assignments", tags=["Assignments"])
 
@@ -47,7 +47,7 @@ async def create(
         if not attachment_file.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=400, detail="Only PDF files accepted for attachment")
         fname = f"{uuid.uuid4()}_{attachment_file.filename}"
-        dest = os.path.join(UPLOAD_DIR, "assignments", fname)
+        dest = os.path.join(settings.upload_dir_abs, "assignments", fname)
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         content = await attachment_file.read()
         with open(dest, "wb") as f:
@@ -90,7 +90,7 @@ async def update(
         if not attachment_file.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=400, detail="Only PDF files accepted for attachment")
         fname = f"{uuid.uuid4()}_{attachment_file.filename}"
-        dest = os.path.join(UPLOAD_DIR, "assignments", fname)
+        dest = os.path.join(settings.upload_dir_abs, "assignments", fname)
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         content = await attachment_file.read()
         with open(dest, "wb") as f:
@@ -119,7 +119,7 @@ async def submit_file(assignment_id: int, file: UploadFile = File(...),
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files accepted")
     filename = f"{uuid.uuid4()}_{file.filename}"
-    dest = os.path.join(UPLOAD_DIR, "submissions", filename)
+    dest = os.path.join(settings.upload_dir_abs, "submissions", filename)
     content = await file.read()
     with open(dest, "wb") as f:
         f.write(content)

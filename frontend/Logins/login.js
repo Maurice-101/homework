@@ -10,6 +10,14 @@ function redirect(role) {
     else if (role === "admin")  window.location.href = "../Admins/admin-dashboard.html";
 }
 
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const showing = input.type === "text";
+    input.type = showing ? "password" : "text";
+    btn.textContent = showing ? "👁" : "🙈";
+    btn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+}
+
 function switchTab(tab) {
     document.getElementById("loginPanel").style.display    = tab === "login"    ? "block" : "none";
     document.getElementById("registerPanel").style.display = tab === "register" ? "block" : "none";
@@ -44,8 +52,10 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     e.preventDefault();
     const errEl = document.getElementById("registerErr");
     const btn   = document.getElementById("registerBtn");
-    const pass  = document.getElementById("regPassword").value;
+    const pass    = document.getElementById("regPassword").value;
+    const confirm = document.getElementById("regConfirmPassword").value;
     if (pass.length < 8) { errEl.textContent = "Password must be at least 8 characters."; return; }
+    if (pass !== confirm) { errEl.textContent = "Passwords do not match."; return; }
     errEl.textContent = "";
     btn.disabled = true;
     btn.textContent = "Creating account…";

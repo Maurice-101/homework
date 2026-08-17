@@ -4,7 +4,7 @@ import urllib.parse
 from typing import Optional
 from sqlalchemy.orm import Session
 from api.model.resource import Resource
-from api.config import R2_BOOKS_PREFIX
+from api.settings import settings
 from api.utils import r2
 
 # Simple in-memory cache: (data, expires_at)
@@ -18,6 +18,7 @@ def _proxy_url(key: str) -> str:
     return f"/api/resources/serve?key={urllib.parse.quote(key, safe='')}"
 
 # Maps folder-name segments (case-insensitive) → canonical subject label
+# (used for past-paper folders, which are still one-subject-per-folder)
 _SUBJECT_MAP = {
     "biology":        "Biology",
     "chemistry":      "Chemistry",
@@ -30,8 +31,59 @@ _SUBJECT_MAP = {
     "phy":            "Physics",
 }
 
-# past-papers/ is a subfolder inside PCB-books/  e.g. "PCB-books/past-papers/"
-_PAST_PAPERS_PREFIX = R2_BOOKS_PREFIX + "past-papers/"
+# past-papers/ is a subfolder inside the books prefix, e.g. "PCB-books/past-papers/"
+_PAST_PAPERS_PREFIX = settings.r2_books_prefix + "past-papers/"
+
+# Most books live directly under a grade folder with the subject baked into the
+# filename rather than a dedicated subject subfolder (e.g. "Auditing S6 SB.pdf").
+# Ordered most-specific-first — first match wins.
+_SUBJECT_PATTERNS = [
+    (r"financial accounting",              "Financial Accounting"),
+    (r"management accounting",             "Management Accounting"),
+    (r"ict\s*(in|for)?\s*acc(ount|out)ing", "ICT in Accounting"),
+    (r"math\w* for acc|sub[_ ]?math",      "Mathematics for Accounting"),
+    (r"\btaxation\b",                      "Taxation"),
+    (r"\bauditing\b",                      "Auditing"),
+    (r"\baccounting\b",                    "Accounting"),
+    (r"history.{0,15}citizenship",         "History & Citizenship"),
+    (r"\bhistory\b",                       "History"),
+    (r"literature",                        "Literature in English"),
+    (r"religion and ethics",               "Religion & Ethics"),
+    (r"religious studies",                 "Religious Studies"),
+    (r"integrated science",                "Integrated Science"),
+    (r"\bgscs\b|general studies",          "General Studies"),
+    (r"computer science",                  "Computer Science"),
+    (r"\bict\b",                           "ICT"),
+    (r"entrepreneurship|\bentrep\b",       "Entrepreneurship"),
+    (r"kinyarwanda",                       "Kinyarwanda"),
+    (r"kiswahili|swahili",                 "Kiswahili"),
+    (r"fran[cç]ais|\bfrench\b",            "French"),
+    (r"\benglish\b",                       "English"),
+    (r"mathemat|\bmaths?\b",               "Mathematics"),
+    (r"chem(is|s)try",                     "Chemistry"),
+    (r"\bbiology\b",                       "Biology"),
+    (r"\bphysics\b",                       "Physics"),
+    (r"geography",                         "Geography"),
+    (r"agric",                             "Agriculture"),
+    (r"economics",                         "Economics"),
+    (r"creative performance",              "Creative Performance"),
+    (r"\bmusic\b",                         "Music"),
+    (r"physical education|\bpes\b|\bsport", "Physical Education"),
+    (r"foundations? of education",         "Foundations of Education"),
+    (r"special ed\w* needs",               "Special Education Needs"),
+    (r"social studies",                    "Social Studies"),
+    (r"home\s*science",                    "Home Science"),
+    (r"clinical placement",                "Clinical Placement"),
+    (r"fundamentals? of nursing",          "Fundamentals of Nursing"),
+    (r"medical pathology",                 "Medical Pathology"),
+    (r"\bethics\b",                        "Ethics"),
+]
+_SUBJECT_PATTERNS = [(re.compile(p, re.I), label) for p, label in _SUBJECT_PATTERNS]
+
+_GRADE_PRIMARY_RE   = re.compile(r"^Primary_(\d)$", re.I)
+_GRADE_SECONDARY_RE = re.compile(r"^s(\d)$", re.I)
+_GRADE_YEAR_RE      = re.compile(r"^Year_(\d)$", re.I)
+_TYPE_TG_RE         = re.compile(r"\bTG\b|teacher.?s?\s*guide", re.I)
 
 
 def _year(name: str) -> str:
@@ -46,6 +98,52 @@ def _grade(name: str) -> str:
     return ""
 
 
+def _normalize_grade(raw: str, stream: str) -> str:
+    """Turn a raw grade-folder name into a display label, e.g. 'Primary_3' -> 'P3'."""
+    m = _GRADE_PRIMARY_RE.match(raw)
+    if m:
+        return f"P{m.group(1)}"
+    m = _GRADE_SECONDARY_RE.match(raw)
+    if m:
+        return f"S{m.group(1)}"
+    m = _GRADE_YEAR_RE.match(raw)
+    if m:
+        return f"TTC Y{m.group(1)}" if "training" in stream.lower() else f"Y{m.group(1)}"
+    return raw
+
+
+def _grade_sort_key(g: str):
+    m = re.match(r"^P(\d)$", g)
+    if m: return (0, int(m.group(1)))
+    m = re.match(r"^S(\d)$", g)
+    if m: return (1, int(m.group(1)))
+    m = re.match(r"^TTC Y(\d)$", g)
+    if m: return (2, int(m.group(1)))
+    m = re.match(r"^Y(\d)$", g)
+    if m: return (3, int(m.group(1)))
+    return (4, g)
+
+
+def _infer_subject(filename: str, folder_subject: Optional[str]) -> str:
+    """Prefer an explicit subject subfolder; otherwise infer from the filename."""
+    if folder_subject:
+        return re.sub(r"\s+", " ", folder_subject.replace("_", " ")).strip()
+    normalized = filename.replace("_", " ")   # "ICT_S3_TG" / "Physics_Students" -> word boundaries
+    for pattern, label in _SUBJECT_PATTERNS:
+        if pattern.search(normalized):
+            return label
+    return "General"
+
+
+def _infer_type(filename: str) -> str:
+    return "teacher_guide" if _TYPE_TG_RE.search(filename) else "textbook"
+
+
+def _clean_title(filename: str) -> str:
+    name = filename[:-4] if filename.lower().endswith(".pdf") else filename
+    return re.sub(r"\s+", " ", name).strip(" .-_") or filename
+
+
 def _subject_from_path(key: str, prefix: str) -> str:
     """Infer subject from the folder segment immediately after *prefix*."""
     relative = key[len(prefix):]          # e.g. "Chemistry/Some Book.pdf"
@@ -54,17 +152,26 @@ def _subject_from_path(key: str, prefix: str) -> str:
 
 
 def scan_books() -> list:
+    """Walk every PDF under the books prefix and derive display metadata from
+    its folder path, e.g.:
+      Rwanda_Curriculumn_Books/Secondary_books/Accounting/s6/Auditing S6 SB.pdf
+      -> level="Secondary", program="Accounting", grade="S6", subject="Auditing"
+    Folder naming is inconsistent (sometimes a subject subfolder is present,
+    sometimes the subject is only in the filename), so subject/type are
+    inferred from the filename when there's no dedicated subject folder.
+    """
     global _books_cache
     now = time.time()
     if _books_cache and _books_cache[1] > now:
         return _books_cache[0]
 
     try:
-        objects = r2.list_prefix(R2_BOOKS_PREFIX)
+        objects = r2.list_prefix(settings.r2_books_prefix)
     except Exception as exc:
         print(f"[R2] scan_books error: {exc}")
         return _books_cache[0] if _books_cache else []
 
+    prefix_len = len(settings.r2_books_prefix)
     books = []
     for obj in objects:
         key = obj["key"]
@@ -72,15 +179,30 @@ def scan_books() -> list:
             continue
         if "/past-papers/" in key:
             continue
-        filename = key.rsplit("/", 1)[-1]
-        subject = _subject_from_path(key, R2_BOOKS_PREFIX)
-        is_tg = "TG" in filename or "teacher" in filename.lower()
+
+        rel = key[prefix_len:]
+        folders = rel.split("/")[:-1]
+        filename = rel.rsplit("/", 1)[-1]
+
+        level, stream, grade, folder_subject = "", "", "", None
+        if len(folders) > 1:
+            level = "Primary" if "primary" in folders[1].lower() else \
+                    "Secondary" if "secondary" in folders[1].lower() else ""
+        if len(folders) > 2:
+            stream = folders[2]
+        if len(folders) > 3:
+            grade = _normalize_grade(folders[3], stream)
+        if len(folders) > 4:
+            folder_subject = folders[4]
+
         books.append({
             "id":          f"r2_{key}",
-            "title":       filename.replace(".pdf", "").strip(),
-            "subject":     subject,
-            "grade_level": _grade(filename),
-            "type":        "teacher_guide" if is_tg else "textbook",
+            "title":       _clean_title(filename),
+            "subject":     _infer_subject(filename, folder_subject),
+            "grade_level": grade,
+            "level":       level,
+            "program":     stream,
+            "type":        _infer_type(filename),
             "file_path":   key,
             "url":         _proxy_url(key),
             "category":    "textbook",
@@ -88,6 +210,27 @@ def scan_books() -> list:
         })
     _books_cache = (books, now + _CACHE_TTL)
     return books
+
+
+def get_subject_catalog() -> list:
+    """Group the library by subject, e.g. for a 'browse by subject' catalog view."""
+    grouped: dict = {}
+    for b in scan_books():
+        entry = grouped.setdefault(b["subject"], {"levels": set(), "count": 0})
+        if b["grade_level"]:
+            entry["levels"].add(b["grade_level"])
+        entry["count"] += 1
+
+    catalog = [
+        {
+            "subject": subject,
+            "levels":  sorted(entry["levels"], key=_grade_sort_key),
+            "count":   entry["count"],
+        }
+        for subject, entry in grouped.items()
+    ]
+    catalog.sort(key=lambda x: x["subject"])
+    return catalog
 
 
 def scan_past_papers() -> list:

@@ -15,7 +15,7 @@ def _to_out(c: Course) -> CourseOut:
 
 
 def get_all_courses(db: Session, subject: Optional[str] = None, grade: Optional[str] = None) -> List[CourseOut]:
-    q = db.query(Course).filter(Course.is_approved == True, Course.is_public == True)
+    q = db.query(Course).filter(Course.is_approved == True)
     if subject:
         q = q.filter(Course.subject.ilike(f"%{subject}%"))
     if grade:

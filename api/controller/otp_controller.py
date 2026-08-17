@@ -1,4 +1,3 @@
-import os
 import random
 import string
 import smtplib
@@ -10,6 +9,7 @@ from fastapi import HTTPException
 from api.model.otp import OTP
 from api.model.user import User
 from api.utils.password import hash_password
+from api.settings import settings
 
 
 def _generate_code() -> str:
@@ -17,11 +17,11 @@ def _generate_code() -> str:
 
 
 def _send_email(to_email: str, code: str):
-    smtp_host = os.getenv("SMTP_HOST", "")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "")
-    smtp_pass = os.getenv("SMTP_PASS", "")
-    smtp_from = os.getenv("SMTP_FROM", smtp_user)
+    smtp_host = settings.smtp_host
+    smtp_port = settings.smtp_port
+    smtp_user = settings.smtp_user
+    smtp_pass = settings.smtp_pass
+    smtp_from = settings.smtp_from_or_user
 
     print(f"\n[OTP] Code for {to_email}: {code}  (expires in 15 min)\n")
 

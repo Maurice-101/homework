@@ -1,22 +1,33 @@
-"""Cloudflare R2 helpers via the Cloudflare REST API (Bearer token).
+"""Cloudflare R2 helpers.
 
-Uses /accounts/{account_id}/r2/buckets/{bucket}/objects endpoints — no S3
-credentials required.  Files are served through a FastAPI proxy endpoint.
+Listing/uploading go through the Cloudflare REST API (Bearer token) —
+/accounts/{account_id}/r2/buckets/{bucket}/objects.  Reading an object's
+bytes goes through the S3-compatible endpoint instead: Cloudflare's edge WAF
+on api.cloudflare.com blocks GET requests whose encoded key contains ".."
+(a path-traversal signature) even when it's just part of a filename, and a
+few of the uploaded books have names like "P1-English-PB ..pdf". The bucket's
+own S3 endpoint isn't behind that WAF rule.
 """
 import re
 import uuid
 import urllib.parse
+import boto3
 import requests
-from api.config import (
-    R2_SECRET_ACCESS_KEY as CF_TOKEN,
-    R2_BUCKET_NAME, R2_ENDPOINT_URL,
-)
+from botocore.config import Config
+from botocore.exceptions import ClientError
+from api.settings import settings
 
-# Account ID is embedded in the S3 endpoint URL:
-# https://{account_id}.r2.cloudflarestorage.com
-_ACCOUNT_ID = R2_ENDPOINT_URL.split("//")[-1].split(".")[0]
-_CF_API     = f"https://api.cloudflare.com/client/v4/accounts/{_ACCOUNT_ID}/r2/buckets/{R2_BUCKET_NAME}"
-_HEADERS    = {"Authorization": f"Bearer {CF_TOKEN}"}
+_CF_API  = settings.cf_api_base
+_HEADERS = {"Authorization": f"Bearer {settings.token_value}"}
+
+_s3_client = boto3.client(
+    "s3",
+    endpoint_url=settings.bucket_url,
+    aws_access_key_id=settings.r2_access_key_id,
+    aws_secret_access_key=settings.r2_secret_access_key,
+    config=Config(signature_version="s3v4"),
+    region_name="auto",
+)
 
 
 def list_prefix(prefix: str) -> list[dict]:
@@ -43,13 +54,17 @@ def list_prefix(prefix: str) -> list[dict]:
     return results
 
 
-def fetch_object(key: str) -> requests.Response:
-    """Stream an object from R2 via the Cloudflare REST API."""
-    encoded = urllib.parse.quote(key, safe="")
-    resp = requests.get(f"{_CF_API}/objects/{encoded}", headers=_HEADERS,
-                        stream=True, timeout=30)
-    resp.raise_for_status()
-    return resp
+def fetch_object(key: str) -> tuple[str, "object"]:
+    """Stream an object from R2 via the S3-compatible endpoint.
+
+    Returns (content_type, iterator[bytes]).
+    """
+    try:
+        resp = _s3_client.get_object(Bucket=settings.r2_bucket_name, Key=key)
+    except ClientError as exc:
+        raise FileNotFoundError(key) from exc
+    content_type = resp.get("ContentType") or "application/pdf"
+    return content_type, resp["Body"].iter_chunks(chunk_size=65536)
 
 
 def upload_file(file_bytes: bytes, filename: str, prefix: str = "resources") -> str:

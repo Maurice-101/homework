@@ -5,7 +5,7 @@ import os
 
 from api.database import init_db
 from api.router import auth, courses, assignments, resources, messages, admin, course_content
-from api.config import UPLOAD_DIR
+from api.settings import settings
 
 app = FastAPI(
     title="Homework Platform API",
@@ -41,8 +41,8 @@ def on_startup():
 
 
 # Serve uploaded files (submissions, teacher-uploaded resources)
-if os.path.isdir(UPLOAD_DIR):
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+if os.path.isdir(settings.upload_dir_abs):
+    app.mount("/uploads", StaticFiles(directory=settings.upload_dir_abs), name="uploads")
 
 # Serve frontend as static files — must be mounted last
 _frontend = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")

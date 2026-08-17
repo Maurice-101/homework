@@ -3,3 +3,6 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+.env
+Rwanda_Curriculumn_Books/
+Abahizi project document/

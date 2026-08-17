@@ -45,6 +45,8 @@ function initNav() {
             if (tab.dataset.tab === "public")   loadPublic();
             if (tab.dataset.tab === "enrolled") loadEnrolled();
             if (tab.dataset.tab === "people")   loadPeople();
+            if (tab.dataset.tab === "subjects") loadSubjectCatalog();
+            if (tab.closest("#sec-resources"))  updateResSummary();
         }));
     document.getElementById("profileForm").addEventListener("submit", saveProfile);
     document.querySelectorAll(".modal").forEach(m =>
@@ -62,7 +64,7 @@ function goTo(sec) {
     if (sec === "courses")       { loadEnrolled(); loadAllCourses(); loadPublic(); loadInvitations(); }
     if (sec === "assignments")   loadAssignments();
     if (sec === "progress")      loadProgress();
-    if (sec === "resources")     loadResources();
+    if (sec === "resources")     { loadResources(); loadSubjectCatalog(); }
     if (sec === "messages")      loadMessages();
     if (sec === "settings")      prefillPwEmail();
     if (sec === "notifications") loadNotifications();
@@ -127,6 +129,51 @@ function quickRes(subject) {
 }
 
 // ── COURSES ──
+
+// DB courses only store a freeform subject string (e.g. "Math", "Language"), which
+// doesn't always match a SUBJECT_THEME key exactly — these aliases catch the common
+// short forms; title is also tried since course titles are often the real subject
+// name (e.g. title "Kinyarwanda" for a course whose subject field is just "Language").
+const COURSE_SUBJECT_ALIASES = {
+    "math": "Mathematics", "maths": "Mathematics",
+    "cs": "Computer Science", "compsci": "Computer Science", "ict": "ICT",
+};
+
+// Built lazily (not at module-eval time) since SUBJECT_THEME is defined further down
+// this file — by the time a course card actually renders, the whole script has already
+// run once, so SUBJECT_THEME is safely available.
+let _subjectThemeLookup = null;
+
+function courseTheme(c) {
+    if (!_subjectThemeLookup) {
+        _subjectThemeLookup = {};
+        for (const key of Object.keys(SUBJECT_THEME)) {
+            _subjectThemeLookup[key.trim().toLowerCase()] = SUBJECT_THEME[key];
+        }
+    }
+    // Case/whitespace-insensitive: a facilitator's freeform "Subject" field might be
+    // typed as "biology", "Biology ", "BIOLOGY", etc. — all should still match.
+    const candidates = [c.subject, c.title].filter(Boolean).map(s => s.trim().toLowerCase());
+    for (const key of candidates) {
+        if (_subjectThemeLookup[key]) return _subjectThemeLookup[key];
+    }
+    for (const key of candidates) {
+        const alias = COURSE_SUBJECT_ALIASES[key];
+        if (alias) {
+            const theme = _subjectThemeLookup[alias.toLowerCase()];
+            if (theme) return theme;
+        }
+    }
+    return null;
+}
+
+function courseHeaderStyle(theme, fallbackColor) {
+    if (theme && theme.img) {
+        return `background-image:linear-gradient(180deg,rgba(20,20,30,.1),rgba(10,10,20,.65)),url('${theme.img}');background-size:cover;background-position:center`;
+    }
+    return `background:${fallbackColor || "#2f6df6"}`;
+}
+
 async function loadEnrolled() {
     const el = document.getElementById("enrolledGrid");
     try {
@@ -136,8 +183,9 @@ async function loadEnrolled() {
         el.innerHTML = list.map(item => {
             const c = item.course || item;
             const prog = item.enrollment?.progress_percent || 0;
+            const theme = courseTheme(c);
             return `<div class="ccard" onclick="openCourseDetail(${c.id},'${esc(c.title)}','${esc(c.subject||'')}','${c.cover_color||'#1f4fa3'}')">
-              <div class="ccard-hd" style="background:${c.cover_color||'#2f6df6'}">📚</div>
+              <div class="ccard-hd" style="${courseHeaderStyle(theme, c.cover_color)}">${theme ? theme.icon : "📚"}</div>
               <div class="ccard-bd">
                 <h4>${c.title}</h4>
                 <p>${c.description || "No description."}</p>
@@ -187,8 +235,9 @@ async function loadPublic() {
 }
 
 function courseCard(c, alreadyEnrolled = false) {
+    const theme = courseTheme(c);
     return `<div class="ccard">
-      <div class="ccard-hd" style="background:${c.cover_color||'#2f6df6'}">📚</div>
+      <div class="ccard-hd" style="${courseHeaderStyle(theme, c.cover_color)}">${theme ? theme.icon : "📚"}</div>
       <div class="ccard-bd">
         <h4>${c.title}</h4>
         <p>${c.description || "No description."}</p>
@@ -200,7 +249,9 @@ function courseCard(c, alreadyEnrolled = false) {
         </div>
         ${alreadyEnrolled
           ? '<span class="tag" style="background:#e8f0fe;color:#1a56bd;margin-top:8px;display:inline-block">✓ Enrolled</span>'
-          : `<button class="btn-enroll" onclick="enroll(${c.id}, this)">+ Enroll</button>`}
+          : c.is_public
+            ? `<button class="btn-enroll" onclick="enroll(${c.id}, this)">+ Enroll</button>`
+            : '<span class="tag" style="background:#f4f4f4;color:#888;margin-top:8px;display:inline-block">🔒 Private — invitation only</span>'}
       </div>
     </div>`;
 }
@@ -1110,10 +1161,180 @@ async function loadProgress() {
 }
 
 // ── RESOURCES ──
-async function loadResources() {
+
+// Subject → { icon, img, credit } used as card art on the "Browse by Subject" catalog.
+// Images are real photos from Wikimedia Commons (public domain / CC-licensed) — credit
+// is shown on each card since several licenses (CC BY, CC BY-SA) require attribution.
+const SUBJECT_THEME = {
+    "Agriculture": { icon: "🌾", img: "../Assets/subjects/agriculture.jpg", credit: "Fredericknoronha / Wikimedia Commons (CC BY-SA 4.0)" },
+    "Auditing": { icon: "📋", img: "../Assets/subjects/auditing.jpg", credit: "HABS / Wikimedia Commons (Public domain)" },
+    "Biology": { icon: "🧬", img: "../Assets/subjects/biology.jpg", credit: "Scott L. Gardner / Wikimedia Commons (CC BY-SA 4.0)" },
+    "Chemistry": { icon: "⚗️", img: "../Assets/subjects/chemistry.jpg", credit: "Belikov Maxim / Wikimedia Commons (CC BY 4.0)" },
+    "Clinical Placement": { icon: "🏥", img: "../Assets/subjects/clinical-placement.jpg", credit: "U.S. Navy / Wikimedia Commons (Public domain)" },
+    "Computer Science": { icon: "💻", img: "../Assets/subjects/computer-science.jpg", credit: "Crew crew / Wikimedia Commons (CC0)" },
+    "Creative Arts Music and Fine Arts": { icon: "🎨", img: "../Assets/subjects/creative-arts-music-and-fine-arts.jpg", credit: "Bartolomeo Bettera / Wikimedia Commons (Public domain)" },
+    "Creative Performance": { icon: "🎭", img: "../Assets/subjects/creative-performance.jpg", credit: "Arquivo histórico de Sarria / Wikimedia Commons (CC BY-SA 3.0)" },
+    "Economics": { icon: "📈", img: "../Assets/subjects/economics.png", credit: "Nikolay Zvezdin / Wikimedia Commons (CC BY-SA 4.0)" },
+    "English": { icon: "📖", img: "../Assets/subjects/english.jpg", credit: "Micheal Kaluba / Wikimedia Commons (CC BY-SA 4.0)" },
+    "Entrepreneurship": { icon: "💡", img: "../Assets/subjects/entrepreneurship.jpg", credit: "Wikimedia Commons (CC0)" },
+    "Ethics": { icon: "⚖️", img: "../Assets/subjects/ethics.jpg", credit: "Domenico Fetti / Wikimedia Commons (Public domain)" },
+    "Financial Accounting": { icon: "💰", img: "../Assets/subjects/financial-accounting.jpg", credit: "Ken Lund / Wikimedia Commons (CC BY-SA 2.0)" },
+    "Foundations of Education": { icon: "🎓", img: "../Assets/subjects/foundations-of-education.jpg", credit: "Harrison Keely / Wikimedia Commons (CC BY 4.0)" },
+    "French": { icon: "🇫🇷", img: "../Assets/subjects/french.jpg", credit: "Getfunky Paris / Wikimedia Commons (CC BY 2.0)" },
+    "Fundamentals of Nursing": { icon: "💉", img: "../Assets/subjects/clinical-placement.jpg", credit: "U.S. Navy / Wikimedia Commons (Public domain)" },
+    "General Studies": { icon: "🧭", img: "../Assets/subjects/general-studies.jpg", credit: "Gary Todd / Wikimedia Commons (CC0)" },
+    "Geography": { icon: "🌍", img: "../Assets/subjects/geography.jpg", credit: "Auguste Henri Dufour / Wikimedia Commons (Public domain)" },
+    "History": { icon: "🏛️", img: "../Assets/subjects/history.jpg", credit: "Gary Todd / Wikimedia Commons (CC0)" },
+    "History & Citizenship": { icon: "🏛️", img: "../Assets/subjects/history-citizenship.jpg", credit: "JJ Harrison / Wikimedia Commons (CC BY-SA 3.0)" },
+    "Home Science": { icon: "🏠", img: "../Assets/subjects/home-science.jpg", credit: "Shixart1985 / Wikimedia Commons (CC BY 2.0)" },
+    "ICT": { icon: "💻", img: "../Assets/subjects/ict.jpg", credit: "Bill Branson / Wikimedia Commons (Public domain)" },
+    "ICT in Accounting": { icon: "🖥️", img: "../Assets/subjects/ict-in-accounting.jpg", credit: "Wikimedia Commons (CC0)" },
+    "Integrated Science": { icon: "🔬", img: "../Assets/subjects/integrated-science.jpg", credit: "U.S. Department of Energy / Wikimedia Commons (Public domain)" },
+    "Kinyarwanda": { icon: "🗣️", img: "../Assets/subjects/kinyarwanda.jpg", credit: "Ericnkurunziza / Wikimedia Commons (CC BY-SA 4.0)" },
+    "Kiswahili": { icon: "🗣️", img: "../Assets/subjects/kiswahili.jpg", credit: "NASA Earth Observatory / Wikimedia Commons (Public domain)" },
+    "Literature in English": { icon: "📚", img: "../Assets/subjects/literature-in-english.jpg", credit: "Wikimedia Commons (CC0)" },
+    "Management Accounting": { icon: "📊", img: "../Assets/subjects/management-accounting.jpg", credit: "Traceries / Wikimedia Commons (Public domain)" },
+    "Mathematics": { icon: "➗", img: "../Assets/subjects/mathematics.jpg", credit: "Manuelzapata04 / Wikimedia Commons (CC BY-SA 4.0)" },
+    "Mathematics for Accounting": { icon: "🧮", img: "../Assets/subjects/mathematics-for-accounting.jpg", credit: "Coyau / Wikimedia Commons (CC BY-SA 3.0)" },
+    "Medical Pathology": { icon: "🩺", img: "../Assets/subjects/medical-pathology.jpg", credit: "CDC / Wikimedia Commons (Public domain)" },
+    "Music": { icon: "🎵", img: "../Assets/subjects/music.jpg", credit: "Maurizio Pesce / Wikimedia Commons (CC BY 2.0)" },
+    "Physical Education": { icon: "⚽", img: "../Assets/subjects/physical-education.jpg", credit: "ThoroughlyReviewed / Wikimedia Commons (CC BY 2.0)" },
+    "Physics": { icon: "⚛️", img: "../Assets/subjects/physics.jpg", credit: "Stanislav Liubauskas / Wikimedia Commons (CC BY 4.0)" },
+    "Religion & Ethics": { icon: "🕊️", img: "../Assets/subjects/religion-ethics.jpg", credit: "Dragfyre / Wikimedia Commons (CC BY-SA 3.0)" },
+    "Religious Studies": { icon: "🕊️", img: "../Assets/subjects/religion-ethics.jpg", credit: "Dragfyre / Wikimedia Commons (CC BY-SA 3.0)" },
+    "Science and Elementary Technology": { icon: "🔧", img: "../Assets/subjects/science-and-elementary-technology.jpg", credit: "Wikimedia Commons (Public domain)" },
+    "Social Studies": { icon: "🏘️", img: "../Assets/subjects/social-studies.jpg", credit: "Bembety / Wikimedia Commons (CC BY-SA 4.0)" },
+    "Social and Religious Studies": { icon: "🏘️", img: "../Assets/subjects/religion-ethics.jpg", credit: "Dragfyre / Wikimedia Commons (CC BY-SA 3.0)" },
+    "Special Education Needs": { icon: "🤝", img: "../Assets/subjects/special-education-needs.jpg", credit: "DFAT / Wikimedia Commons (CC BY 4.0)" },
+    "Taxation": { icon: "🧾", img: "../Assets/subjects/taxation.jpg", credit: "Blogtrepreneur / Wikimedia Commons (CC BY 2.0)" },
+};
+const DEFAULT_SUBJECT_THEME = { icon: "📘", img: "", credit: "" };
+
+let _subjectCatalog = null;
+
+async function loadSubjectCatalog() {
+    const el = document.getElementById("subjGrid");
+    if (!_subjectCatalog) {
+        el.innerHTML = '<p class="empty">Loading…</p>';
+        try {
+            _subjectCatalog = await apiGet("/resources/subjects") || [];
+        } catch (e) {
+            el.innerHTML = '<p class="empty">Failed to load.</p>';
+            return;
+        }
+    }
+    renderSubjectCatalog(filteredSubjectCatalog());
+    updateResSummary();
+}
+
+// Applies the same subject/grade/search filters used by the Textbooks/Past
+// Papers/Uploaded tabs to the subject catalog, so "Browse by Subject" isn't
+// the one tab that ignores them.
+function filteredSubjectCatalog() {
+    const list = _subjectCatalog || [];
     const subject = document.getElementById("rsubject").value;
     const grade   = document.getElementById("rgrade").value;
     const search  = document.getElementById("rsearch").value.trim().toLowerCase();
+    return list.filter(s => {
+        if (subject && s.subject !== subject) return false;
+        if (grade && !s.levels.includes(grade)) return false;
+        if (search && !s.subject.toLowerCase().includes(search)) return false;
+        return true;
+    });
+}
+
+function getActiveResourceTab() {
+    return document.querySelector('#sec-resources .tab.active')?.dataset.tab || "subjects";
+}
+
+// One place decides what resSummary says, based on whichever tab is actually visible —
+// otherwise switching tabs with filters already set left a summary that matched the
+// wrong grid (e.g. "3 results" shown while the still-unfiltered subject grid was up).
+// Caches the last fetched counts so a plain tab switch (no filter change, no new
+// fetch) can still show the right number instead of resetting to zero.
+let _lastResourceCounts = { books: [], papers: [], uploaded: [] };
+
+function updateResSummary(counts) {
+    if (counts) _lastResourceCounts = counts;
+    const { books, papers, uploaded } = _lastResourceCounts;
+    const summary = document.getElementById("resSummary");
+    const subject = document.getElementById("rsubject").value;
+    const grade   = document.getElementById("rgrade").value;
+    const search  = document.getElementById("rsearch").value.trim();
+    if (!subject && !grade && !search) { summary.textContent = ""; return; }
+    const suffix = `${subject ? " for " + subject : ""}${grade ? " · " + grade : ""}${search ? ' · "' + search + '"' : ""}`;
+    if (getActiveResourceTab() === "subjects") {
+        summary.textContent = `Showing ${filteredSubjectCatalog().length} subject(s)${suffix}`;
+    } else {
+        summary.textContent = `Showing ${books.length + papers.length + uploaded.length} result(s)${suffix}`;
+    }
+}
+
+function renderSubjectCatalog(catalog) {
+    const el = document.getElementById("subjGrid");
+    if (!_subjectCatalog || !_subjectCatalog.length) { el.innerHTML = '<p class="empty">No subjects available yet.</p>'; return; }
+    if (!catalog.length) { el.innerHTML = '<p class="empty">No subjects match your filters.</p>'; return; }
+    el.innerHTML = catalog.map(s => {
+        const theme = SUBJECT_THEME[s.subject] || DEFAULT_SUBJECT_THEME;
+        const bg = theme.img
+            ? `linear-gradient(180deg,rgba(20,20,30,.15),rgba(10,10,20,.75)),url('${theme.img}')`
+            : "linear-gradient(135deg,#2f6df6,#5a8dff)";
+        return `
+        <div class="subj-card" style="background-image:${bg}" onclick="browseSubject('${esc(s.subject)}')">
+          <div class="subj-icon">${theme.icon}</div>
+          <h4>${esc(s.subject)}</h4>
+          <div class="subj-levels">${s.levels.map(l => `<span class="subj-level-tag">${esc(l)}</span>`).join("")}</div>
+          <div class="subj-count">${s.count} book${s.count === 1 ? "" : "s"}</div>
+          ${theme.credit ? `<div class="subj-credit">📷 ${esc(theme.credit)}</div>` : ""}
+        </div>`;
+    }).join("");
+}
+
+async function browseSubject(subject) {
+    const tabBtn = document.querySelector('#sec-resources .tab[data-tab="textbooks"]');
+    if (tabBtn) activateTab(tabBtn);
+    await ensureResourceFilterOptions();
+    document.getElementById("rsubject").value = subject;
+    document.getElementById("rgrade").value = "";
+    loadResources();
+}
+
+let _resourceFilterOptions = null;
+
+async function ensureResourceFilterOptions() {
+    if (_resourceFilterOptions) return _resourceFilterOptions;
+    try {
+        const data = await apiGet("/resources/");   // unfiltered, so options cover the full library
+        const all = [...(data.textbooks || []), ...(data.past_papers || []), ...(data.uploaded || [])];
+        const subjects = [...new Set(all.map(r => r.subject).filter(Boolean))].sort();
+        const grades   = [...new Set(all.map(r => r.grade_level).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        const subjSel  = document.getElementById("rsubject");
+        const gradeSel = document.getElementById("rgrade");
+        if (subjects.length) {
+            const current = subjSel.value;
+            subjSel.innerHTML = '<option value="">All Subjects</option>' +
+                subjects.map(s => `<option${s === current ? " selected" : ""}>${esc(s)}</option>`).join("");
+        }
+        if (grades.length) {
+            const current = gradeSel.value;
+            gradeSel.innerHTML = '<option value="">All Grades</option>' +
+                grades.map(g => `<option${g === current ? " selected" : ""}>${esc(g)}</option>`).join("");
+        }
+        _resourceFilterOptions = { subjects, grades };
+    } catch (e) { /* keep the static fallback options already in the markup */ }
+    return _resourceFilterOptions;
+}
+
+async function loadResources() {
+    await ensureResourceFilterOptions();
+    const subject = document.getElementById("rsubject").value;
+    const grade   = document.getElementById("rgrade").value;
+    const search  = document.getElementById("rsearch").value.trim().toLowerCase();
+
+    if (_subjectCatalog) renderSubjectCatalog(filteredSubjectCatalog());
+
     const [tbEl, ppEl, upEl] = [
         document.getElementById("tbGrid"),
         document.getElementById("ppGrid"),
@@ -1138,11 +1359,7 @@ async function loadResources() {
             books = books.filter(f); papers = papers.filter(f); uploaded = uploaded.filter(f);
         }
 
-        const summary = document.getElementById("resSummary");
-        const total = books.length + papers.length + uploaded.length;
-        if (subject || grade || search) {
-            summary.textContent = `Showing ${total} result(s)${subject ? " for " + subject : ""}${grade ? " · " + grade : ""}${search ? ' · "' + search + '"' : ""}`;
-        } else { summary.textContent = ""; }
+        updateResSummary({ books, papers, uploaded });
 
         renderRes(tbEl, books,    "textbook");
         renderRes(ppEl, papers,   "past_paper");
