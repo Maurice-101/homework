@@ -37,6 +37,7 @@ def _migrate():
             "ALTER TABLE canvas_notes ADD COLUMN book_id INTEGER REFERENCES canvas_books(id)",
             "CREATE TABLE IF NOT EXISTS course_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER NOT NULL REFERENCES courses(id), name VARCHAR(100) NOT NULL, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "CREATE TABLE IF NOT EXISTS group_members (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id INTEGER NOT NULL REFERENCES course_groups(id), student_id INTEGER NOT NULL REFERENCES users(id), added_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "ALTER TABLE resources ADD COLUMN course_id INTEGER REFERENCES courses(id)",
         ]
     else:
         # PostgreSQL syntax
@@ -64,6 +65,7 @@ def _migrate():
                 student_id INTEGER NOT NULL REFERENCES users(id),
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )""",
+            "ALTER TABLE resources ADD COLUMN IF NOT EXISTS course_id INTEGER REFERENCES courses(id)",
         ]
 
     with engine.connect() as conn:

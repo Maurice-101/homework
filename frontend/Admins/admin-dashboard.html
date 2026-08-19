@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard – Homework</title>
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="admin.css?v=2">
 </head>
 <body>
 <div class="layout">
@@ -25,24 +25,29 @@
       </div>
     </div>
     <ul class="menu">
-      <li class="active" data-sec="dashboard">   <span class="ico">🏠</span><span class="lbl">Dashboard</span></li>
-      <li data-sec="users">                      <span class="ico">👤</span><span class="lbl">User Management</span></li>
-      <li data-sec="courses">                    <span class="ico">📚</span><span class="lbl">Courses</span></li>
-      <li data-sec="assignments">                <span class="ico">📄</span><span class="lbl">Assignments</span></li>
-      <li data-sec="resources">                  <span class="ico">📖</span><span class="lbl">Resources</span></li>
-      <li data-sec="messages">                   <span class="ico">✉️</span><span class="lbl">Messages</span></li>
-      <li data-sec="notifications">              <span class="ico">🔔</span><span class="lbl">Notifications <span class="badge" id="notifBadge"></span></span></li>
-      <li data-sec="settings">                   <span class="ico">⚙️</span><span class="lbl">Platform Settings</span></li>
+      <li class="active" data-sec="dashboard">   <span class="ico">🏠</span><span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
+      <li data-sec="users">                      <span class="ico">👤</span><span class="lbl" data-i18n="admin.userManagement">User Management</span></li>
+      <li data-sec="courses">                    <span class="ico">📚</span><span class="lbl" data-i18n="nav.courses">Courses</span></li>
+      <li data-sec="assignments">                <span class="ico">📄</span><span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
+      <li data-sec="resources">                  <span class="ico">📖</span><span class="lbl" data-i18n="nav.resources">Resources</span></li>
+      <li data-sec="messages">                   <span class="ico">✉️</span><span class="lbl" data-i18n="nav.messages">Messages</span></li>
+      <li data-sec="notifications">              <span class="ico">🔔</span><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="settings">                   <span class="ico">⚙️</span><span class="lbl" data-i18n="admin.platformSettings">Platform Settings</span></li>
     </ul>
     <div class="sb-foot">
-      <button class="logout-btn" id="logoutBtn">⬅ Logout</button>
+      <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
+        <option value="en">🌐 English</option>
+        <option value="fr">🌐 French</option>
+        <option value="rw">🌐 Kinyarwanda</option>
+      </select>
+      <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main class="main-area">
     <header class="topbar">
-      <h2 id="pageTitle">Dashboard</h2>
+      <h2 id="pageTitle" data-i18n="title.dashboard">Dashboard</h2>
       <div class="tb-right">
         <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
         <span class="tb-icon" onclick="goTo('messages')">✉️</span>
@@ -54,51 +59,51 @@
     <!-- DASHBOARD -->
     <section class="sec active" id="sec-dashboard">
       <div class="welcome">
-        <h1>Admin Control Panel</h1>
-        <p>Manage users, courses, and monitor platform activity.</p>
+        <h1 data-i18n="admin.controlPanel">Admin Control Panel</h1>
+        <p data-i18n="admin.manageSubtitle">Manage users, courses, and monitor platform activity.</p>
       </div>
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">👤</div>
-          <div class="stat-info"><span class="stat-num" id="statUsers">0</span><span class="stat-lbl">Total Users</span></div>
+          <div class="stat-info"><span class="stat-num" id="statUsers">0</span><span class="stat-lbl" data-i18n="admin.totalUsers">Total Users</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">🎓</div>
-          <div class="stat-info"><span class="stat-num" id="statStudents">0</span><span class="stat-lbl">Students</span></div>
+          <div class="stat-info"><span class="stat-num" id="statStudents">0</span><span class="stat-lbl" data-i18n="admin.students">Students</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">🧑‍🏫</div>
-          <div class="stat-info"><span class="stat-num" id="statFacilitators">0</span><span class="stat-lbl">Facilitators</span></div>
+          <div class="stat-info"><span class="stat-num" id="statFacilitators">0</span><span class="stat-lbl" data-i18n="admin.facilitators">Facilitators</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📚</div>
-          <div class="stat-info"><span class="stat-num" id="statCourses">0</span><span class="stat-lbl">Courses</span></div>
+          <div class="stat-info"><span class="stat-num" id="statCourses">0</span><span class="stat-lbl" data-i18n="nav.courses">Courses</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📄</div>
-          <div class="stat-info"><span class="stat-num" id="statAssignments">0</span><span class="stat-lbl">Assignments</span></div>
+          <div class="stat-info"><span class="stat-num" id="statAssignments">0</span><span class="stat-lbl" data-i18n="nav.assignments">Assignments</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📝</div>
-          <div class="stat-info"><span class="stat-num" id="statSubmissions">0</span><span class="stat-lbl">Submissions</span></div>
+          <div class="stat-info"><span class="stat-num" id="statSubmissions">0</span><span class="stat-lbl" data-i18n="admin.submissions">Submissions</span></div>
         </div>
       </div>
       <div class="dash-grid">
         <div class="dash-panel">
-          <h3>Pending Approvals</h3>
-          <ul class="dash-list" id="pendingCourses"><li class="empty">Loading…</li></ul>
+          <h3 data-i18n="admin.pendingApprovals">Pending Approvals</h3>
+          <ul class="dash-list" id="pendingCourses"><li class="empty" data-i18n="common.loading">Loading…</li></ul>
         </div>
         <div class="dash-panel">
-          <h3>Recent Users</h3>
-          <ul class="dash-list" id="recentUsers"><li class="empty">Loading…</li></ul>
+          <h3 data-i18n="admin.recentUsers">Recent Users</h3>
+          <ul class="dash-list" id="recentUsers"><li class="empty" data-i18n="common.loading">Loading…</li></ul>
         </div>
         <div class="dash-panel">
-          <h3>Quick Actions</h3>
+          <h3 data-i18n="facilitator.quickActions">Quick Actions</h3>
           <div class="quick-actions">
-            <button class="qa-btn" onclick="goTo('users')">👤 Manage Users</button>
-            <button class="qa-btn" onclick="goTo('courses')">📚 Review Courses</button>
-            <button class="qa-btn" onclick="goTo('messages')">✉ Send Announcement</button>
-            <button class="qa-btn" onclick="goTo('resources')">📖 View Resources</button>
+            <button class="qa-btn" onclick="goTo('users')" data-i18n="admin.manageUsers">👤 Manage Users</button>
+            <button class="qa-btn" onclick="goTo('courses')" data-i18n="admin.reviewCourses">📚 Review Courses</button>
+            <button class="qa-btn" onclick="goTo('messages')" data-i18n="admin.sendAnnouncement">✉ Send Announcement</button>
+            <button class="qa-btn" onclick="goTo('resources')" data-i18n="admin.viewResources">📖 View Resources</button>
           </div>
         </div>
       </div>
@@ -107,26 +112,26 @@
     <!-- USER MANAGEMENT -->
     <section class="sec" id="sec-users">
       <div class="sec-header">
-        <h2>User Management</h2>
+        <h2 data-i18n="admin.userManagement">User Management</h2>
         <div class="filter-row">
           <select id="userRoleFilter" onchange="loadUsers()">
-            <option value="">All Roles</option>
-            <option value="student">Students</option>
-            <option value="facilitator">Facilitators</option>
-            <option value="admin">Admins</option>
+            <option value="" data-i18n="admin.allRoles">All Roles</option>
+            <option value="student" data-i18n="admin.students">Students</option>
+            <option value="facilitator" data-i18n="admin.facilitators">Facilitators</option>
+            <option value="admin" data-i18n="admin.admins">Admins</option>
           </select>
-          <input type="text" id="userSearch" class="search-input" placeholder="Search users…" oninput="filterUsers()">
+          <input type="text" id="userSearch" class="search-input" placeholder="Search users…" data-i18n-placeholder="admin.searchUsers" oninput="filterUsers()">
         </div>
       </div>
       <div class="table-wrap">
         <table class="data-table" id="usersTable">
           <thead>
             <tr>
-              <th>Name</th><th>Email</th><th>Role</th><th>School</th><th>Status</th><th>Actions</th>
+              <th data-i18n="admin.name">Name</th><th data-i18n="common.email">Email</th><th data-i18n="admin.role">Role</th><th data-i18n="common.school">School</th><th data-i18n="admin.status">Status</th><th data-i18n="admin.actions">Actions</th>
             </tr>
           </thead>
           <tbody id="usersBody">
-            <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+            <tr><td colspan="6" class="empty-state" data-i18n="common.loading">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -135,22 +140,22 @@
     <!-- COURSES -->
     <section class="sec" id="sec-courses">
       <div class="sec-header">
-        <h2>Course Management</h2>
+        <h2 data-i18n="admin.courseManagement">Course Management</h2>
         <div class="filter-row">
           <select id="courseStatusFilter" onchange="loadAdminCourses()">
-            <option value="">All Status</option>
-            <option value="pending">Pending Approval</option>
-            <option value="approved">Approved</option>
+            <option value="" data-i18n="admin.allStatus">All Status</option>
+            <option value="pending" data-i18n="admin.pendingApproval">Pending Approval</option>
+            <option value="approved" data-i18n="admin.approved">Approved</option>
           </select>
         </div>
       </div>
       <div class="table-wrap">
         <table class="data-table" id="coursesTable">
           <thead>
-            <tr><th>Title</th><th>Facilitator</th><th>Subject</th><th>Grade</th><th>Enrolled</th><th>Status</th><th>Actions</th></tr>
+            <tr><th data-i18n="admin.title">Title</th><th data-i18n="admin.facilitator">Facilitator</th><th data-i18n="admin.subject">Subject</th><th data-i18n="common.grade">Grade</th><th data-i18n="admin.enrolled">Enrolled</th><th data-i18n="admin.status">Status</th><th data-i18n="admin.actions">Actions</th></tr>
           </thead>
           <tbody id="coursesBody">
-            <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+            <tr><td colspan="7" class="empty-state" data-i18n="common.loading">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -158,74 +163,74 @@
 
     <!-- ASSIGNMENTS -->
     <section class="sec" id="sec-assignments">
-      <div class="sec-header"><h2>Assignment Oversight</h2></div>
+      <div class="sec-header"><h2 data-i18n="admin.assignmentOversight">Assignment Oversight</h2></div>
       <div class="assignment-list" id="adminAssignments">
-        <div class="empty-state">Loading…</div>
+        <div class="empty-state" data-i18n="common.loading">Loading…</div>
       </div>
     </section>
 
     <!-- RESOURCES -->
     <section class="sec" id="sec-resources">
-      <div class="sec-header"><h2>Resources & Library</h2></div>
+      <div class="sec-header"><h2 data-i18n="resources.title">Resources & Library</h2></div>
       <div class="tab-bar">
-        <button class="tab active" data-tab="res-textbooks">Textbooks</button>
-        <button class="tab" data-tab="res-papers">Past Papers</button>
+        <button class="tab active" data-tab="res-textbooks" data-i18n="resources.textbooks">Textbooks</button>
+        <button class="tab" data-tab="res-papers" data-i18n="resources.pastPapers">Past Papers</button>
       </div>
       <div class="tab-content active" id="res-textbooks">
-        <div class="resource-grid" id="textbookGrid"><div class="empty-state">Loading…</div></div>
+        <div class="resource-grid" id="textbookGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
       <div class="tab-content" id="res-papers">
-        <div class="resource-grid" id="paperGrid"><div class="empty-state">Loading…</div></div>
+        <div class="resource-grid" id="paperGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
     </section>
 
     <!-- MESSAGES -->
     <section class="sec" id="sec-messages">
       <div class="sec-header">
-        <h2>Messages</h2>
-        <button class="btn-primary" onclick="openCompose()">+ Compose</button>
+        <h2 data-i18n="nav.messages">Messages</h2>
+        <button class="btn-primary" onclick="openCompose()" data-i18n="admin.compose">+ Compose</button>
       </div>
       <div class="tab-bar">
-        <button class="tab active" data-tab="msg-inbox">Inbox</button>
-        <button class="tab" data-tab="msg-sent">Sent</button>
+        <button class="tab active" data-tab="msg-inbox" data-i18n="admin.inbox">Inbox</button>
+        <button class="tab" data-tab="msg-sent" data-i18n="admin.sent">Sent</button>
       </div>
       <div class="tab-content active" id="msg-inbox">
-        <div class="msg-list" id="inboxList"><div class="empty-state">No messages.</div></div>
+        <div class="msg-list" id="inboxList"><div class="empty-state" data-i18n="admin.noMessages">No messages.</div></div>
       </div>
       <div class="tab-content" id="msg-sent">
-        <div class="msg-list" id="sentList"><div class="empty-state">No sent messages.</div></div>
+        <div class="msg-list" id="sentList"><div class="empty-state" data-i18n="admin.noSentMessages">No sent messages.</div></div>
       </div>
     </section>
 
     <!-- NOTIFICATIONS -->
     <section class="sec" id="sec-notifications">
       <div class="sec-header">
-        <h2>Notifications</h2>
-        <button class="btn-outline" onclick="markAllRead()">Mark All Read</button>
+        <h2 data-i18n="nav.notifications">Notifications</h2>
+        <button class="btn-outline" onclick="markAllRead()" data-i18n="facilitator.markAllRead">Mark All Read</button>
       </div>
-      <div class="notif-list" id="notifList"><div class="empty-state">No notifications.</div></div>
+      <div class="notif-list" id="notifList"><div class="empty-state" data-i18n="facilitator.noNotifications">No notifications.</div></div>
     </section>
 
     <!-- SETTINGS -->
     <section class="sec" id="sec-settings">
-      <div class="sec-header"><h2>Platform Settings</h2></div>
+      <div class="sec-header"><h2 data-i18n="admin.platformSettings">Platform Settings</h2></div>
       <div class="settings-wrap">
         <div class="settings-card">
-          <h3>Admin Profile</h3>
+          <h3 data-i18n="admin.adminProfile">Admin Profile</h3>
           <form id="profileForm" onsubmit="saveProfile(event)">
-            <div class="form-row"><label>First Name</label><input type="text" id="setFirstName" required></div>
-            <div class="form-row"><label>Last Name</label><input type="text" id="setLastName" required></div>
-            <div class="form-row"><label>Email</label><input type="email" id="setEmail" required></div>
-            <div class="form-row"><label>School</label><input type="text" id="setSchool"></div>
-            <div class="form-row"><label>Bio</label><textarea id="setBio" rows="3"></textarea></div>
-            <button type="submit" class="btn-primary">Save Changes</button>
+            <div class="form-row"><label data-i18n="common.firstName">First Name</label><input type="text" id="setFirstName" required></div>
+            <div class="form-row"><label data-i18n="common.lastName">Last Name</label><input type="text" id="setLastName" required></div>
+            <div class="form-row"><label data-i18n="common.email">Email</label><input type="email" id="setEmail" required></div>
+            <div class="form-row"><label data-i18n="common.school">School</label><input type="text" id="setSchool"></div>
+            <div class="form-row"><label data-i18n="common.bio">Bio</label><textarea id="setBio" rows="3"></textarea></div>
+            <button type="submit" class="btn-primary" data-i18n="common.saveChanges">Save Changes</button>
           </form>
           <p class="save-msg hidden" id="saveMsg">Profile updated!</p>
         </div>
         <div class="settings-card" style="margin-top:20px">
-          <h3>Platform Info</h3>
-          <p style="font-size:14px;color:var(--text-sub)">Homework Platform – National Digital Education System for Secondary Education in Rwanda</p>
-          <p style="font-size:13px;color:var(--text-sub);margin-top:8px">Version 1.0.0</p>
+          <h3 data-i18n="admin.platformInfo">Platform Info</h3>
+          <p style="font-size:14px;color:var(--text-sub)" data-i18n="admin.platformInfoText">Homework Platform – National Digital Education System for Secondary Education in Rwanda</p>
+          <p style="font-size:13px;color:var(--text-sub);margin-top:8px" data-i18n="admin.version">Version 1.0.0</p>
         </div>
       </div>
     </section>
@@ -275,7 +280,8 @@
   </div>
 </div>
 
-<script src="../js/api.js"></script>
-<script src="adim.js"></script>
+<script src="../js/api.js?v=2"></script>
+<script src="../js/i18n.js?v=2"></script>
+<script src="adim.js?v=2"></script>
 </body>
 </html>

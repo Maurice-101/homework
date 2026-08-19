@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Facilitator Dashboard – Homework</title>
-<link rel="stylesheet" href="facilitator.css">
+<link rel="stylesheet" href="facilitator.css?v=3">
 </head>
 <body>
 <div class="layout">
@@ -25,25 +25,30 @@
       </div>
     </div>
     <ul class="menu">
-      <li class="active" data-sec="dashboard">    <span class="ico">🏠</span><span class="lbl">Dashboard</span></li>
-      <li data-sec="subjects">                    <span class="ico">📚</span><span class="lbl">My Subjects</span></li>
-      <li data-sec="assignments">                 <span class="ico">📄</span><span class="lbl">Assignments</span></li>
-      <li data-sec="students">                    <span class="ico">👥</span><span class="lbl">My Students</span></li>
-      <li data-sec="progress">                    <span class="ico">📈</span><span class="lbl">Progress</span></li>
-      <li data-sec="resources">                   <span class="ico">📖</span><span class="lbl">Resources</span></li>
-      <li data-sec="messages">                    <span class="ico">✉️</span><span class="lbl">Messages</span></li>
-      <li data-sec="notifications">               <span class="ico">🔔</span><span class="lbl">Notifications <span class="badge" id="notifBadge"></span></span></li>
-      <li data-sec="settings">                    <span class="ico">⚙️</span><span class="lbl">Settings</span></li>
+      <li class="active" data-sec="dashboard">    <span class="ico">🏠</span><span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
+      <li data-sec="subjects">                    <span class="ico">📚</span><span class="lbl" data-i18n="nav.subjects">My Subjects</span></li>
+      <li data-sec="assignments">                 <span class="ico">📄</span><span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
+      <li data-sec="students">                    <span class="ico">👥</span><span class="lbl" data-i18n="nav.students">My Students</span></li>
+      <li data-sec="progress">                    <span class="ico">📈</span><span class="lbl" data-i18n="nav.progress">Progress</span></li>
+      <li data-sec="resources">                   <span class="ico">📖</span><span class="lbl" data-i18n="nav.resources">Resources</span></li>
+      <li data-sec="messages">                    <span class="ico">✉️</span><span class="lbl" data-i18n="nav.messages">Messages</span></li>
+      <li data-sec="notifications">               <span class="ico">🔔</span><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="settings">                    <span class="ico">⚙️</span><span class="lbl" data-i18n="nav.settings">Settings</span></li>
     </ul>
     <div class="sb-foot">
-      <button class="logout-btn" id="logoutBtn">⬅ Logout</button>
+      <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
+        <option value="en">🌐 English</option>
+        <option value="fr">🌐 French</option>
+        <option value="rw">🌐 Kinyarwanda</option>
+      </select>
+      <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main class="main-area">
     <header class="topbar">
-      <h2 id="pageTitle">Dashboard</h2>
+      <h2 id="pageTitle" data-i18n="title.dashboard">Dashboard</h2>
       <div class="tb-right">
         <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
         <span class="tb-icon" onclick="goTo('messages')">✉️</span>
@@ -59,27 +64,27 @@
         <p>Manage your subjects, assignments, and monitor student progress.</p>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-info"><span class="stat-num" id="statCourses">0</span><span class="stat-lbl">My Subjects</span></div></div>
-        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-info"><span class="stat-num" id="statStudents">0</span><span class="stat-lbl">My Students</span></div></div>
-        <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-info"><span class="stat-num" id="statAssignments">0</span><span class="stat-lbl">Active Assignments</span></div></div>
-        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><span class="stat-num" id="statPending">0</span><span class="stat-lbl">Pending Grading</span></div></div>
+        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-info"><span class="stat-num" id="statCourses">0</span><span class="stat-lbl" data-i18n="nav.subjects">My Subjects</span></div></div>
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-info"><span class="stat-num" id="statStudents">0</span><span class="stat-lbl" data-i18n="nav.students">My Students</span></div></div>
+        <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-info"><span class="stat-num" id="statAssignments">0</span><span class="stat-lbl" data-i18n="facilitator.activeAssignments">Active Assignments</span></div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><span class="stat-num" id="statPending">0</span><span class="stat-lbl" data-i18n="facilitator.pendingGrading">Pending Grading</span></div></div>
       </div>
       <div class="dash-grid">
         <div class="dash-panel">
-          <h3>Recent Submissions</h3>
+          <h3 data-i18n="facilitator.recentSubmissions">Recent Submissions</h3>
           <ul class="dash-list" id="recentSubmissions"><li class="empty">No recent submissions.</li></ul>
         </div>
         <div class="dash-panel">
-          <h3>Upcoming Due Dates</h3>
+          <h3 data-i18n="facilitator.upcomingDueDates">Upcoming Due Dates</h3>
           <ul class="dash-list" id="upcomingDue"><li class="empty">No upcoming assignments.</li></ul>
         </div>
         <div class="dash-panel">
-          <h3>Quick Actions</h3>
+          <h3 data-i18n="facilitator.quickActions">Quick Actions</h3>
           <div class="quick-actions">
-            <button class="qa-btn" onclick="goTo('subjects'); openCreateCourse()">+ New Subject</button>
-            <button class="qa-btn" onclick="goTo('assignments'); openCreateAssignment()">+ New Assignment</button>
-            <button class="qa-btn" onclick="goTo('messages')">✉ Message Students</button>
-            <button class="qa-btn" onclick="goTo('resources')">📖 Browse Resources</button>
+            <button class="qa-btn" onclick="goTo('subjects'); openCreateCourse()" data-i18n="facilitator.newSubject">+ New Subject</button>
+            <button class="qa-btn" onclick="goTo('assignments'); openCreateAssignment()" data-i18n="facilitator.newAssignment">+ New Assignment</button>
+            <button class="qa-btn" onclick="goTo('messages')" data-i18n="facilitator.messageStudents">✉ Message Students</button>
+            <button class="qa-btn" onclick="goTo('resources')" data-i18n="facilitator.browseResources">📖 Browse Resources</button>
           </div>
         </div>
       </div>
@@ -88,11 +93,11 @@
     <!-- MY SUBJECTS -->
     <section class="sec" id="sec-subjects">
       <div class="sec-header">
-        <h2>My Subjects</h2>
-        <button class="btn-primary" onclick="openCreateCourse()">+ Create Subject</button>
+        <h2 data-i18n="nav.subjects">My Subjects</h2>
+        <button class="btn-primary" onclick="openCreateCourse()" data-i18n="facilitator.createSubject">+ Create Subject</button>
       </div>
       <div class="course-grid" id="courseGrid">
-        <div class="empty-state">Loading subjects…</div>
+        <div class="empty-state" data-i18n="facilitator.loadingSubjects">Loading subjects…</div>
       </div>
 
       <!-- Course Detail Panel (tabbed) -->
@@ -109,6 +114,7 @@
           <button class="cdtab" data-ftab="syllabus" onclick="switchFTab('syllabus')">📅 Syllabus</button>
           <button class="cdtab" data-ftab="students" onclick="switchFTab('students')">👥 Students</button>
           <button class="cdtab" data-ftab="groups" onclick="switchFTab('groups')">🗂️ Groups</button>
+          <button class="cdtab" data-ftab="materials" onclick="switchFTab('materials')">📖 Materials</button>
         </nav>
         <!-- Overview -->
         <div class="fpane active" id="fpane-overview" style="padding:18px">
@@ -165,21 +171,34 @@
           </div>
           <div id="fGroupsList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
         </div>
+        <!-- Materials -->
+        <div class="fpane" id="fpane-materials" style="padding:18px">
+          <div style="background:#f8f9fd;border-radius:10px;padding:14px;margin-bottom:16px">
+            <h4 style="margin:0 0 10px;font-size:14px">Upload PDF</h4>
+            <input type="file" id="matUploadFiles" multiple accept=".pdf" onchange="renderPickedFiles('matUploadFiles','matPickedFiles')">
+            <div id="matPickedFiles" class="picked-files"></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-sm" onclick="uploadCourseMaterials()">Upload</button>
+              <button class="btn-sm btn-outline" onclick="openAttachLibraryModal()">📚 Attach from Library</button>
+            </div>
+          </div>
+          <div id="fMaterialsList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
+        </div>
       </div>
     </section>
 
     <!-- ASSIGNMENTS -->
     <section class="sec" id="sec-assignments">
       <div class="sec-header">
-        <h2>Assignments</h2>
-        <button class="btn-primary" onclick="openCreateAssignment()">+ Create Assignment</button>
+        <h2 data-i18n="title.assignments">Assignments</h2>
+        <button class="btn-primary" onclick="openCreateAssignment()" data-i18n="facilitator.createAssignment">+ Create Assignment</button>
       </div>
       <div class="tab-bar">
-        <button class="tab active" data-tab="asgn-all">All</button>
-        <button class="tab" data-tab="asgn-grade">Needs Grading</button>
+        <button class="tab active" data-tab="asgn-all" data-i18n="facilitator.all">All</button>
+        <button class="tab" data-tab="asgn-grade" data-i18n="facilitator.needsGrading">Needs Grading</button>
       </div>
       <div class="tab-content active" id="asgn-all">
-        <div class="assignment-list" id="allAssignments"><div class="empty-state">Loading…</div></div>
+        <div class="assignment-list" id="allAssignments"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
       <div class="tab-content" id="asgn-grade">
         <div class="assignment-list" id="gradingList"><div class="empty-state">No submissions to grade.</div></div>
@@ -189,60 +208,60 @@
     <!-- MY STUDENTS -->
     <section class="sec" id="sec-students">
       <div class="sec-header">
-        <h2>My Students</h2>
-        <input type="text" id="studentSearch" class="search-input" placeholder="Search students…" oninput="filterStudents()">
+        <h2 data-i18n="nav.students">My Students</h2>
+        <input type="text" id="studentSearch" class="search-input" placeholder="Search students…" data-i18n-placeholder="facilitator.searchStudents" oninput="filterStudents()">
       </div>
       <div class="students-grid" id="studentsGrid">
-        <div class="empty-state">Loading students…</div>
+        <div class="empty-state" data-i18n="facilitator.loadingStudents">Loading students…</div>
       </div>
     </section>
 
     <!-- PROGRESS -->
     <section class="sec" id="sec-progress">
-      <div class="sec-header"><h2>Student Progress</h2></div>
+      <div class="sec-header"><h2 data-i18n="facilitator.studentProgress">Student Progress</h2></div>
       <div class="progress-filters">
         <select id="progressCourseFilter" onchange="loadProgressData()">
-          <option value="">All Subjects</option>
+          <option value="" data-i18n="common.allSubjects">All Subjects</option>
         </select>
       </div>
       <div class="progress-list" id="progressList">
-        <div class="empty-state">Loading progress data…</div>
+        <div class="empty-state" data-i18n="facilitator.loadingProgressData">Loading progress data…</div>
       </div>
     </section>
 
     <!-- RESOURCES -->
     <section class="sec" id="sec-resources">
-      <div class="sec-header"><h2>Resources & Library</h2></div>
+      <div class="sec-header"><h2 data-i18n="resources.title">Resources & Library</h2></div>
       <!-- Upload Panel -->
       <div class="upload-panel">
-        <h3>📤 Upload Resource</h3>
+        <h3 data-i18n="facilitator.uploadResource">📤 Upload Resource</h3>
         <div class="upload-form-row">
           <input type="text" id="upTitle" placeholder="Resource title" style="flex:2">
           <input type="text" id="upSubject" placeholder="Subject">
           <input type="text" id="upGrade" placeholder="Grade (S4/S5/S6)">
           <select id="upType">
-            <option value="textbook">Textbook</option>
-            <option value="past_paper">Past Paper</option>
+            <option value="textbook" data-i18n="resources.textbooks">Textbook</option>
+            <option value="past_paper" data-i18n="resources.pastPapers">Past Paper</option>
             <option value="uploaded">Other</option>
           </select>
           <input type="file" id="upFile" accept=".pdf">
-          <button class="btn-primary" onclick="uploadResource()">Upload PDF</button>
+          <button class="btn-primary" onclick="uploadResource()" data-i18n="facilitator.uploadPdf">Upload PDF</button>
         </div>
         <p class="upload-msg hidden" id="uploadMsg"></p>
       </div>
       <div class="tab-bar" style="margin-top:16px">
-        <button class="tab active" data-tab="res-textbooks">Textbooks</button>
-        <button class="tab" data-tab="res-papers">Past Papers</button>
-        <button class="tab" data-tab="res-uploaded">Uploaded</button>
+        <button class="tab active" data-tab="res-textbooks" data-i18n="resources.textbooks">Textbooks</button>
+        <button class="tab" data-tab="res-papers" data-i18n="resources.pastPapers">Past Papers</button>
+        <button class="tab" data-tab="res-uploaded" data-i18n="resources.uploaded">Uploaded</button>
       </div>
       <div class="tab-content active" id="res-textbooks">
-        <div class="resource-grid" id="textbookGrid"><div class="empty-state">Loading…</div></div>
+        <div class="resource-grid" id="textbookGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
       <div class="tab-content" id="res-papers">
-        <div class="resource-grid" id="paperGrid"><div class="empty-state">Loading…</div></div>
+        <div class="resource-grid" id="paperGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
       <div class="tab-content" id="res-uploaded">
-        <div class="resource-grid" id="uploadedGrid"><div class="empty-state">Loading…</div></div>
+        <div class="resource-grid" id="uploadedGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
     </section>
 
@@ -252,13 +271,13 @@
         <!-- Left: contacts sidebar -->
         <div class="chat-sidebar" id="chatSidebar">
           <div class="chat-sidebar-head">
-            <h3>Messages</h3>
+            <h3 data-i18n="nav.messages">Messages</h3>
             <button class="btn-sm" onclick="openNewChat()">+ New</button>
           </div>
           <div class="chat-search-row">
-            <input type="text" id="chatContactSearch" placeholder="Search…" oninput="filterContacts()" class="chat-search-input">
+            <input type="text" id="chatContactSearch" placeholder="Search…" data-i18n-placeholder="common.searchEllipsis" oninput="filterContacts()" class="chat-search-input">
           </div>
-          <div class="contacts-list" id="contactsList"><div class="empty-state">Loading…</div></div>
+          <div class="contacts-list" id="contactsList"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
         </div>
         <!-- Right: conversation thread -->
         <div class="chat-main" id="chatMain">
@@ -300,47 +319,47 @@
     <!-- NOTIFICATIONS -->
     <section class="sec" id="sec-notifications">
       <div class="sec-header">
-        <h2>Notifications</h2>
-        <button class="btn-outline" onclick="markAllRead()">Mark All Read</button>
+        <h2 data-i18n="nav.notifications">Notifications</h2>
+        <button class="btn-outline" onclick="markAllRead()" data-i18n="facilitator.markAllRead">Mark All Read</button>
       </div>
-      <div class="notif-list" id="notifList"><div class="empty-state">No notifications.</div></div>
+      <div class="notif-list" id="notifList"><div class="empty-state" data-i18n="facilitator.noNotifications">No notifications.</div></div>
     </section>
 
     <!-- SETTINGS -->
     <section class="sec" id="sec-settings">
-      <div class="sec-header"><h2>Settings</h2></div>
+      <div class="sec-header"><h2 data-i18n="nav.settings">Settings</h2></div>
       <div class="settings-wrap">
         <div class="settings-card">
-          <h3>Profile Information</h3>
+          <h3 data-i18n="facilitator.profileInfo">Profile Information</h3>
           <form id="profileForm" onsubmit="saveProfile(event)">
             <div class="form-row">
-              <label>First Name</label>
+              <label data-i18n="common.firstName">First Name</label>
               <input type="text" id="setFirstName" required>
             </div>
             <div class="form-row">
-              <label>Last Name</label>
+              <label data-i18n="common.lastName">Last Name</label>
               <input type="text" id="setLastName" required>
             </div>
             <div class="form-row">
-              <label>Email</label>
+              <label data-i18n="common.email">Email</label>
               <input type="email" id="setEmail" required>
             </div>
             <div class="form-row">
-              <label>School</label>
+              <label data-i18n="common.school">School</label>
               <input type="text" id="setSchool">
             </div>
             <div class="form-row">
-              <label>Bio</label>
+              <label data-i18n="common.bio">Bio</label>
               <textarea id="setBio" rows="3"></textarea>
             </div>
-            <button type="submit" class="btn-primary">Save Changes</button>
+            <button type="submit" class="btn-primary" data-i18n="common.saveChanges">Save Changes</button>
           </form>
           <p class="save-msg hidden" id="saveMsg">Profile updated!</p>
         </div>
 
         <!-- Change Password -->
         <div class="settings-card">
-          <h3>Change Password</h3>
+          <h3 data-i18n="settings.changePassword">Change Password</h3>
           <p style="font-size:12px;color:#888;margin-bottom:12px">A 6-digit verification code will be sent to your email. It expires in 15 minutes.</p>
           <div id="fPwStep1">
             <div class="form-row"><label>Your Email</label><input type="email" id="fPwEmail"></div>
@@ -349,10 +368,10 @@
           </div>
           <div id="fPwStep2" style="display:none">
             <div class="form-row"><label>6-Digit Code</label><input type="text" id="fPwCode" maxlength="6" placeholder="123456" style="letter-spacing:6px;font-size:18px;text-align:center"></div>
-            <div class="form-row"><label>New Password</label><input type="password" id="fPwNew" placeholder="Min. 8 characters"></div>
-            <div class="form-row"><label>Confirm Password</label><input type="password" id="fPwConfirm"></div>
+            <div class="form-row"><label data-i18n="common.password">New Password</label><input type="password" id="fPwNew" placeholder="Min. 8 characters"></div>
+            <div class="form-row"><label data-i18n="common.confirmPassword">Confirm Password</label><input type="password" id="fPwConfirm"></div>
             <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn-outline" onclick="resetFPwSteps()">← Back</button>
+              <button class="btn-outline" onclick="resetFPwSteps()">← <span data-i18n="common.back">Back</span></button>
               <button class="btn-primary" style="flex:1" onclick="facilitatorVerifyOTP()">Update Password</button>
             </div>
             <p class="save-msg hidden" id="fPwMsg2"></p>
@@ -382,6 +401,11 @@
           <option value="false">Private (Enrolled only)</option>
           <option value="true">Public</option>
         </select>
+      </div>
+      <div class="form-row">
+        <label>Course Materials <small style="color:#888">(optional — PDF, select multiple)</small></label>
+        <input type="file" id="ccMaterials" multiple accept=".pdf" onchange="renderPickedFiles('ccMaterials','ccPickedFiles')">
+        <div id="ccPickedFiles" class="picked-files"></div>
       </div>
       <button class="btn-primary" onclick="submitCreateCourse()">Create Subject</button>
     </div>
@@ -413,7 +437,11 @@
       <div class="form-row"><label>Due Date</label><input type="datetime-local" id="caDue"></div>
       <div class="form-row"><label>Max Score</label><input type="number" id="caScore" value="100"></div>
       <div class="form-row"><label>Attachment URL <small style="color:#888">(optional link / Google Doc)</small></label><input type="url" id="caAttachUrl" placeholder="https://…"></div>
-      <div class="form-row"><label>Attachment PDF <small style="color:#888">(optional)</small></label><input type="file" id="caAttachFile" accept=".pdf"></div>
+      <div class="form-row">
+        <label>Attachments <small style="color:#888">(optional — PDF, images, Word, PowerPoint, Excel; select multiple)</small></label>
+        <input type="file" id="caAttachFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" onchange="renderPickedFiles('caAttachFiles','caPickedFiles')">
+        <div id="caPickedFiles" class="picked-files"></div>
+      </div>
       <button class="btn-primary" onclick="submitCreateAssignment()">Create Assignment</button>
     </div>
   </div>
@@ -447,8 +475,15 @@
         </select>
       </div>
       <div class="form-row"><label>Attachment URL <small style="color:#888">(optional link / Google Doc)</small></label><input type="url" id="editAttachUrl" placeholder="https://…"></div>
-      <div class="form-row"><label>Replace Attachment PDF <small style="color:#888">(leave empty to keep existing)</small></label><input type="file" id="editAttachFile" accept=".pdf"></div>
-      <div id="editCurrentAttach" style="font-size:12px;color:#666;margin-top:-4px;margin-bottom:8px"></div>
+      <div class="form-row">
+        <label>Current Attachments</label>
+        <div id="editCurrentAttach" style="font-size:12px;color:#666"></div>
+      </div>
+      <div class="form-row">
+        <label>Add More Attachments <small style="color:#888">(optional — PDF, images, Word, PowerPoint, Excel; select multiple)</small></label>
+        <input type="file" id="editAttachFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" onchange="renderPickedFiles('editAttachFiles','editPickedFiles')">
+        <div id="editPickedFiles" class="picked-files"></div>
+      </div>
       <button class="btn-primary" onclick="submitEditAssignment()">Save Changes</button>
     </div>
   </div>
@@ -546,7 +581,26 @@
   </div>
 </div>
 
-<script src="../js/api.js"></script>
-<script src="facilitator.js"></script>
+<!-- MODAL: Attach from Library -->
+<div class="modal-overlay hidden" id="modalAttachLibrary">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <h3>📚 Attach from Cloudflare Library</h3>
+      <button class="modal-close" onclick="closeModal('modalAttachLibrary')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <input type="text" id="libSearch" placeholder="Search by title or subject…" oninput="renderLibraryPicker()">
+      </div>
+      <div id="libPickerList" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+        <p style="color:#aaa;font-size:13px">Loading library…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=2"></script>
+<script src="../js/i18n.js?v=2"></script>
+<script src="facilitator.js?v=4"></script>
 </body>
 </html>

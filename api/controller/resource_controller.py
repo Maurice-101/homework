@@ -2,6 +2,7 @@ import re
 import time
 import urllib.parse
 from typing import Optional
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from api.model.resource import Resource
 from api.settings import settings
@@ -271,14 +272,20 @@ def get_all_resources(
     subject_filter: Optional[str] = None,
     type_filter: Optional[str] = None,
     db: Optional[Session] = None,
+    course_id_filter: Optional[int] = None,
 ) -> dict:
-    all_r = scan_books() + scan_past_papers()
+    # A specific course's materials are exactly its DB-linked resources — the
+    # auto-scanned R2 library isn't tied to any course, so skip it here.
+    all_r = [] if course_id_filter else (scan_books() + scan_past_papers())
 
-    # DB-uploaded resources (now stored with a full R2 URL in file_path)
+    # DB-uploaded / library-attached resources (file_path holds a full R2 proxy
+    # URL for library attachments, or a relative /uploads/ path for direct uploads)
     if db is not None:
-        for res in db.query(Resource).all():
+        q = db.query(Resource)
+        if course_id_filter:
+            q = q.filter(Resource.course_id == course_id_filter)
+        for res in q.all():
             file_url = res.file_path or ""
-            # If already a URL or proxy path, use as-is; otherwise legacy /uploads/ path
             if not file_url.startswith("http") and not file_url.startswith("/"):
                 file_url = f"/uploads/{file_url}"
             all_r.append({
@@ -292,6 +299,7 @@ def get_all_resources(
                 "category":    "uploaded",
                 "source":      "uploaded",
                 "description": res.description,
+                "course_id":   res.course_id,
             })
 
     if subject_filter:
@@ -311,6 +319,7 @@ def upload_resource(
     title: str, subject: Optional[str], grade_level: Optional[str],
     res_type: str, file_bytes: bytes, filename: str,
     uploaded_by: int, db: Session, description: Optional[str] = None,
+    course_id: Optional[int] = None,
 ) -> dict:
     key = r2.upload_file(file_bytes, filename, prefix="resources")
     url = _proxy_url(key)
@@ -319,6 +328,7 @@ def upload_resource(
         grade_level=grade_level, type=res_type,
         file_path=url,          # store full URL so legacy code still works
         uploaded_by=uploaded_by,
+        course_id=course_id,
     )
     db.add(res)
     db.commit()
@@ -333,4 +343,46 @@ def upload_resource(
         "url":         url,
         "category":    "uploaded",
         "source":      "uploaded",
+        "course_id":   res.course_id,
     }
+
+
+def attach_library_material(key: str, course_id: int, uploaded_by: int, db: Session) -> dict:
+    """Link an existing R2 library book (or past paper) to a course, without copying the file."""
+    book = next((b for b in scan_books() if b["file_path"] == key), None)
+    if not book:
+        book = next((p for p in scan_past_papers() if p["file_path"] == key), None)
+    if not book:
+        raise HTTPException(status_code=404, detail="Library item not found")
+
+    res = Resource(
+        title=book["title"], subject=book.get("subject"), grade_level=book.get("grade_level"),
+        type=book.get("type", "textbook"), file_path=book["url"],
+        uploaded_by=uploaded_by, course_id=course_id,
+    )
+    db.add(res)
+    db.commit()
+    db.refresh(res)
+    return {
+        "id":          f"db_{res.id}",
+        "title":       res.title,
+        "subject":     res.subject or "",
+        "grade_level": res.grade_level or "",
+        "type":        res.type,
+        "file_path":   res.file_path,
+        "url":         res.file_path,
+        "category":    "uploaded",
+        "source":      "uploaded",
+        "course_id":   res.course_id,
+    }
+
+
+def delete_resource(resource_id: int, user_id: int, db: Session) -> dict:
+    res = db.query(Resource).filter(Resource.id == resource_id).first()
+    if not res:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    if res.uploaded_by != user_id:
+        raise HTTPException(status_code=403, detail="Not your resource")
+    db.delete(res)
+    db.commit()
+    return {"message": "Resource removed"}

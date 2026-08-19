@@ -1,6 +1,15 @@
 from pydantic import BaseModel, model_validator, computed_field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+
+
+class AttachmentOut(BaseModel):
+    id: int
+    filename: str
+    file_path: str
+
+    class Config:
+        from_attributes = True
 
 
 class AssignmentCreate(BaseModel):
@@ -46,6 +55,7 @@ class AssignmentOut(BaseModel):
     created_at: datetime
     attachment_url: Optional[str] = None
     attachment_path: Optional[str] = None
+    attachments: List[AttachmentOut] = []
     course_title: Optional[str] = None
     # student view extras
     student_grade: Optional[float] = None

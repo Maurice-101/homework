@@ -23,6 +23,20 @@ class Assignment(Base):
     course = relationship("Course", back_populates="assignments")
     creator = relationship("User", back_populates="assignments_created")
     submissions = relationship("Submission", back_populates="assignment")
+    attachments = relationship("AssignmentAttachment", back_populates="assignment",
+                               cascade="all, delete-orphan", order_by="AssignmentAttachment.id")
+
+
+class AssignmentAttachment(Base):
+    __tablename__ = "assignment_attachments"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    filename = Column(String(255), nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    assignment = relationship("Assignment", back_populates="attachments")
 
 
 class Submission(Base):

@@ -261,6 +261,97 @@ function switchFTab(tab) {
   if (tab === 'announcements') loadAnnouncements();
   if (tab === 'syllabus')      loadSyllabus();
   if (tab === 'groups')        loadFGroups();
+  if (tab === 'materials')     loadCourseMaterials();
+}
+
+// ── Course Materials (uploaded PDFs + items attached from the Cloudflare library) ──
+async function loadCourseMaterials() {
+  const el = document.getElementById('fMaterialsList');
+  if (!activeCourseId) return;
+  el.innerHTML = '<p style="color:#aaa;font-size:13px">Loading…</p>';
+  try {
+    const data = await apiGet(`/resources/?course_id=${activeCourseId}`);
+    const items = data?.uploaded || [];
+    el.innerHTML = items.length
+      ? items.map(r => `
+          <div class="attach-file-row" style="margin-bottom:6px">
+            <a href="${esc(r.url)}" target="_blank">📄 ${esc(r.title)}</a>
+            <button type="button" class="attach-remove-btn" onclick="deleteCourseMaterial('${r.id.replace('db_','')}', this)" title="Remove">✕</button>
+          </div>`).join('')
+      : '<p style="color:#aaa;font-size:13px">No materials yet — upload a PDF or attach one from the library.</p>';
+  } catch (e) {
+    el.innerHTML = '<p style="color:#aaa;font-size:13px">Could not load materials.</p>';
+  }
+}
+
+async function uploadCourseMaterials() {
+  const files = Array.from(document.getElementById('matUploadFiles').files || []);
+  if (!files.length || !activeCourseId) return;
+  try {
+    const fd = new FormData();
+    fd.append('course_id', activeCourseId);
+    files.forEach(f => fd.append('files', f));
+    await apiFetch('/resources/upload-many', { method: 'POST', body: fd });
+    document.getElementById('matUploadFiles').value = '';
+    document.getElementById('matPickedFiles').innerHTML = '';
+    loadCourseMaterials();
+    showToast('Materials uploaded!');
+  } catch (e) { showToast('Could not upload materials.', 'error'); }
+}
+
+async function deleteCourseMaterial(resourceId, btn) {
+  if (!confirm('Remove this material?')) return;
+  try {
+    await apiFetch(`/resources/${resourceId}`, { method: 'DELETE' });
+    btn.closest('.attach-file-row').remove();
+    showToast('Material removed.');
+  } catch (e) { showToast('Could not remove material.', 'error'); }
+}
+
+// ── Attach from Cloudflare library ──
+let _libraryCatalog = null;
+
+async function openAttachLibraryModal() {
+  if (!activeCourseId) return;
+  document.getElementById('modalAttachLibrary').classList.remove('hidden');
+  document.getElementById('libSearch').value = '';
+  if (!_libraryCatalog) {
+    document.getElementById('libPickerList').innerHTML = '<p style="color:#aaa;font-size:13px">Loading library…</p>';
+    try {
+      const data = await apiGet('/resources/');
+      _libraryCatalog = [...(data.textbooks || []), ...(data.past_papers || [])].filter(r => r.source === 'library');
+    } catch (e) {
+      document.getElementById('libPickerList').innerHTML = '<p style="color:#aaa;font-size:13px">Could not load library.</p>';
+      return;
+    }
+  }
+  renderLibraryPicker();
+}
+
+function renderLibraryPicker() {
+  const search = document.getElementById('libSearch').value.trim().toLowerCase();
+  const list = (_libraryCatalog || []).filter(b =>
+    !search || b.title.toLowerCase().includes(search) || (b.subject || '').toLowerCase().includes(search));
+  const el = document.getElementById('libPickerList');
+  if (!list.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px">No matching books.</p>'; return; }
+  el.innerHTML = list.slice(0, 100).map(b => `
+    <div class="attach-file-row">
+      <span>📄 ${esc(b.title)} <small style="color:#aaa">${esc(b.subject || '')}${b.grade_level ? ' · ' + esc(b.grade_level) : ''}</small></span>
+      <button type="button" class="btn-sm" onclick="attachLibraryItem('${esc(b.file_path).replace(/'/g,"\\'")}', this)">+ Attach</button>
+    </div>`).join('');
+}
+
+async function attachLibraryItem(key, btn) {
+  if (!activeCourseId) return;
+  btn.disabled = true; btn.textContent = 'Attaching…';
+  try {
+    await apiPost('/resources/library/attach', { key, course_id: activeCourseId });
+    showToast('Attached to course materials!');
+    btn.textContent = '✓ Attached';
+  } catch (e) {
+    btn.disabled = false; btn.textContent = '+ Attach';
+    showToast('Could not attach.', 'error');
+  }
 }
 
 // ── Announcements ─────────────────────────────────────────────────────────────
@@ -445,15 +536,27 @@ function openCreateCourse() {
 }
 
 async function submitCreateCourse() {
-  const title   = document.getElementById('ccTitle').value.trim();
-  const desc    = document.getElementById('ccDesc').value.trim();
-  const subject = document.getElementById('ccSubject').value.trim();
-  const grade   = document.getElementById('ccGrade').value.trim();
-  const pub     = document.getElementById('ccPublic').value === 'true';
+  const title     = document.getElementById('ccTitle').value.trim();
+  const desc      = document.getElementById('ccDesc').value.trim();
+  const subject   = document.getElementById('ccSubject').value.trim();
+  const grade     = document.getElementById('ccGrade').value.trim();
+  const pub       = document.getElementById('ccPublic').value === 'true';
+  const materials = Array.from(document.getElementById('ccMaterials').files || []);
   if (!title) { showToast('Title required', 'error'); return; }
   try {
-    await apiPost('/courses/', { title, description: desc, subject, grade_level: grade, is_public: pub });
+    const course = await apiPost('/courses/', { title, description: desc, subject, grade_level: grade, is_public: pub });
+    if (materials.length) {
+      const fd = new FormData();
+      fd.append('course_id', course.id);
+      if (subject) fd.append('subject', subject);
+      if (grade)   fd.append('grade_level', grade);
+      materials.forEach(f => fd.append('files', f));
+      try { await apiFetch('/resources/upload-many', { method: 'POST', body: fd }); }
+      catch (e) { showToast('Subject created, but some materials failed to upload.', 'error'); }
+    }
     closeModal('modalCreateCourse');
+    document.getElementById('ccMaterials').value = '';
+    document.getElementById('ccPickedFiles').innerHTML = '';
     loadCourses();
     showToast('Subject created!');
   } catch(e) { showToast('Could not create subject.', 'error'); }
@@ -498,7 +601,18 @@ async function loadAssignments() {
   }
 }
 
+function fileIcon(filename) {
+  const ext = (filename || '').split('.').pop().toLowerCase();
+  if (ext === 'pdf') return '📄';
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
+  if (['doc','docx'].includes(ext)) return '📝';
+  if (['ppt','pptx'].includes(ext)) return '📽️';
+  if (['xls','xlsx'].includes(ext)) return '📊';
+  return '📎';
+}
+
 function asgnCard(a, showSubs) {
+  const attachments = a.attachments || [];
   return `
     <div class="asgn-card">
       <div class="asgn-left">
@@ -511,6 +625,7 @@ function asgnCard(a, showSubs) {
           ${a.course_title ? `<span class="asgn-tag">📚 ${esc(a.course_title)}</span>` : ''}
           ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">🔗 Link</a>` : ''}
           ${a.attachment_path ? `<a href="/uploads/${esc(a.attachment_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">📎 PDF</a>` : ''}
+          ${attachments.map(att => `<a href="/uploads/${esc(att.file_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join('')}
         </div>
       </div>
       <div class="asgn-right">
@@ -518,6 +633,14 @@ function asgnCard(a, showSubs) {
         <button class="btn-sm btn-outline" onclick="openEditAssignment(${a.id})">Edit</button>
       </div>
     </div>`;
+}
+
+// Preview list of files chosen in a <input type="file" multiple> before submit
+function renderPickedFiles(inputId, listId) {
+  const files = Array.from(document.getElementById(inputId).files || []);
+  document.getElementById(listId).innerHTML = files.map(f =>
+    `<div class="picked-file-row"><span>${fileIcon(f.name)} ${esc(f.name)}</span></div>`
+  ).join('');
 }
 
 async function openCreateAssignment() {
@@ -539,7 +662,7 @@ async function submitCreateAssignment() {
   const due        = document.getElementById('caDue').value;
   const score      = parseInt(document.getElementById('caScore').value) || 100;
   const attachUrl  = document.getElementById('caAttachUrl').value.trim();
-  const attachFile = document.getElementById('caAttachFile').files[0];
+  const attachFiles = Array.from(document.getElementById('caAttachFiles').files || []);
   if (!title || !course) { showToast('Title and subject required', 'error'); return; }
   try {
     const fd = new FormData();
@@ -549,10 +672,12 @@ async function submitCreateAssignment() {
     fd.append('assignment_type', type);
     if (due)      fd.append('due_date', new Date(due).toISOString());
     fd.append('max_score', score);
-    if (attachUrl)  fd.append('attachment_url', attachUrl);
-    if (attachFile) fd.append('attachment_file', attachFile);
+    if (attachUrl) fd.append('attachment_url', attachUrl);
+    attachFiles.forEach(f => fd.append('attachment_files', f));
     await apiFetch('/assignments/', { method: 'POST', body: fd });
     closeModal('modalCreateAssignment');
+    document.getElementById('caAttachFiles').value = '';
+    document.getElementById('caPickedFiles').innerHTML = '';
     loadAssignments();
     showToast('Assignment created and students notified!');
   } catch(e) { showToast('Could not create assignment.', 'error'); }
@@ -570,15 +695,9 @@ function openEditAssignment(id) {
   document.getElementById('editScore').value      = a.max_score || 100;
   document.getElementById('editPublished').value  = a.is_published ? 'true' : 'false';
   document.getElementById('editAttachUrl').value  = a.attachment_url || '';
-  document.getElementById('editAttachFile').value = '';
-  const curEl = document.getElementById('editCurrentAttach');
-  if (a.attachment_path) {
-    curEl.innerHTML = `Current PDF: <a href="/uploads/${esc(a.attachment_path)}" target="_blank">View</a>`;
-  } else if (a.attachment_url) {
-    curEl.innerHTML = `Current link: <a href="${esc(a.attachment_url)}" target="_blank">Open</a>`;
-  } else {
-    curEl.textContent = 'No current attachment';
-  }
+  document.getElementById('editAttachFiles').value = '';
+  document.getElementById('editPickedFiles').innerHTML = '';
+  renderCurrentAttachments(a);
   if (a.due_date) {
     const d = new Date(a.due_date);
     if (!isNaN(d)) document.getElementById('editDue').value = d.toISOString().slice(0,16);
@@ -586,6 +705,35 @@ function openEditAssignment(id) {
     document.getElementById('editDue').value = '';
   }
   document.getElementById('modalEditAssignment').classList.remove('hidden');
+}
+
+function renderCurrentAttachments(a) {
+  const curEl = document.getElementById('editCurrentAttach');
+  const rows = [];
+  if (a.attachment_path) {
+    rows.push(`<div class="attach-file-row"><a href="/uploads/${esc(a.attachment_path)}" target="_blank">📄 Legacy PDF attachment</a></div>`);
+  }
+  if (a.attachment_url) {
+    rows.push(`<div class="attach-file-row"><a href="${esc(a.attachment_url)}" target="_blank">🔗 ${esc(a.attachment_url)}</a></div>`);
+  }
+  (a.attachments || []).forEach(att => {
+    rows.push(`<div class="attach-file-row">
+      <a href="/uploads/${esc(att.file_path)}" target="_blank">${fileIcon(att.filename)} ${esc(att.filename)}</a>
+      <button type="button" class="attach-remove-btn" onclick="deleteAssignmentAttachment(${a.id}, ${att.id}, this)" title="Remove">✕</button>
+    </div>`);
+  });
+  curEl.innerHTML = rows.length ? rows.join('') : '<span style="color:#aaa">No current attachments</span>';
+}
+
+async function deleteAssignmentAttachment(assignmentId, attachmentId, btn) {
+  if (!confirm('Remove this attachment?')) return;
+  try {
+    await apiFetch(`/assignments/${assignmentId}/attachments/${attachmentId}`, { method: 'DELETE' });
+    btn.closest('.attach-file-row').remove();
+    const a = _allAsgnData.find(x => x.id == assignmentId);
+    if (a) a.attachments = (a.attachments || []).filter(att => att.id !== attachmentId);
+    showToast('Attachment removed.');
+  } catch (e) { showToast('Could not remove attachment.', 'error'); }
 }
 
 async function submitEditAssignment() {
@@ -596,8 +744,8 @@ async function submitEditAssignment() {
   const due        = document.getElementById('editDue').value;
   const score      = parseFloat(document.getElementById('editScore').value);
   const published  = document.getElementById('editPublished').value === 'true';
-  const attachUrl  = document.getElementById('editAttachUrl').value.trim();
-  const attachFile = document.getElementById('editAttachFile').files[0];
+  const attachUrl   = document.getElementById('editAttachUrl').value.trim();
+  const attachFiles = Array.from(document.getElementById('editAttachFiles').files || []);
   if (!title) { showToast('Title required', 'error'); return; }
   try {
     const fd = new FormData();
@@ -607,8 +755,8 @@ async function submitEditAssignment() {
     if (due)      fd.append('due_date', new Date(due).toISOString());
     fd.append('max_score', score);
     fd.append('is_published', published);
-    if (attachUrl)  fd.append('attachment_url', attachUrl);
-    if (attachFile) fd.append('attachment_file', attachFile);
+    if (attachUrl) fd.append('attachment_url', attachUrl);
+    attachFiles.forEach(f => fd.append('attachment_files', f));
     await apiFetch(`/assignments/${id}`, { method: 'PUT', body: fd });
     closeModal('modalEditAssignment');
     loadAssignments();

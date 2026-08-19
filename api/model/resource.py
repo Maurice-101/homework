@@ -15,6 +15,8 @@ class Resource(Base):
     type = Column(String(30), default="textbook")
     file_path = Column(String(500), nullable=False)
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     uploader = relationship("User", foreign_keys=[uploaded_by])
+    course = relationship("Course", foreign_keys=[course_id])

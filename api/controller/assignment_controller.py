@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from datetime import datetime
 from typing import List
-from api.model.assignment import Assignment, Submission
+from api.model.assignment import Assignment, Submission, AssignmentAttachment
 from api.model.course import Enrollment
 from api.model.notification import Notification
+from api.settings import settings
 from api.schemas.assignment import (
     AssignmentCreate, AssignmentUpdate, AssignmentOut,
     SubmissionCreate, SubmissionOut, GradeSubmission,
@@ -32,7 +33,7 @@ def _aout(a: Assignment, student_id: int = None, db: Session = None) -> Assignme
 
 
 def create_assignment(data: AssignmentCreate, creator_id: int, db: Session,
-                      attachment_path: str = None) -> AssignmentOut:
+                      attachment_path: str = None, attachment_files: list = None) -> AssignmentOut:
     a = Assignment(
         title=data.title, description=data.description, course_id=data.course_id,
         created_by=creator_id, due_date=data.due_date,
@@ -44,6 +45,11 @@ def create_assignment(data: AssignmentCreate, creator_id: int, db: Session,
     db.add(a)
     db.commit()
     db.refresh(a)
+    for file_path, filename in (attachment_files or []):
+        db.add(AssignmentAttachment(assignment_id=a.id, file_path=file_path, filename=filename))
+    if attachment_files:
+        db.commit()
+        db.refresh(a)
     if data.is_published and data.course_id:
         for e in db.query(Enrollment).filter(Enrollment.course_id == data.course_id).all():
             db.add(Notification(
@@ -55,7 +61,7 @@ def create_assignment(data: AssignmentCreate, creator_id: int, db: Session,
 
 
 def update_assignment(assignment_id: int, data: AssignmentUpdate, facilitator_id: int, db: Session,
-                      attachment_path: str = None) -> AssignmentOut:
+                      attachment_path: str = None, attachment_files: list = None) -> AssignmentOut:
     a = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.created_by == facilitator_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Assignment not found or not yours")
@@ -66,6 +72,8 @@ def update_assignment(assignment_id: int, data: AssignmentUpdate, facilitator_id
     if data.max_score is not None:       a.max_score = data.max_score
     if data.attachment_url is not None:  a.attachment_url = data.attachment_url
     if attachment_path is not None:      a.attachment_path = attachment_path
+    for file_path, filename in (attachment_files or []):
+        db.add(AssignmentAttachment(assignment_id=a.id, file_path=file_path, filename=filename))
     if data.is_published is not None:
         was = a.is_published
         a.is_published = data.is_published
@@ -76,6 +84,26 @@ def update_assignment(assignment_id: int, data: AssignmentUpdate, facilitator_id
     db.commit()
     db.refresh(a)
     return _aout(a)
+
+
+def delete_attachment(assignment_id: int, attachment_id: int, facilitator_id: int, db: Session) -> dict:
+    a = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.created_by == facilitator_id).first()
+    if not a:
+        raise HTTPException(status_code=404, detail="Assignment not found or not yours")
+    att = db.query(AssignmentAttachment).filter(
+        AssignmentAttachment.id == attachment_id, AssignmentAttachment.assignment_id == assignment_id,
+    ).first()
+    if not att:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    full_path = os.path.join(settings.upload_dir_abs, att.file_path)
+    db.delete(att)
+    db.commit()
+    if os.path.exists(full_path):
+        try:
+            os.remove(full_path)
+        except OSError:
+            pass
+    return {"message": "Attachment deleted"}
 
 
 def get_assignments_student(student_id: int, db: Session) -> dict:

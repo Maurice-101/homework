@@ -72,6 +72,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 .badge { background: var(--danger); color: #fff; font-size: 10px; border-radius: 10px; padding: 1px 6px; margin-left: 4px; }
 .sb-foot { padding: 14px; border-top: 1px solid rgba(255,255,255,.1); }
+.lang-sel { width: 100%; padding: 7px; margin-bottom: 7px; border-radius: 6px; border: none; background: rgba(255,255,255,.1); color: var(--sb-text); }
+.lang-sel option { color: #222; background: #fff; }
 .logout-btn { width: 100%; background: rgba(255,255,255,.1); border: none; color: var(--sb-text); padding: 9px; border-radius: 6px; cursor: pointer; font-size: 13px; text-align: left; transition: background .15s; }
 .logout-btn:hover { background: rgba(255,255,255,.2); }
 

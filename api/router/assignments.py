@@ -2,7 +2,7 @@ import os, uuid, json
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from fastapi import Body
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from api.database import get_db
 from api.schemas.assignment import AssignmentCreate, AssignmentUpdate, SubmissionCreate, GradeSubmission
 from api.controller import assignment_controller
@@ -11,6 +11,32 @@ from api.model.user import User
 from api.settings import settings
 
 router = APIRouter(prefix="/assignments", tags=["Assignments"])
+
+# Attachment types accepted for assignment materials (documents, images, PDFs) —
+# an allowlist rather than "anything" to keep this from becoming an arbitrary-file-upload hole.
+_ALLOWED_ATTACHMENT_EXT = {
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+    ".jpg", ".jpeg", ".png", ".gif", ".webp",
+}
+
+
+async def _save_attachments(files: Optional[List[UploadFile]]) -> list[tuple[str, str]]:
+    """Validate + save each uploaded file. Returns [(relative_path, original_filename), ...]."""
+    saved = []
+    for f in files or []:
+        if not f or not f.filename:
+            continue
+        ext = os.path.splitext(f.filename)[1].lower()
+        if ext not in _ALLOWED_ATTACHMENT_EXT:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {f.filename}")
+        fname = f"{uuid.uuid4()}_{f.filename}"
+        dest = os.path.join(settings.upload_dir_abs, "assignments", fname)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        content = await f.read()
+        with open(dest, "wb") as out:
+            out.write(content)
+        saved.append((f"assignments/{fname}", f.filename))
+    return saved
 
 
 @router.get("/")
@@ -31,6 +57,7 @@ async def create(
     is_published: bool = Form(True),
     attachment_url: Optional[str] = Form(None),
     attachment_file: Optional[UploadFile] = File(None),
+    attachment_files: Optional[List[UploadFile]] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("facilitator", "admin")),
 ):
@@ -42,6 +69,7 @@ async def create(
         except Exception:
             dt = None
 
+    # Legacy single-file field, kept for backward compat with any existing callers
     file_path = None
     if attachment_file and attachment_file.filename:
         if not attachment_file.filename.lower().endswith(".pdf"):
@@ -54,13 +82,16 @@ async def create(
             f.write(content)
         file_path = f"assignments/{fname}"
 
+    saved_files = await _save_attachments(attachment_files)
+
     data = AssignmentCreate(
         title=title, description=description, course_id=course_id,
         due_date=dt, assignment_type=assignment_type,
         max_score=max_score, is_published=is_published,
         attachment_url=attachment_url,
     )
-    return assignment_controller.create_assignment(data, current_user.id, db, attachment_path=file_path)
+    return assignment_controller.create_assignment(data, current_user.id, db,
+                                                    attachment_path=file_path, attachment_files=saved_files)
 
 
 @router.put("/{assignment_id}")
@@ -74,6 +105,7 @@ async def update(
     is_published: Optional[bool] = Form(None),
     attachment_url: Optional[str] = Form(None),
     attachment_file: Optional[UploadFile] = File(None),
+    attachment_files: Optional[List[UploadFile]] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("facilitator", "admin")),
 ):
@@ -97,13 +129,21 @@ async def update(
             f.write(content)
         file_path = f"assignments/{fname}"
 
+    saved_files = await _save_attachments(attachment_files)
+
     data = AssignmentUpdate(
         title=title, description=description, due_date=dt,
         assignment_type=assignment_type, max_score=max_score,
         is_published=is_published, attachment_url=attachment_url,
     )
     return assignment_controller.update_assignment(assignment_id, data, current_user.id, db,
-                                                   attachment_path=file_path)
+                                                   attachment_path=file_path, attachment_files=saved_files)
+
+
+@router.delete("/{assignment_id}/attachments/{attachment_id}")
+def delete_attachment(assignment_id: int, attachment_id: int, db: Session = Depends(get_db),
+                      current_user: User = Depends(require_role("facilitator", "admin"))):
+    return assignment_controller.delete_attachment(assignment_id, attachment_id, current_user.id, db)
 
 
 @router.post("/{assignment_id}/submit")

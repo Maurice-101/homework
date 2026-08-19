@@ -78,6 +78,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 }
 
 .sb-foot { padding: 14px; border-top: 1px solid rgba(255,255,255,.1); }
+.lang-sel {
+  width: 100%; padding: 7px; margin-bottom: 7px; border-radius: 6px;
+  border: none; background: rgba(255,255,255,.1); color: var(--sb-text);
+}
+.lang-sel option { color: #222; background: #fff; }
 .logout-btn {
   width: 100%; background: rgba(255,255,255,.1); border: none;
   color: var(--sb-text); padding: 9px; border-radius: 6px;
@@ -299,6 +304,18 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 }
 .form-row input:focus, .form-row textarea:focus { border-color: var(--primary); }
 .save-msg { color: var(--success); font-size: 13px; margin-top: 10px; }
+
+.picked-files { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.picked-file-row, .attach-file-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: #f4f6fb; border-radius: 6px; padding: 6px 10px; font-size: 12.5px; color: var(--text-sub);
+}
+.attach-file-row a { color: var(--primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-remove-btn {
+  background: none; border: none; color: #c0392b; cursor: pointer; font-size: 13px;
+  padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+}
+.attach-remove-btn:hover { background: rgba(192,57,43,.1); }
 
 /* ---- BUTTONS ---- */
 .btn-primary {

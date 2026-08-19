@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard – Homework</title>
-<link rel="stylesheet" href="student.css">
+<link rel="stylesheet" href="student.css?v=3">
 </head>
 <body>
 <div class="layout">
@@ -23,30 +23,30 @@
       </div>
     </div>
     <ul class="menu">
-      <li class="active" data-sec="dashboard">  <span class="ico">🏠</span><span class="lbl">Dashboard</span></li>
-      <li data-sec="courses">     <span class="ico">📚</span><span class="lbl">Courses</span></li>
-      <li data-sec="assignments"> <span class="ico">📄</span><span class="lbl">Assignments</span></li>
-      <li data-sec="progress">    <span class="ico">📈</span><span class="lbl">Progress</span></li>
-      <li data-sec="resources">   <span class="ico">📖</span><span class="lbl">Resources</span></li>
-      <li data-sec="messages">    <span class="ico">✉️</span><span class="lbl">Messages</span></li>
-      <li data-sec="notifications"><span class="ico">🔔</span><span class="lbl">Notifications <span class="badge" id="notifBadge"></span></span></li>
-      <li data-sec="canvas">      <span class="ico">✏️</span><span class="lbl">Canvas</span></li>
-      <li data-sec="settings">    <span class="ico">⚙️</span><span class="lbl">Settings</span></li>
+      <li class="active" data-sec="dashboard">  <span class="ico">🏠</span><span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
+      <li data-sec="courses">     <span class="ico">📚</span><span class="lbl" data-i18n="nav.courses">Courses</span></li>
+      <li data-sec="assignments"> <span class="ico">📄</span><span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
+      <li data-sec="progress">    <span class="ico">📈</span><span class="lbl" data-i18n="nav.progress">Progress</span></li>
+      <li data-sec="resources">   <span class="ico">📖</span><span class="lbl" data-i18n="nav.resources">Resources</span></li>
+      <li data-sec="messages">    <span class="ico">✉️</span><span class="lbl" data-i18n="nav.messages">Messages</span></li>
+      <li data-sec="notifications"><span class="ico">🔔</span><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="canvas">      <span class="ico">✏️</span><span class="lbl" data-i18n="nav.canvas">Canvas</span></li>
+      <li data-sec="settings">    <span class="ico">⚙️</span><span class="lbl" data-i18n="nav.settings">Settings</span></li>
     </ul>
     <div class="sb-foot">
-      <select class="lang-sel" id="langSel">
+      <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
         <option value="en">🌐 English</option>
         <option value="fr">🌐 French</option>
         <option value="rw">🌐 Kinyarwanda</option>
       </select>
-      <button class="logout-btn" id="logoutBtn">⬅ Logout</button>
+      <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main class="main-area">
     <header class="topbar">
-      <h2 id="pageTitle">Dashboard</h2>
+      <h2 id="pageTitle" data-i18n="title.dashboard">Dashboard</h2>
       <div class="tb-right">
         <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
         <span class="tb-icon" onclick="goTo('messages')">✉️</span>
@@ -58,14 +58,14 @@
     <!-- DASHBOARD -->
     <section class="sec active" id="sec-dashboard">
       <div class="welcome">
-        <h1 id="welcomeMsg">Welcome back! 👋</h1>
-        <p id="welcomeSub">Here's your academic overview for today.</p>
+        <h1 id="welcomeMsg" data-i18n="dashboard.welcome">Welcome back! 👋</h1>
+        <p id="welcomeSub" data-i18n="dashboard.welcomeSub">Here's your academic overview for today.</p>
       </div>
       <div class="stat-cards">
-        <div class="stat blue"><h3 id="stCourses">0</h3><p>Active Courses</p></div>
-        <div class="stat green"><h3 id="stPending">0</h3><p>Upcoming Assignments</p></div>
-        <div class="stat orange"><h3 id="stSubmitted">0</h3><p>Submitted</p></div>
-        <div class="stat purple"><h3 id="stNotifs">0</h3><p>Notifications</p></div>
+        <div class="stat blue"><h3 id="stCourses">0</h3><p data-i18n="dashboard.activeCourses">Active Courses</p></div>
+        <div class="stat green"><h3 id="stPending">0</h3><p data-i18n="dashboard.upcomingAssignments">Upcoming Assignments</p></div>
+        <div class="stat orange"><h3 id="stSubmitted">0</h3><p data-i18n="dashboard.submitted">Submitted</p></div>
+        <div class="stat purple"><h3 id="stNotifs">0</h3><p data-i18n="dashboard.notifications">Notifications</p></div>
       </div>
       <div class="dash-grid">
         <div class="panel"><h3>📄 Upcoming Assignments</h3><ul class="plist" id="dUpcoming"><li class="empty">Loading…</li></ul></div>
@@ -77,33 +77,33 @@
 
     <!-- COURSES -->
     <section class="sec" id="sec-courses">
-      <div class="sec-head"><h2>Courses</h2>
+      <div class="sec-head"><h2 data-i18n="courses.title">Courses</h2>
         <div class="tabs">
-          <button class="tab active" data-tab="enrolled">Enrolled</button>
-          <button class="tab" data-tab="browse">Browse</button>
-          <button class="tab" data-tab="public">Public</button>
-          <button class="tab" data-tab="invitations">Invitations <span class="badge" id="inviteBadge" style="display:none"></span></button>
+          <button class="tab active" data-tab="enrolled" data-i18n="courses.enrolled">Enrolled</button>
+          <button class="tab" data-tab="browse" data-i18n="courses.browse">Browse</button>
+          <button class="tab" data-tab="public" data-i18n="courses.public">Public</button>
+          <button class="tab" data-tab="invitations"><span data-i18n="courses.invitations">Invitations</span> <span class="badge" id="inviteBadge" style="display:none"></span></button>
         </div>
       </div>
-      <div class="tab-body active" id="tab-enrolled"><div class="cgrid" id="enrolledGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body active" id="tab-enrolled"><div class="cgrid" id="enrolledGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
       <div class="tab-body" id="tab-browse">
         <div class="search-row">
-          <input type="text" id="csearch" placeholder="Search courses…">
-          <select id="csubject"><option value="">All Subjects</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option></select>
-          <select id="cgrade"><option value="">All Grades</option><option>S4</option><option>S5</option><option>S6</option></select>
-          <button onclick="loadAllCourses()">Search</button>
+          <input type="text" id="csearch" placeholder="Search courses…" data-i18n-placeholder="common.searchCourses">
+          <select id="csubject"><option value="" data-i18n="common.allSubjects">All Subjects</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option></select>
+          <select id="cgrade"><option value="" data-i18n="common.allGrades">All Grades</option><option>S4</option><option>S5</option><option>S6</option></select>
+          <button onclick="loadAllCourses()" data-i18n="common.search">Search</button>
         </div>
-        <div class="cgrid" id="browseGrid"><p class="empty">Loading…</p></div>
+        <div class="cgrid" id="browseGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div>
       </div>
-      <div class="tab-body" id="tab-public"><div class="cgrid" id="publicGrid"><p class="empty">Loading…</p></div></div>
-      <div class="tab-body" id="tab-invitations"><div class="cgrid" id="invitationsGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body" id="tab-public"><div class="cgrid" id="publicGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+      <div class="tab-body" id="tab-invitations"><div class="cgrid" id="invitationsGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
 
       <!-- Course Detail Panel -->
       <div class="course-detail-panel hidden" id="courseDetailPanel">
 
         <!-- Canvas-style topbar -->
         <div class="cd-topbar">
-          <button class="cd-back-btn" onclick="closeCourseDetail()">&#8592; Courses</button>
+          <button class="cd-back-btn" onclick="closeCourseDetail()">&#8592; <span data-i18n="courses.title">Courses</span></button>
           <span class="cd-breadcrumb" id="cdBreadcrumb"></span>
         </div>
 
@@ -114,15 +114,15 @@
           <nav class="cd-sidenav" id="cdTabBar">
             <div class="cd-course-label" id="cdSideTitle">Course</div>
             <div class="cd-nav-list">
-              <button class="cdtab active" data-tab="home"          data-color="home">        <span class="cdtab-icon">🏠</span><span class="cdtab-lbl">Home</span></button>
-              <button class="cdtab"        data-tab="syllabus"      data-color="syllabus">    <span class="cdtab-icon">📅</span><span class="cdtab-lbl">Syllabus</span></button>
-              <button class="cdtab"        data-tab="modules"       data-color="modules">     <span class="cdtab-icon">📘</span><span class="cdtab-lbl">Modules</span></button>
-              <button class="cdtab"        data-tab="assignments"   data-color="assignments"> <span class="cdtab-icon">📝</span><span class="cdtab-lbl">Assignments</span></button>
-              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-icon">📊</span><span class="cdtab-lbl">Grades</span></button>
-              <button class="cdtab"        data-tab="people"        data-color="people">      <span class="cdtab-icon">👥</span><span class="cdtab-lbl">People</span></button>
-              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-icon">💬</span><span class="cdtab-lbl">Discussions</span></button>
-              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-icon">📢</span><span class="cdtab-lbl">Announcements</span></button>
-              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-icon">✉️</span><span class="cdtab-lbl">Course Chat</span></button>
+              <button class="cdtab active" data-tab="home"          data-color="home">        <span class="cdtab-icon">🏠</span><span class="cdtab-lbl" data-i18n="cd.home">Home</span></button>
+              <button class="cdtab"        data-tab="syllabus"      data-color="syllabus">    <span class="cdtab-icon">📅</span><span class="cdtab-lbl" data-i18n="cd.syllabus">Syllabus</span></button>
+              <button class="cdtab"        data-tab="modules"       data-color="modules">     <span class="cdtab-icon">📘</span><span class="cdtab-lbl" data-i18n="cd.modules">Modules</span></button>
+              <button class="cdtab"        data-tab="assignments"   data-color="assignments"> <span class="cdtab-icon">📝</span><span class="cdtab-lbl" data-i18n="cd.assignments">Assignments</span></button>
+              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-icon">📊</span><span class="cdtab-lbl" data-i18n="cd.grades">Grades</span></button>
+              <button class="cdtab"        data-tab="people"        data-color="people">      <span class="cdtab-icon">👥</span><span class="cdtab-lbl" data-i18n="cd.people">People</span></button>
+              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-icon">💬</span><span class="cdtab-lbl" data-i18n="cd.discussions">Discussions</span></button>
+              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-icon">📢</span><span class="cdtab-lbl" data-i18n="cd.announcements">Announcements</span></button>
+              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-icon">✉️</span><span class="cdtab-lbl" data-i18n="cd.courseChat">Course Chat</span></button>
             </div>
           </nav>
 
@@ -139,8 +139,8 @@
             <!-- ANNOUNCEMENTS -->
             <div class="cdpane" id="cdpane-announcements">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>📢 Announcements</h3></div>
-                <div id="cdAnnList"><p class="empty">Loading…</p></div>
+                <div class="cdpane-header"><h3>📢 <span data-i18n="cd.announcements">Announcements</span></h3></div>
+                <div id="cdAnnList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
               </div>
             </div>
 
@@ -149,8 +149,8 @@
               <div class="cdpane-inner">
                 <!-- List view -->
                 <div id="cdAsgListWrap">
-                  <div class="cdpane-header"><h3>Assignments</h3></div>
-                  <div id="cdAsgList"><p class="empty">Loading…</p></div>
+                  <div class="cdpane-header"><h3 data-i18n="cd.assignments">Assignments</h3></div>
+                  <div id="cdAsgList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
                 </div>
                 <!-- Detail view -->
                 <div id="cdAsgDetail" class="hidden"></div>
@@ -161,37 +161,37 @@
             <div class="cdpane" id="cdpane-discussions">
               <div class="cdpane-inner">
                 <div class="cdpane-header">
-                  <h3>💬 Discussions</h3>
-                  <button class="btn-sm" onclick="document.getElementById('discNewForm').classList.toggle('hidden')">+ New Discussion</button>
+                  <h3>💬 <span data-i18n="cd.discussions">Discussions</span></h3>
+                  <button class="btn-sm" onclick="document.getElementById('discNewForm').classList.toggle('hidden')" data-i18n="cd.newDiscussion">+ New Discussion</button>
                 </div>
                 <div class="disc-new hidden" id="discNewForm">
-                  <input type="text" id="discTitle" placeholder="Discussion title…">
-                  <textarea id="discBody" placeholder="What's on your mind?…" rows="3"></textarea>
+                  <input type="text" id="discTitle" placeholder="Discussion title…" data-i18n-placeholder="cd.discussionTitlePlaceholder">
+                  <textarea id="discBody" placeholder="What's on your mind?…" rows="3" data-i18n-placeholder="cd.whatsOnYourMindPlaceholder"></textarea>
                   <div style="display:flex;gap:8px">
-                    <button class="btn-sm" onclick="postDiscussion()">Post</button>
-                    <button class="btn-s" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('discNewForm').classList.add('hidden')">Cancel</button>
+                    <button class="btn-sm" onclick="postDiscussion()" data-i18n="common.post">Post</button>
+                    <button class="btn-s" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('discNewForm').classList.add('hidden')" data-i18n="common.cancel">Cancel</button>
                   </div>
                 </div>
-                <div id="cdDiscList"><p class="empty">Loading…</p></div>
+                <div id="cdDiscList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
               </div>
             </div>
 
             <!-- GRADES -->
             <div class="cdpane" id="cdpane-grades">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>📊 Grades</h3></div>
-                <div id="cdGradeList"><p class="empty">Loading…</p></div>
+                <div class="cdpane-header"><h3>📊 <span data-i18n="cd.grades">Grades</span></h3></div>
+                <div id="cdGradeList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
               </div>
             </div>
 
             <!-- SYLLABUS -->
             <div class="cdpane" id="cdpane-syllabus">
               <div class="cdpane-inner" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
-                <div class="cdpane-header" style="padding:20px 28px 16px;border-radius:12px 12px 0 0;flex-shrink:0"><h3>📅 Syllabus &amp; Books</h3></div>
+                <div class="cdpane-header" style="padding:20px 28px 16px;border-radius:12px 12px 0 0;flex-shrink:0"><h3>📅 <span data-i18n="cd.syllabus">Syllabus &amp; Books</span></h3></div>
                 <div class="syl-split">
-                  <div class="syl-list" id="cdSylList"><p class="empty" style="padding:16px">Loading…</p></div>
+                  <div class="syl-list" id="cdSylList"><p class="empty" style="padding:16px" data-i18n="common.loading">Loading…</p></div>
                   <div class="syl-detail" id="cdSylDetail" style="display:flex;flex-direction:column">
-                    <div class="syl-detail-empty">← Select a week or book</div>
+                    <div class="syl-detail-empty" data-i18n="cd.selectWeekOrBook">← Select a week or book</div>
                   </div>
                 </div>
               </div>
@@ -200,7 +200,7 @@
             <!-- MODULES -->
             <div class="cdpane" id="cdpane-modules">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>📘 Modules</h3></div>
+                <div class="cdpane-header"><h3>📘 <span data-i18n="cd.modules">Modules</span></h3></div>
                 <ul class="module-list" id="studentModuleList"></ul>
               </div>
             </div>
@@ -208,16 +208,16 @@
             <!-- PEOPLE & GROUPS -->
             <div class="cdpane" id="cdpane-people">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>👥 People &amp; Groups</h3></div>
+                <div class="cdpane-header"><h3>👥 <span data-i18n="cd.peopleGroups">People &amp; Groups</span></h3></div>
                 <div class="people-subtabs">
-                  <button class="ptab active" data-ptab="members" onclick="switchPeopleTab('members')">Members</button>
-                  <button class="ptab" data-ptab="groups" onclick="switchPeopleTab('groups')">Groups</button>
+                  <button class="ptab active" data-ptab="members" onclick="switchPeopleTab('members')" data-i18n="cd.members">Members</button>
+                  <button class="ptab" data-ptab="groups" onclick="switchPeopleTab('groups')" data-i18n="cd.groups">Groups</button>
                 </div>
                 <div class="ppane active" id="ppane-members">
-                  <div id="cdPeopleList"><p class="empty">Loading…</p></div>
+                  <div id="cdPeopleList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
                 </div>
                 <div class="ppane" id="ppane-groups">
-                  <div id="cdGroupsList"><p class="empty">Loading…</p></div>
+                  <div id="cdGroupsList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
                 </div>
               </div>
             </div>
@@ -225,11 +225,11 @@
             <!-- COURSE CHAT -->
             <div class="cdpane" id="cdpane-chats">
               <div class="cdpane-inner cd-chat-panel">
-                <div class="cdpane-header" style="flex-shrink:0"><h3>✉️ Course Chat</h3></div>
+                <div class="cdpane-header" style="flex-shrink:0"><h3>✉️ <span data-i18n="cd.courseChat">Course Chat</span></h3></div>
                 <div id="cdChatMessages" class="cd-chat-messages"></div>
                 <div class="cd-chat-input">
-                  <textarea id="cdChatText" placeholder="Write a message… (Enter to post, Shift+Enter for new line)" rows="2"></textarea>
-                  <button class="cd-chat-post-btn" id="cdChatPostBtn" onclick="postCourseChat()">Post</button>
+                  <textarea id="cdChatText" placeholder="Write a message… (Enter to post, Shift+Enter for new line)" rows="2" data-i18n-placeholder="cd.writeMessagePlaceholder"></textarea>
+                  <button class="cd-chat-post-btn" id="cdChatPostBtn" onclick="postCourseChat()" data-i18n="common.post">Post</button>
                 </div>
               </div>
             </div>
@@ -241,46 +241,46 @@
 
     <!-- ASSIGNMENTS -->
     <section class="sec" id="sec-assignments">
-      <div class="sec-head"><h2>Assignments &amp; Tests</h2>
+      <div class="sec-head"><h2 data-i18n="title.assignments">Assignments &amp; Tests</h2>
         <div class="tabs">
           <button class="tab active" data-tab="upcoming-a">Upcoming</button>
-          <button class="tab" data-tab="submitted-a">Submitted</button>
+          <button class="tab" data-tab="submitted-a" data-i18n="dashboard.submitted">Submitted</button>
         </div>
       </div>
-      <div class="tab-body active" id="tab-upcoming-a"><div class="alist" id="upcomingList"><p class="empty">Loading…</p></div></div>
-      <div class="tab-body" id="tab-submitted-a"><div class="alist" id="submittedList"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body active" id="tab-upcoming-a"><div class="alist" id="upcomingList"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+      <div class="tab-body" id="tab-submitted-a"><div class="alist" id="submittedList"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
 
       <!-- Assignment Detail Panel -->
       <div class="assignment-detail-panel hidden" id="assignmentDetailPanel">
-        <button class="back-btn" onclick="closeAssignmentDetail()">← Back to Assignments</button>
+        <button class="back-btn" onclick="closeAssignmentDetail()">← <span data-i18n="cd.backToAssignments">Back to Assignments</span></button>
         <div id="assignmentDetailContent"></div>
         <div class="adetail-grid">
           <div class="adetail-submit">
-            <h3>📤 Your Submission</h3>
+            <h3 data-i18n="cd.yourSubmission">📤 Your Submission</h3>
             <div id="existingSubmission" style="display:none" class="existing-sub"></div>
             <div id="submitForm">
               <div class="sub-type-row">
-                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')">📝 Text</button>
-                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')">🔗 Link / Drive</button>
-                <button class="sub-type-btn" data-type="pdf" onclick="selectSubType(this,'pdf')">📄 Upload PDF</button>
+                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')" data-i18n="cd.textTab">📝 Text</button>
+                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')" data-i18n="cd.linkDriveTab">🔗 Link / Drive</button>
+                <button class="sub-type-btn" data-type="pdf" onclick="selectSubType(this,'pdf')" data-i18n="cd.uploadPdfTab">📄 Upload PDF</button>
               </div>
               <div id="sub-text-area">
-                <label>Your Answer</label>
-                <textarea id="submitContent" rows="8" placeholder="Write your answer here…"></textarea>
+                <label data-i18n="cd.yourAnswer">Your Answer</label>
+                <textarea id="submitContent" rows="8" placeholder="Write your answer here…" data-i18n-placeholder="cd.writeAnswerPlaceholder"></textarea>
               </div>
               <div id="sub-link-area" style="display:none">
-                <label>Website / Google Drive Link</label>
+                <label data-i18n="cd.websiteLink">Website / Google Drive Link</label>
                 <input type="url" id="submitLink" placeholder="https://…">
               </div>
               <div id="sub-pdf-area" style="display:none">
-                <label>Upload PDF</label>
+                <label data-i18n="facilitator.uploadPdf">Upload PDF</label>
                 <input type="file" id="submitFile" accept=".pdf">
               </div>
-              <button class="btn-p" style="margin-top:12px;width:100%" onclick="doSubmit()">Submit Assignment</button>
+              <button class="btn-p" style="margin-top:12px;width:100%" onclick="doSubmit()" data-i18n="cd.submitAssignment">Submit Assignment</button>
             </div>
           </div>
           <div class="adetail-resources">
-            <h3>📖 Course Resources</h3>
+            <h3 data-i18n="cd.courseResources">📖 Course Resources</h3>
             <div id="courseResourcesForAssignment"><p class="empty">Loading resources…</p></div>
           </div>
         </div>
@@ -289,37 +289,37 @@
 
     <!-- PROGRESS -->
     <section class="sec" id="sec-progress">
-      <h2>Progress Tracking</h2>
-      <div class="pgrid" id="progressGrid"><p class="empty">Loading…</p></div>
+      <h2 data-i18n="title.progress">Progress Tracking</h2>
+      <div class="pgrid" id="progressGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div>
     </section>
 
     <!-- RESOURCES -->
     <section class="sec" id="sec-resources">
-      <div class="sec-head"><h2>Resources &amp; Library</h2>
+      <div class="sec-head"><h2 data-i18n="resources.title">Resources &amp; Library</h2>
         <div class="tabs">
-          <button class="tab active" data-tab="subjects">Browse by Subject</button>
-          <button class="tab" data-tab="textbooks">Textbooks</button>
-          <button class="tab" data-tab="pastpapers">Past Papers</button>
-          <button class="tab" data-tab="uploaded">Uploaded</button>
+          <button class="tab active" data-tab="subjects" data-i18n="resources.browseBySubject">Browse by Subject</button>
+          <button class="tab" data-tab="textbooks" data-i18n="resources.textbooks">Textbooks</button>
+          <button class="tab" data-tab="pastpapers" data-i18n="resources.pastPapers">Past Papers</button>
+          <button class="tab" data-tab="uploaded" data-i18n="resources.uploaded">Uploaded</button>
         </div>
       </div>
       <div class="search-row">
-        <input type="text" id="rsearch" placeholder="Search by title…" oninput="loadResources()">
+        <input type="text" id="rsearch" placeholder="Search by title…" data-i18n-placeholder="common.searchByTitle" oninput="loadResources()">
         <select id="rsubject" onchange="loadResources()">
-          <option value="">All Subjects</option>
+          <option value="" data-i18n="common.allSubjects">All Subjects</option>
           <option>Biology</option><option>Chemistry</option><option>Physics</option>
           <option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option>
         </select>
         <select id="rgrade" onchange="loadResources()">
-          <option value="">All Grades</option>
+          <option value="" data-i18n="common.allGrades">All Grades</option>
           <option>S4</option><option>S5</option><option>S6</option>
         </select>
       </div>
       <div class="res-summary" id="resSummary"></div>
-      <div class="tab-body active" id="tab-subjects"><div class="rgrid" id="subjGrid"><p class="empty">Loading…</p></div></div>
-      <div class="tab-body" id="tab-textbooks"><div class="rgrid" id="tbGrid"><p class="empty">Loading…</p></div></div>
-      <div class="tab-body" id="tab-pastpapers"><div class="rgrid" id="ppGrid"><p class="empty">Loading…</p></div></div>
-      <div class="tab-body" id="tab-uploaded"><div class="rgrid" id="uploadedGrid"><p class="empty">Loading…</p></div></div>
+      <div class="tab-body active" id="tab-subjects"><div class="rgrid" id="subjGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+      <div class="tab-body" id="tab-textbooks"><div class="rgrid" id="tbGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+      <div class="tab-body" id="tab-pastpapers"><div class="rgrid" id="ppGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+      <div class="tab-body" id="tab-uploaded"><div class="rgrid" id="uploadedGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
     </section>
 
     <!-- MESSAGES (WhatsApp-style) -->
@@ -328,13 +328,13 @@
         <!-- Left: contacts sidebar -->
         <div class="chat-sidebar" id="chatSidebar">
           <div class="chat-sidebar-head">
-            <h3>Messages</h3>
+            <h3 data-i18n="nav.messages">Messages</h3>
             <button class="btn-sm" onclick="openNewChat()">+ New</button>
           </div>
           <div class="chat-search-row">
-            <input type="text" id="chatContactSearch" placeholder="Search…" oninput="filterContacts()" class="chat-search-input">
+            <input type="text" id="chatContactSearch" placeholder="Search…" data-i18n-placeholder="common.searchEllipsis" oninput="filterContacts()" class="chat-search-input">
           </div>
-          <div class="contacts-list" id="contactsList"><div class="empty-state">Loading…</div></div>
+          <div class="contacts-list" id="contactsList"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
         </div>
         <!-- Right: conversation thread -->
         <div class="chat-main" id="chatMain">
@@ -375,20 +375,20 @@
 
     <!-- NOTIFICATIONS -->
     <section class="sec" id="sec-notifications">
-      <h2>Notifications</h2>
+      <h2 data-i18n="nav.notifications">Notifications</h2>
       <div style="margin-bottom:12px">
         <button class="btn-s" onclick="markAllRead()" style="font-size:12px">Mark All Read</button>
       </div>
-      <div class="nlist" id="notifList"><p class="empty">Loading…</p></div>
+      <div class="nlist" id="notifList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
     </section>
 
     <!-- CANVAS -->
     <section class="sec" id="sec-canvas">
       <div class="canvas-head">
-        <h2>✏️ Canvas – Virtual Notebook</h2>
+        <h2>✏️ <span data-i18n="title.canvas">Canvas – Virtual Notebook</span></h2>
         <div class="canvas-btns">
           <button class="btn-p" onclick="createBook()">+ New Book</button>
-          <button class="btn-s" onclick="saveNote()">💾 Save</button>
+          <button class="btn-s" onclick="saveNote()">💾 <span data-i18n="common.save">Save</span></button>
           <span id="saveIndicator" style="color:#27ae60;font-size:13px;margin-left:8px;opacity:0;transition:opacity .5s"></span>
         </div>
       </div>
@@ -466,24 +466,24 @@
 
     <!-- SETTINGS -->
     <section class="sec" id="sec-settings">
-      <h2>Settings &amp; Profile</h2>
+      <h2 data-i18n="settings.title">Settings &amp; Profile</h2>
       <div class="settings-grid">
         <div class="settings-panel">
-          <h3>Profile</h3>
+          <h3 data-i18n="settings.profile">Profile</h3>
           <form id="profileForm">
-            <label>First Name</label><input type="text" id="sFirst">
-            <label>Last Name</label><input type="text" id="sLast">
-            <label>School</label><input type="text" id="sSchool">
-            <label>Grade</label><input type="text" id="sGrade">
-            <label>Bio</label><textarea id="sBio" rows="3"></textarea>
-            <button type="submit" class="btn-p" style="margin-top:14px">Save Changes</button>
+            <label data-i18n="common.firstName">First Name</label><input type="text" id="sFirst">
+            <label data-i18n="common.lastName">Last Name</label><input type="text" id="sLast">
+            <label data-i18n="common.school">School</label><input type="text" id="sSchool">
+            <label data-i18n="common.grade">Grade</label><input type="text" id="sGrade">
+            <label data-i18n="common.bio">Bio</label><textarea id="sBio" rows="3"></textarea>
+            <button type="submit" class="btn-p" style="margin-top:14px" data-i18n="common.saveChanges">Save Changes</button>
           </form>
           <p class="form-msg" id="profileMsg"></p>
         </div>
 
         <!-- Change Password -->
         <div class="settings-panel">
-          <h3>Change Password</h3>
+          <h3 data-i18n="settings.changePassword">Change Password</h3>
           <p style="font-size:12px;color:#888;margin-bottom:12px">A 6-digit verification code will be sent to your email. It expires in 15 minutes.</p>
 
           <!-- Step 1 -->
@@ -498,12 +498,12 @@
           <div id="pwStep2" style="display:none">
             <label>6-Digit Code</label>
             <input type="text" id="pwCode" maxlength="6" placeholder="123456" style="letter-spacing:6px;font-size:18px;text-align:center">
-            <label style="margin-top:10px">New Password</label>
+            <label style="margin-top:10px" data-i18n="common.password">New Password</label>
             <input type="password" id="pwNew" placeholder="Min. 8 characters">
-            <label>Confirm Password</label>
+            <label data-i18n="common.confirmPassword">Confirm Password</label>
             <input type="password" id="pwConfirm" placeholder="Repeat new password">
             <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn-s" onclick="resetPwSteps()">← Back</button>
+              <button class="btn-s" onclick="resetPwSteps()">← <span data-i18n="common.back">Back</span></button>
               <button class="btn-p" style="flex:1" onclick="verifyOTP()">Update Password</button>
             </div>
             <p class="form-msg" id="pwMsg2"></p>
@@ -511,9 +511,11 @@
         </div>
 
         <div class="settings-panel">
-          <h3>Language</h3>
-          <label>Display Language</label>
-          <select><option value="en">English</option><option value="fr">French</option><option value="rw">Kinyarwanda</option></select>
+          <h3 data-i18n="settings.language">Language</h3>
+          <label data-i18n="settings.displayLanguage">Display Language</label>
+          <select class="lang-sel" id="langSel2" onchange="setLang(this.value)">
+            <option value="en">English</option><option value="fr">French</option><option value="rw">Kinyarwanda</option>
+          </select>
         </div>
       </div>
     </section>
@@ -527,7 +529,7 @@
     <div class="modal-head">
       <h3 id="pdfViewerTitle">Document</h3>
       <div style="display:flex;gap:8px;align-items:center">
-        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">⬇ Download</a>
+        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">⬇ <span data-i18n="common.download">Download</span></a>
         <button class="modal-close" onclick="closeModal('modalPdfViewer')">✕</button>
       </div>
     </div>
@@ -550,7 +552,8 @@
   </div>
 </div>
 
-<script src="../js/api.js"></script>
-<script src="student.js"></script>
+<script src="../js/api.js?v=3"></script>
+<script src="../js/i18n.js?v=3"></script>
+<script src="student.js?v=5"></script>
 </body>
 </html>

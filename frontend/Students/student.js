@@ -57,10 +57,7 @@ function goTo(sec) {
     document.querySelectorAll(".menu li").forEach(li => li.classList.toggle("active", li.dataset.sec === sec));
     document.querySelectorAll(".sec").forEach(s => s.classList.remove("active"));
     document.getElementById(`sec-${sec}`)?.classList.add("active");
-    const titles = { dashboard:"Dashboard", courses:"Courses", assignments:"Assignments & Tests",
-        progress:"Progress", resources:"Resources & Library", messages:"Messages",
-        notifications:"Notifications", canvas:"Canvas – Virtual Notebook", settings:"Settings" };
-    document.getElementById("pageTitle").textContent = titles[sec] || sec;
+    document.getElementById("pageTitle").textContent = t(`title.${sec}`);
     if (sec === "courses")       { loadEnrolled(); loadAllCourses(); loadPublic(); loadInvitations(); }
     if (sec === "assignments")   loadAssignments();
     if (sec === "progress")      loadProgress();
@@ -194,9 +191,9 @@ async function loadEnrolled() {
                   ${c.grade_level ? `<span class="tag">${c.grade_level}</span>` : ""}
                   ${c.facilitator_name ? `<span class="tag">👤 ${c.facilitator_name}</span>` : ""}
                 </div>
-                <div style="margin-top:8px;font-size:11px;color:#666">Progress: ${prog}%</div>
+                <div style="margin-top:8px;font-size:11px;color:#666">${t("courses.progress")}: ${prog}%</div>
                 <div class="pbar-wrap"><div class="pbar" style="width:${prog}%"></div></div>
-                <span class="tag" style="background:#e8f0fe;color:#1a56bd;margin-top:8px;display:inline-block">✓ Enrolled — Click to view</span>
+                <span class="tag" style="background:#e8f0fe;color:#1a56bd;margin-top:8px;display:inline-block">${t("courses.enrolledClickToView")}</span>
               </div>
             </div>`;
         }).join("");
@@ -245,27 +242,27 @@ function courseCard(c, alreadyEnrolled = false) {
           ${c.subject ? `<span class="tag">${c.subject}</span>` : ""}
           ${c.grade_level ? `<span class="tag">${c.grade_level}</span>` : ""}
           ${c.facilitator_name ? `<span class="tag">👤 ${c.facilitator_name}</span>` : ""}
-          ${c.is_public ? '<span class="tag" style="background:#e8f5ee;color:#1a5c3a">Public</span>' : ""}
+          ${c.is_public ? `<span class="tag" style="background:#e8f5ee;color:#1a5c3a">${t("common.public")}</span>` : ""}
         </div>
         ${alreadyEnrolled
-          ? '<span class="tag" style="background:#e8f0fe;color:#1a56bd;margin-top:8px;display:inline-block">✓ Enrolled</span>'
+          ? `<span class="tag" style="background:#e8f0fe;color:#1a56bd;margin-top:8px;display:inline-block">${t("common.enrolled")}</span>`
           : c.is_public
-            ? `<button class="btn-enroll" onclick="enroll(${c.id}, this)">+ Enroll</button>`
-            : '<span class="tag" style="background:#f4f4f4;color:#888;margin-top:8px;display:inline-block">🔒 Private — invitation only</span>'}
+            ? `<button class="btn-enroll" onclick="enroll(${c.id}, this)">${t("common.enroll")}</button>`
+            : `<span class="tag" style="background:#f4f4f4;color:#888;margin-top:8px;display:inline-block">🔒 ${t("courses.privateInviteOnly")}</span>`}
       </div>
     </div>`;
 }
 
 async function enroll(courseId, btn) {
-    if (btn) { btn.disabled = true; btn.textContent = "Enrolling…"; }
+    if (btn) { btn.disabled = true; btn.textContent = t("courses.enrolling"); }
     try {
         await apiPost(`/courses/${courseId}/enroll`, {});
-        if (btn) { btn.textContent = "✓ Enrolled"; btn.style.background = "#27ae60"; }
+        if (btn) { btn.textContent = t("common.enrolled"); btn.style.background = "#27ae60"; }
         loadEnrolled();
-        showToast("Successfully enrolled!");
+        showToast(t("courses.enrolledToast"));
     } catch (e) {
-        if (btn) { btn.disabled = false; btn.textContent = "+ Enroll"; }
-        showToast(e.message || "Could not enroll.", "error");
+        if (btn) { btn.disabled = false; btn.textContent = t("common.enroll"); }
+        showToast(e.message || t("courses.enrollFailedToast"), "error");
     }
 }
 
@@ -320,10 +317,10 @@ function switchCdTab(tab) {
     document.querySelectorAll(".cdpane").forEach(p => p.classList.toggle("active", p.id === `cdpane-${tab}`));
     const cur = document.getElementById("cdBreadCur");
     if (cur) {
-        const labels = {home:"Home",announcements:"Announcements",assignments:"Assignments",
-            discussions:"Discussions",grades:"Grades",people:"People",
-            syllabus:"Syllabus",modules:"Modules",chats:"Course Chat"};
-        cur.textContent = labels[tab] || tab;
+        const keys = {home:"cd.home",announcements:"cd.announcements",assignments:"cd.assignments",
+            discussions:"cd.discussions",grades:"cd.grades",people:"cd.people",
+            syllabus:"cd.syllabus",modules:"cd.modules",chats:"cd.courseChat"};
+        cur.textContent = keys[tab] ? t(keys[tab]) : tab;
     }
     // Reset assignment detail to list when switching back to assignments
     if (tab === "assignments") {
@@ -360,37 +357,37 @@ function renderCdHome(c) {
     const enr  = (c.enrollments||[]).find(e => e.student_id == me) || {};
     const prog = enr.progress_percent || 0;
     const pass = enr.pass_status || "in_progress";
-    const passLabel = pass==="passed" ? "✓ Passed" : pass==="retake" ? "↩ Retake" : "In Progress";
+    const passLabel = pass==="passed" ? t("cd.passed") : pass==="retake" ? t("cd.retake") : t("cd.inProgress");
     const passCol   = pass==="passed" ? "#1a8a5a" : pass==="retake" ? "#c0392b" : "#c47f00";
     const progCol   = prog>=55 ? "#2f6df6" : "#f39c12";
 
     document.getElementById("cdHomeContent").innerHTML = `
       <div class="cd-home-hero">
         <h2>${esc(c.title)}</h2>
-        <p>${esc(c.description || "No description available for this course.")}</p>
-        ${c.facilitator_name ? `<div class="cd-home-instructor">👤 Taught by <strong>${esc(c.facilitator_name)}</strong> &nbsp;·&nbsp; ${esc(c.subject||"")} &nbsp;·&nbsp; ${esc(c.grade_level||"")}</div>` : ""}
+        <p>${esc(c.description || t("cd.noDescription"))}</p>
+        ${c.facilitator_name ? `<div class="cd-home-instructor">👤 ${t("cd.taughtBy")} <strong>${esc(c.facilitator_name)}</strong> &nbsp;·&nbsp; ${esc(c.subject||"")} &nbsp;·&nbsp; ${esc(c.grade_level||"")}</div>` : ""}
       </div>
 
       <div class="cd-progress-section">
-        <label>Your Progress &nbsp; <span style="color:${passCol};font-weight:700">${passLabel}</span></label>
+        <label>${t("cd.yourProgress")} &nbsp; <span style="color:${passCol};font-weight:700">${passLabel}</span></label>
         <div class="cd-prog-bar-bg">
           <div class="cd-prog-bar-fill" style="width:${prog}%;background:${progCol}"></div>
         </div>
         <div class="cd-prog-meta">
-          <span>${prog}% complete</span>
+          <span>${prog}% ${t("cd.percentComplete")}</span>
           <span style="color:#bbb">·</span>
-          <span>${(c.modules||[]).length} modules</span>
+          <span>${(c.modules||[]).length} ${t("cd.modulesCount")}</span>
           <span style="color:#bbb">·</span>
-          <span>${(c.assignments||[]).length} assignments</span>
+          <span>${(c.assignments||[]).length} ${t("cd.assignmentsCount")}</span>
         </div>
       </div>
 
       <div class="cd-quick-nav">
-        <button class="cd-quick-btn" onclick="switchCdTab('syllabus')">📅 Syllabus</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('assignments')">📝 Assignments</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('grades')">📊 Grades</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('modules')">📘 Modules</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('discussions')">💬 Discussions</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('syllabus')">📅 ${t("cd.syllabus")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('assignments')">📝 ${t("cd.assignments")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('grades')">📊 ${t("cd.grades")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('modules')">📘 ${t("cd.modules")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('discussions')">💬 ${t("cd.discussions")}</button>
       </div>`;
 }
 
@@ -744,17 +741,22 @@ async function loadCdSyllabus(courseId) {
     listEl.innerHTML   = '<p class="empty" style="padding:16px">Loading…</p>';
     detailEl.innerHTML = '<div class="syl-detail-empty">← Select a week or book</div>';
 
-    // Fetch weeks and books in parallel
-    const [weeksResult, booksResult] = await Promise.allSettled([
+    // Fetch weeks, subject-matched library books, and this course's own materials in parallel
+    const [weeksResult, booksResult, courseMatResult] = await Promise.allSettled([
         apiGet(`/courses/${courseId}/syllabus`),
         apiGet(`/resources/?subject=${encodeURIComponent(activeDetailSubject || "")}`),
+        apiGet(`/resources/?course_id=${courseId}`),
     ]);
 
     _sylWeeks = weeksResult.status === "fulfilled" ? (weeksResult.value || []) : [];
     const booksData = booksResult.status === "fulfilled" ? booksResult.value : {};
+    const courseMatData = courseMatResult.status === "fulfilled" ? courseMatResult.value : {};
+    const courseMaterials = [...(courseMatData.uploaded || [])];
+    const seen = new Set(courseMaterials.map(r => r.id));
     _sylBooks = [
-        ...(booksData.textbooks    || []),
-        ...(booksData.uploaded     || []),
+        ...courseMaterials,
+        ...(booksData.textbooks || []).filter(r => !seen.has(r.id)),
+        ...(booksData.uploaded  || []).filter(r => !seen.has(r.id)),
     ];
 
     renderSylList();
@@ -967,6 +969,16 @@ async function loadAssignments() {
         document.getElementById(id).innerHTML = '<p class="empty">Failed to load.</p>'); }
 }
 
+function fileIcon(filename) {
+    const ext = (filename || "").split(".").pop().toLowerCase();
+    if (ext === "pdf") return "📄";
+    if (["jpg","jpeg","png","gif","webp"].includes(ext)) return "🖼️";
+    if (["doc","docx"].includes(ext)) return "📝";
+    if (["ppt","pptx"].includes(ext)) return "📽️";
+    if (["xls","xlsx"].includes(ext)) return "📊";
+    return "📎";
+}
+
 function renderAsgn(id, list, type) {
     const el = document.getElementById(id);
     if (!list.length) { el.innerHTML = `<p class="empty">No ${type} assignments.</p>`; return; }
@@ -981,6 +993,7 @@ function renderAsgn(id, list, type) {
             ${a.student_feedback ? `<p class="feedback-preview">💬 ${esc(a.student_feedback.slice(0,100))}</p>` : ""}
             ${a.attachment_url ? `<span class="tag" style="background:#e8f0fe;color:#2f6df6;font-size:11px">🔗 Has Link</span>` : ""}
             ${a.attachment_path ? `<span class="tag" style="background:#f3e8ff;color:#6c00c9;font-size:11px">📎 Has PDF</span>` : ""}
+            ${(a.attachments||[]).length ? `<span class="tag" style="background:#f3e8ff;color:#6c00c9;font-size:11px">📎 ${a.attachments.length} file${a.attachments.length===1?'':'s'}</span>` : ""}
           </div>
           <span style="font-size:20px;color:#aaa">›</span>
         </div>`).join("");
@@ -1010,6 +1023,9 @@ function openAssignmentDetail(aOrId) {
         ${a.description ? `<p style="margin:12px 0;color:#555">${esc(a.description)}</p>` : ""}
         ${a.attachment_url ? `<div style="margin:10px 0"><a href="${esc(a.attachment_url)}" target="_blank" class="btn-s" style="display:inline-block">🔗 Open Attachment / Google Doc</a></div>` : ""}
         ${a.attachment_path ? `<div style="margin:10px 0"><a href="/uploads/${esc(a.attachment_path)}" target="_blank" class="btn-s" style="display:inline-block">📎 View Assignment PDF</a></div>` : ""}
+        ${(a.attachments||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
+          ${a.attachments.map(att => `<a href="/uploads/${esc(att.file_path)}" target="_blank" class="btn-s" style="display:inline-block">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join("")}
+        </div>` : ""}
     `;
 
     const existEl = document.getElementById("existingSubmission");
@@ -1067,13 +1083,22 @@ async function loadCourseResources(courseId, courseTitle) {
     const el = document.getElementById("courseResourcesForAssignment");
     el.innerHTML = '<p class="empty">Loading…</p>';
     try {
-        // Get resources matching the course subject
         const detail = courseId ? await apiGet(`/courses/${courseId}`) : null;
         const subject = detail?.subject || courseTitle;
-        let url = "/resources/?";
-        if (subject) url += `subject=${encodeURIComponent(subject)}`;
-        const data = await apiGet(url);
-        const all  = [...(data.textbooks||[]), ...(data.past_papers||[]), ...(data.uploaded||[])];
+        const [subjResult, courseMatResult] = await Promise.allSettled([
+            apiGet(`/resources/?${subject ? "subject=" + encodeURIComponent(subject) : ""}`),
+            courseId ? apiGet(`/resources/?course_id=${courseId}`) : Promise.resolve({}),
+        ]);
+        const data = subjResult.status === "fulfilled" ? subjResult.value : {};
+        const courseMatData = courseMatResult.status === "fulfilled" ? courseMatResult.value : {};
+        const courseMaterials = [...(courseMatData.uploaded || [])];
+        const seen = new Set(courseMaterials.map(r => r.id));
+        const all  = [
+            ...courseMaterials,
+            ...(data.textbooks    || []).filter(r => !seen.has(r.id)),
+            ...(data.past_papers  || []).filter(r => !seen.has(r.id)),
+            ...(data.uploaded     || []).filter(r => !seen.has(r.id)),
+        ];
         if (!all.length) { el.innerHTML = '<p class="empty">No resources for this subject.</p>'; return; }
         el.innerHTML = all.slice(0,6).map(r => `
             <div class="mini-res-card">
@@ -1082,26 +1107,9 @@ async function loadCourseResources(courseId, courseTitle) {
                 <strong>${esc(r.title)}</strong>
                 <p>${r.subject || ""} ${r.grade_level ? "· " + r.grade_level : ""}</p>
               </div>
-              <button onclick="openOrDlRes('${encodeURIComponent(r.file_path)}','${esc(r.title)}','${r.source||''}')" class="btn-tiny">Open</button>
+              <button onclick="openPdf('${esc(r.url)}','${esc(r.title)}')" class="btn-tiny">Open</button>
             </div>`).join("");
     } catch(e) { el.innerHTML = '<p class="empty">Could not load resources.</p>'; }
-}
-
-async function openOrDlRes(encodedPath, title, source) {
-    if (source === "uploaded") {
-        // served via /uploads/
-        window.open(`/uploads/${decodeURIComponent(encodedPath)}`, "_blank");
-        return;
-    }
-    // library download
-    try {
-        const res = await fetch(`/api/resources/download?path=${encodedPath}`,
-            { headers: { Authorization: `Bearer ${getToken()}` } });
-        if (!res.ok) { showToast("Download failed.", "error"); return; }
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(await res.blob());
-        a.download = decodeURIComponent(title) + ".pdf"; a.click();
-    } catch(e) { showToast("Download failed.", "error"); }
 }
 
 async function doSubmit() {
@@ -1314,12 +1322,12 @@ async function ensureResourceFilterOptions() {
         const gradeSel = document.getElementById("rgrade");
         if (subjects.length) {
             const current = subjSel.value;
-            subjSel.innerHTML = '<option value="">All Subjects</option>' +
+            subjSel.innerHTML = `<option value="" data-i18n="common.allSubjects">${t("common.allSubjects")}</option>` +
                 subjects.map(s => `<option${s === current ? " selected" : ""}>${esc(s)}</option>`).join("");
         }
         if (grades.length) {
             const current = gradeSel.value;
-            gradeSel.innerHTML = '<option value="">All Grades</option>' +
+            gradeSel.innerHTML = `<option value="" data-i18n="common.allGrades">${t("common.allGrades")}</option>` +
                 grades.map(g => `<option${g === current ? " selected" : ""}>${esc(g)}</option>`).join("");
         }
         _resourceFilterOptions = { subjects, grades };
@@ -1382,8 +1390,8 @@ function renderRes(el, items, type) {
             <span class="tag" style="background:#f3e8ff;color:#3d0070">${esc((r.type||'').replace("_"," "))}</span>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            ${url ? `<button class="btn-sm" onclick="openPdf('${esc(url)}','${esc(r.title)}')">📖 View</button>` : ''}
-            ${url ? `<a class="btn-sm btn-outline" href="${esc(url)}" target="_blank" download style="text-decoration:none">⬇ Download</a>` : ''}
+            ${url ? `<button class="btn-sm" onclick="openPdf('${esc(url)}','${esc(r.title)}')">📖 ${t("common.view")}</button>` : ''}
+            ${url ? `<a class="btn-sm btn-outline" href="${esc(url)}" target="_blank" download style="text-decoration:none">⬇ ${t("common.download")}</a>` : ''}
           </div>
         </div>`;
     }).join("");

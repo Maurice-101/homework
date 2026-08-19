@@ -32,7 +32,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
     const btn   = document.getElementById("loginBtn");
     errEl.textContent = "";
     btn.disabled = true;
-    btn.textContent = "Signing in…";
+    btn.textContent = t("auth.signingIn");
     try {
         const data = await apiPost("/auth/login", {
             user_email: document.getElementById("loginEmail").value.trim(),
@@ -41,9 +41,9 @@ document.getElementById("loginForm").addEventListener("submit", async function (
         saveAuth(data.access_token, data.user);
         redirect(data.user.role);
     } catch (err) {
-        errEl.textContent = err.message || "Invalid email or password.";
+        errEl.textContent = err.message || t("auth.invalidCredentials");
         btn.disabled = false;
-        btn.textContent = "Login";
+        btn.textContent = t("auth.loginBtn");
     }
 });
 
@@ -54,11 +54,11 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     const btn   = document.getElementById("registerBtn");
     const pass    = document.getElementById("regPassword").value;
     const confirm = document.getElementById("regConfirmPassword").value;
-    if (pass.length < 8) { errEl.textContent = "Password must be at least 8 characters."; return; }
-    if (pass !== confirm) { errEl.textContent = "Passwords do not match."; return; }
+    if (pass.length < 8) { errEl.textContent = t("auth.passwordMin8"); return; }
+    if (pass !== confirm) { errEl.textContent = t("auth.passwordsNoMatch"); return; }
     errEl.textContent = "";
     btn.disabled = true;
-    btn.textContent = "Creating account…";
+    btn.textContent = t("auth.creatingAccount");
     try {
         const data = await apiPost("/auth/register", {
             first_name:    document.getElementById("regFirst").value.trim(),
@@ -72,8 +72,8 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         saveAuth(data.access_token, data.user);
         redirect(data.user.role);
     } catch (err) {
-        errEl.textContent = err.message || "Registration failed. Try again.";
+        errEl.textContent = err.message || t("auth.registrationFailed");
         btn.disabled = false;
-        btn.textContent = "Create Account";
+        btn.textContent = t("auth.createAccountBtn");
     }
 });
