@@ -317,6 +317,28 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 }
 .attach-remove-btn:hover { background: rgba(192,57,43,.1); }
 
+/* ---- QUESTION BUILDER ---- */
+.qb-card {
+  border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+  margin-bottom: 12px; background: #fff;
+}
+.qb-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.qb-card-head .qb-num { font-weight: 700; font-size: 13px; color: var(--primary); flex-shrink: 0; }
+.qb-card-head select { width: auto; flex-shrink: 0; }
+.qb-card-head input[type="number"] { width: 70px; flex-shrink: 0; }
+.qb-card-actions { display: flex; gap: 4px; margin-left: auto; }
+.qb-icon-btn {
+  background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px 6px;
+  border-radius: 5px; color: var(--text-sub);
+}
+.qb-icon-btn:hover { background: #f0f2f8; }
+.qb-icon-btn.danger:hover { background: rgba(192,57,43,.1); color: #c0392b; }
+.qb-text { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13.5px; font-family: inherit; resize: vertical; margin-bottom: 8px; }
+.qb-option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.qb-option-row input[type="text"] { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; font-size: 13px; }
+.qb-option-row .qb-match-arrow { color: #aaa; font-size: 12px; }
+.qb-required-row { display: flex; align-items: center; gap: 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 8px; }
+
 /* ---- BUTTONS ---- */
 .btn-primary {
   background: var(--primary); color: #fff; border: none;

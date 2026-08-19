@@ -1,6 +1,43 @@
 from pydantic import BaseModel, model_validator, computed_field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
+
+
+class OptionIn(BaseModel):
+    id: Optional[int] = None          # present when editing an existing option
+    text: str
+    is_correct: bool = False
+    match_value: Optional[str] = None  # matching questions: the right-hand answer
+    order_num: int = 0
+
+
+class QuestionIn(BaseModel):
+    id: Optional[int] = None          # present when editing an existing question
+    text: str
+    type: str = "short_answer"
+    points: float = 1.0
+    required: bool = True
+    order_num: int = 0
+    options: List[OptionIn] = []
+
+
+class QuestionsSetIn(BaseModel):
+    questions: List[QuestionIn] = []
+
+
+class AnswerIn(BaseModel):
+    question_id: int
+    answer_text: Optional[str] = None
+    selected_option_ids: Optional[List[int]] = None
+    matching_answers: Optional[Dict[str, str]] = None
+
+
+class AnswersSubmitIn(BaseModel):
+    answers: List[AnswerIn] = []
+
+
+class GradeAnswer(BaseModel):
+    points_awarded: float
 
 
 class AttachmentOut(BaseModel):
@@ -22,6 +59,12 @@ class AssignmentCreate(BaseModel):
     max_score: float = 100.0
     is_published: bool = True
     attachment_url: Optional[str] = None  # optional link / Google Doc
+    status: str = "draft"                 # draft | published | closed
+    available_from: Optional[datetime] = None
+    time_limit_minutes: Optional[int] = None
+    max_attempts: int = 1
+    randomize_questions: bool = False
+    randomize_choices: bool = False
 
     @model_validator(mode="after")
     def normalize_type(self):
@@ -40,6 +83,12 @@ class AssignmentUpdate(BaseModel):
     max_score: Optional[float] = None
     is_published: Optional[bool] = None
     attachment_url: Optional[str] = None  # optional link / Google Doc
+    status: Optional[str] = None
+    available_from: Optional[datetime] = None
+    time_limit_minutes: Optional[int] = None
+    max_attempts: Optional[int] = None
+    randomize_questions: Optional[bool] = None
+    randomize_choices: Optional[bool] = None
 
 
 class AssignmentOut(BaseModel):
@@ -57,6 +106,13 @@ class AssignmentOut(BaseModel):
     attachment_path: Optional[str] = None
     attachments: List[AttachmentOut] = []
     course_title: Optional[str] = None
+    status: str = "draft"
+    available_from: Optional[datetime] = None
+    time_limit_minutes: Optional[int] = None
+    max_attempts: int = 1
+    randomize_questions: bool = False
+    randomize_choices: bool = False
+    question_count: int = 0
     # student view extras
     student_grade: Optional[float] = None
     student_feedback: Optional[str] = None
@@ -92,6 +148,8 @@ class SubmissionOut(BaseModel):
     graded_at: Optional[datetime] = None
     student_name: Optional[str] = None
     assignment_title: Optional[str] = None
+    attempt_number: int = 1
+    answers: list = []   # populated for question-based assignments; each item is a plain dict
 
     class Config:
         from_attributes = True

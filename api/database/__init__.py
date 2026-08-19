@@ -38,6 +38,14 @@ def _migrate():
             "CREATE TABLE IF NOT EXISTS course_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER NOT NULL REFERENCES courses(id), name VARCHAR(100) NOT NULL, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "CREATE TABLE IF NOT EXISTS group_members (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id INTEGER NOT NULL REFERENCES course_groups(id), student_id INTEGER NOT NULL REFERENCES users(id), added_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "ALTER TABLE resources ADD COLUMN course_id INTEGER REFERENCES courses(id)",
+            "ALTER TABLE assignments ADD COLUMN status VARCHAR(20) DEFAULT 'draft'",
+            "ALTER TABLE assignments ADD COLUMN available_from DATETIME",
+            "ALTER TABLE assignments ADD COLUMN time_limit_minutes INTEGER",
+            "ALTER TABLE assignments ADD COLUMN max_attempts INTEGER DEFAULT 1",
+            "ALTER TABLE assignments ADD COLUMN randomize_questions BOOLEAN DEFAULT 0",
+            "ALTER TABLE assignments ADD COLUMN randomize_choices BOOLEAN DEFAULT 0",
+            "UPDATE assignments SET status = CASE WHEN is_published THEN 'published' ELSE 'draft' END WHERE status IS NULL",
+            "ALTER TABLE submissions ADD COLUMN attempt_number INTEGER DEFAULT 1",
         ]
     else:
         # PostgreSQL syntax
@@ -66,6 +74,14 @@ def _migrate():
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )""",
             "ALTER TABLE resources ADD COLUMN IF NOT EXISTS course_id INTEGER REFERENCES courses(id)",
+            "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'draft'",
+            "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS available_from TIMESTAMP",
+            "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS time_limit_minutes INTEGER",
+            "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1",
+            "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS randomize_questions BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS randomize_choices BOOLEAN DEFAULT FALSE",
+            "UPDATE assignments SET status = CASE WHEN is_published THEN 'published' ELSE 'draft' END WHERE status IS NULL",
+            "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS attempt_number INTEGER DEFAULT 1",
         ]
 
     with engine.connect() as conn:

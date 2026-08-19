@@ -4,11 +4,20 @@ from fastapi import Body
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from api.database import get_db
-from api.schemas.assignment import AssignmentCreate, AssignmentUpdate, SubmissionCreate, GradeSubmission
+from api.schemas.assignment import (
+    AssignmentCreate, AssignmentUpdate, SubmissionCreate, GradeSubmission,
+    QuestionsSetIn, AnswersSubmitIn, GradeAnswer,
+)
 from api.controller import assignment_controller
 from api.utils.auth import get_current_user, require_role
 from api.model.user import User
 from api.settings import settings
+
+# File-upload questions accept the same document/image types as assignment attachments.
+_ALLOWED_ANSWER_FILE_EXT = {
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+    ".jpg", ".jpeg", ".png", ".gif", ".webp",
+}
 
 router = APIRouter(prefix="/assignments", tags=["Assignments"])
 
@@ -58,6 +67,12 @@ async def create(
     attachment_url: Optional[str] = Form(None),
     attachment_file: Optional[UploadFile] = File(None),
     attachment_files: Optional[List[UploadFile]] = File(None),
+    status: str = Form("draft"),
+    available_from: Optional[str] = Form(None),
+    time_limit_minutes: Optional[int] = Form(None),
+    max_attempts: int = Form(1),
+    randomize_questions: bool = Form(False),
+    randomize_choices: bool = Form(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("facilitator", "admin")),
 ):
@@ -68,6 +83,12 @@ async def create(
             dt = datetime.fromisoformat(due_date.replace("Z", "+00:00"))
         except Exception:
             dt = None
+    avail_dt = None
+    if available_from:
+        try:
+            avail_dt = datetime.fromisoformat(available_from.replace("Z", "+00:00"))
+        except Exception:
+            avail_dt = None
 
     # Legacy single-file field, kept for backward compat with any existing callers
     file_path = None
@@ -89,6 +110,9 @@ async def create(
         due_date=dt, assignment_type=assignment_type,
         max_score=max_score, is_published=is_published,
         attachment_url=attachment_url,
+        status=status, available_from=avail_dt, time_limit_minutes=time_limit_minutes,
+        max_attempts=max_attempts, randomize_questions=randomize_questions,
+        randomize_choices=randomize_choices,
     )
     return assignment_controller.create_assignment(data, current_user.id, db,
                                                     attachment_path=file_path, attachment_files=saved_files)
@@ -106,6 +130,12 @@ async def update(
     attachment_url: Optional[str] = Form(None),
     attachment_file: Optional[UploadFile] = File(None),
     attachment_files: Optional[List[UploadFile]] = File(None),
+    status: Optional[str] = Form(None),
+    available_from: Optional[str] = Form(None),
+    time_limit_minutes: Optional[int] = Form(None),
+    max_attempts: Optional[int] = Form(None),
+    randomize_questions: Optional[bool] = Form(None),
+    randomize_choices: Optional[bool] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("facilitator", "admin")),
 ):
@@ -116,6 +146,12 @@ async def update(
             dt = datetime.fromisoformat(due_date.replace("Z", "+00:00"))
         except Exception:
             dt = None
+    avail_dt = None
+    if available_from:
+        try:
+            avail_dt = datetime.fromisoformat(available_from.replace("Z", "+00:00"))
+        except Exception:
+            avail_dt = None
 
     file_path = None
     if attachment_file and attachment_file.filename:
@@ -135,6 +171,9 @@ async def update(
         title=title, description=description, due_date=dt,
         assignment_type=assignment_type, max_score=max_score,
         is_published=is_published, attachment_url=attachment_url,
+        status=status, available_from=avail_dt, time_limit_minutes=time_limit_minutes,
+        max_attempts=max_attempts, randomize_questions=randomize_questions,
+        randomize_choices=randomize_choices,
     )
     return assignment_controller.update_assignment(assignment_id, data, current_user.id, db,
                                                    attachment_path=file_path, attachment_files=saved_files)
@@ -177,3 +216,64 @@ def submissions(assignment_id: int, db: Session = Depends(get_db),
 def grade(submission_id: int, data: GradeSubmission, db: Session = Depends(get_db),
           current_user: User = Depends(require_role("facilitator", "admin"))):
     return assignment_controller.grade_submission(submission_id, data, db)
+
+
+# ── Question builder ─────────────────────────────────────────────────────────
+
+@router.put("/{assignment_id}/questions")
+def save_questions(assignment_id: int, payload: QuestionsSetIn, db: Session = Depends(get_db),
+                   current_user: User = Depends(require_role("facilitator", "admin"))):
+    return assignment_controller.save_questions(assignment_id, payload, current_user.id, db)
+
+
+@router.get("/{assignment_id}/questions")
+def get_questions(assignment_id: int, db: Session = Depends(get_db),
+                  current_user: User = Depends(get_current_user)):
+    if current_user.role == "student":
+        return assignment_controller.get_questions_for_student(assignment_id, current_user.id, db)
+    return assignment_controller.get_questions_for_facilitator(assignment_id, current_user.id, db)
+
+
+@router.post("/{assignment_id}/answers")
+async def submit_answers(
+    assignment_id: int,
+    answers: str = Form("[]"),                       # JSON-encoded list of {question_id, answer_text, selected_option_ids, matching_answers}
+    file_question_ids: List[int] = Form(default=[]),  # parallel to `files`, below
+    files: List[UploadFile] = File(default=[]),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("student")),
+):
+    try:
+        parsed = json.loads(answers)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid answers payload")
+    payload = AnswersSubmitIn(answers=parsed)
+
+    file_answers = {}
+    for qid, f in zip(file_question_ids, files):
+        if not f or not f.filename:
+            continue
+        ext = os.path.splitext(f.filename)[1].lower()
+        if ext not in _ALLOWED_ANSWER_FILE_EXT:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {f.filename}")
+        fname = f"{uuid.uuid4()}_{f.filename}"
+        dest = os.path.join(settings.upload_dir_abs, "submissions", fname)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        content = await f.read()
+        with open(dest, "wb") as out:
+            out.write(content)
+        file_answers[qid] = (f"submissions/{fname}", f.filename)
+
+    return assignment_controller.submit_answers(assignment_id, current_user.id, payload, file_answers, db)
+
+
+@router.get("/submissions/{submission_id}")
+def submission_detail(submission_id: int, db: Session = Depends(get_db),
+                      current_user: User = Depends(get_current_user)):
+    return assignment_controller.get_submission_detail(submission_id, current_user.id, current_user.role, db)
+
+
+@router.post("/answers/{response_id}/grade")
+def grade_answer(response_id: int, data: GradeAnswer, db: Session = Depends(get_db),
+                 current_user: User = Depends(require_role("facilitator", "admin"))):
+    return assignment_controller.grade_question_response(response_id, data, current_user.id, db)

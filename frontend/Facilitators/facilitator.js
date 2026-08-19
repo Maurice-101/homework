@@ -262,9 +262,26 @@ function switchFTab(tab) {
   if (tab === 'syllabus')      loadSyllabus();
   if (tab === 'groups')        loadFGroups();
   if (tab === 'materials')     loadCourseMaterials();
+  if (tab === 'assignments')   loadCourseAssignments();
 }
 
 // ── Course Materials (uploaded PDFs + items attached from the Cloudflare library) ──
+// ── Course-scoped Assignments tab ────────────────────────────────────────────
+async function loadCourseAssignments() {
+  const el = document.getElementById('courseAssignmentsList');
+  if (!activeCourseId) return;
+  el.innerHTML = '<p style="color:#aaa;font-size:13px">Loading…</p>';
+  try {
+    if (!_allAsgnData.length) _allAsgnData = await apiGet('/assignments/') || [];
+    const list = _allAsgnData.filter(a => a.course_id == activeCourseId);
+    el.innerHTML = list.length
+      ? list.map(a => asgnCard(a, true)).join('')
+      : '<p style="color:#aaa;font-size:13px">No assignments for this course yet.</p>';
+  } catch (e) {
+    el.innerHTML = '<p style="color:#aaa;font-size:13px">Could not load assignments.</p>';
+  }
+}
+
 async function loadCourseMaterials() {
   const el = document.getElementById('fMaterialsList');
   if (!activeCourseId) return;
@@ -611,15 +628,22 @@ function fileIcon(filename) {
   return '📎';
 }
 
+const STATUS_COLORS = {
+  draft: 'background:#f4f4f4;color:#888', published: 'background:#e8f5ee;color:#1a5c3a', closed: 'background:#fde8e8;color:#a12b2b',
+};
+
 function asgnCard(a, showSubs) {
   const attachments = a.attachments || [];
+  const status = a.status || (a.is_published ? 'published' : 'draft');
   return `
     <div class="asgn-card">
       <div class="asgn-left">
         <h3>${esc(a.title)}</h3>
         <p>${esc(a.description || '')}</p>
         <div class="asgn-meta">
+          <span class="asgn-tag" style="${STATUS_COLORS[status] || ''}">${status}</span>
           <span class="asgn-tag type">${esc(a.assignment_type || a.type || '')}</span>
+          ${a.question_count ? `<span class="asgn-tag">❓ ${a.question_count} question${a.question_count === 1 ? '' : 's'}</span>` : ''}
           ${a.due_date ? `<span class="asgn-tag due">Due: ${fmtDate(a.due_date)}</span>` : ''}
           <span class="asgn-tag">Max: ${a.max_score}</span>
           ${a.course_title ? `<span class="asgn-tag">📚 ${esc(a.course_title)}</span>` : ''}
@@ -643,7 +667,10 @@ function renderPickedFiles(inputId, listId) {
   ).join('');
 }
 
+let _createForCourseId = null;
+
 async function openCreateAssignment() {
+  _createForCourseId = null;
   if (!Array.isArray(myCourses) || myCourses.length === 0) {
     try { myCourses = await apiGet('/courses/my') || []; } catch(e) {}
   }
@@ -654,6 +681,15 @@ async function openCreateAssignment() {
   document.getElementById('modalCreateAssignment').classList.remove('hidden');
 }
 
+// Opened from the "Assignments" tab inside a specific course's detail view
+async function openCreateAssignmentForCourse() {
+  await openCreateAssignment();
+  if (activeCourseId) {
+    document.getElementById('caCourse').value = activeCourseId;
+    _createForCourseId = activeCourseId;
+  }
+}
+
 async function submitCreateAssignment() {
   const title      = document.getElementById('caTitle').value.trim();
   const desc       = document.getElementById('caDesc').value.trim();
@@ -661,6 +697,7 @@ async function submitCreateAssignment() {
   const type       = document.getElementById('caType').value;
   const due        = document.getElementById('caDue').value;
   const score      = parseInt(document.getElementById('caScore').value) || 100;
+  const status     = document.getElementById('caStatus').value;
   const attachUrl  = document.getElementById('caAttachUrl').value.trim();
   const attachFiles = Array.from(document.getElementById('caAttachFiles').files || []);
   if (!title || !course) { showToast('Title and subject required', 'error'); return; }
@@ -672,20 +709,28 @@ async function submitCreateAssignment() {
     fd.append('assignment_type', type);
     if (due)      fd.append('due_date', new Date(due).toISOString());
     fd.append('max_score', score);
+    fd.append('status', status);
     if (attachUrl) fd.append('attachment_url', attachUrl);
     attachFiles.forEach(f => fd.append('attachment_files', f));
-    await apiFetch('/assignments/', { method: 'POST', body: fd });
+    const created = await apiFetch('/assignments/', { method: 'POST', body: fd });
     closeModal('modalCreateAssignment');
     document.getElementById('caAttachFiles').value = '';
     document.getElementById('caPickedFiles').innerHTML = '';
+    document.getElementById('caStatus').value = 'draft';
     loadAssignments();
-    showToast('Assignment created and students notified!');
+    if (_createForCourseId) loadCourseAssignments();
+    showToast(status === 'published' ? 'Assignment created and students notified!' : 'Assignment created as draft.');
+    // Jump straight into the editor so the facilitator can add questions right away
+    if (created && created.id) {
+      _allAsgnData = [...(_allAsgnData || []), created];
+      openEditAssignment(created.id);
+    }
   } catch(e) { showToast('Could not create assignment.', 'error'); }
 }
 
 let _allAsgnData = [];
 
-function openEditAssignment(id) {
+async function openEditAssignment(id) {
   const a = _allAsgnData.find(x => x.id == id);
   if (!a) { showToast('Assignment not found', 'error'); return; }
   document.getElementById('editAsgnId').value    = a.id;
@@ -693,7 +738,11 @@ function openEditAssignment(id) {
   document.getElementById('editDesc').value       = a.description || '';
   document.getElementById('editType').value       = a.assignment_type || a.type || 'homework';
   document.getElementById('editScore').value      = a.max_score || 100;
-  document.getElementById('editPublished').value  = a.is_published ? 'true' : 'false';
+  document.getElementById('editStatus').value     = a.status || (a.is_published ? 'published' : 'draft');
+  document.getElementById('editTimeLimit').value  = a.time_limit_minutes || '';
+  document.getElementById('editMaxAttempts').value = a.max_attempts || 1;
+  document.getElementById('editRandomizeQ').checked = !!a.randomize_questions;
+  document.getElementById('editRandomizeC').checked = !!a.randomize_choices;
   document.getElementById('editAttachUrl').value  = a.attachment_url || '';
   document.getElementById('editAttachFiles').value = '';
   document.getElementById('editPickedFiles').innerHTML = '';
@@ -704,7 +753,21 @@ function openEditAssignment(id) {
   } else {
     document.getElementById('editDue').value = '';
   }
+  if (a.available_from) {
+    const d = new Date(a.available_from);
+    if (!isNaN(d)) document.getElementById('editAvailFrom').value = d.toISOString().slice(0,16);
+  } else {
+    document.getElementById('editAvailFrom').value = '';
+  }
   document.getElementById('modalEditAssignment').classList.remove('hidden');
+
+  _editingQuestions = [];
+  renderQuestionBuilder();
+  try {
+    const questions = await apiGet(`/assignments/${id}/questions`);
+    _editingQuestions = Array.isArray(questions) ? questions : [];
+  } catch (e) { /* new assignment with no questions yet, or fetch failed — start empty */ }
+  renderQuestionBuilder();
 }
 
 function renderCurrentAttachments(a) {
@@ -737,16 +800,25 @@ async function deleteAssignmentAttachment(assignmentId, attachmentId, btn) {
 }
 
 async function submitEditAssignment() {
-  const id         = document.getElementById('editAsgnId').value;
-  const title      = document.getElementById('editTitle').value.trim();
-  const desc       = document.getElementById('editDesc').value.trim();
-  const type       = document.getElementById('editType').value;
-  const due        = document.getElementById('editDue').value;
-  const score      = parseFloat(document.getElementById('editScore').value);
-  const published  = document.getElementById('editPublished').value === 'true';
+  const id          = document.getElementById('editAsgnId').value;
+  const title       = document.getElementById('editTitle').value.trim();
+  const desc        = document.getElementById('editDesc').value.trim();
+  const type        = document.getElementById('editType').value;
+  const due         = document.getElementById('editDue').value;
+  const score       = parseFloat(document.getElementById('editScore').value);
+  const status      = document.getElementById('editStatus').value;
+  const timeLimit   = document.getElementById('editTimeLimit').value;
+  const maxAttempts = parseInt(document.getElementById('editMaxAttempts').value) || 1;
+  const availFrom   = document.getElementById('editAvailFrom').value;
+  const randomizeQ  = document.getElementById('editRandomizeQ').checked;
+  const randomizeC  = document.getElementById('editRandomizeC').checked;
   const attachUrl   = document.getElementById('editAttachUrl').value.trim();
   const attachFiles = Array.from(document.getElementById('editAttachFiles').files || []);
   if (!title) { showToast('Title required', 'error'); return; }
+
+  const questionsError = validateQuestionBuilder();
+  if (questionsError) { showToast(questionsError, 'error'); return; }
+
   try {
     const fd = new FormData();
     fd.append('title', title);
@@ -754,17 +826,204 @@ async function submitEditAssignment() {
     fd.append('assignment_type', type);
     if (due)      fd.append('due_date', new Date(due).toISOString());
     fd.append('max_score', score);
-    fd.append('is_published', published);
+    fd.append('status', status);
+    fd.append('max_attempts', maxAttempts);
+    fd.append('randomize_questions', randomizeQ);
+    fd.append('randomize_choices', randomizeC);
+    if (timeLimit)  fd.append('time_limit_minutes', timeLimit);
+    if (availFrom)  fd.append('available_from', new Date(availFrom).toISOString());
     if (attachUrl) fd.append('attachment_url', attachUrl);
     attachFiles.forEach(f => fd.append('attachment_files', f));
     await apiFetch(`/assignments/${id}`, { method: 'PUT', body: fd });
+    await apiFetch(`/assignments/${id}/questions`, {
+      method: 'PUT',
+      body: JSON.stringify({ questions: _editingQuestions }),
+      headers: { 'Content-Type': 'application/json' },
+    });
     closeModal('modalEditAssignment');
     loadAssignments();
+    if (activeCourseId) loadCourseAssignments();
     showToast('Assignment updated!');
   } catch(e) { showToast('Could not update assignment.', 'error'); }
 }
 
+// ── Question builder ─────────────────────────────────────────────────────────
+// _editingQuestions is the in-memory draft; text-field edits (oninput) update it
+// silently without re-rendering, so the user never loses cursor focus mid-type.
+// Structural changes (add/remove/reorder/type-switch) call renderQuestionBuilder().
+let _editingQuestions = [];
+
+const QUESTION_TYPE_LABELS = {
+  short_answer: 'Short Answer', long_answer: 'Long Answer / Essay',
+  multiple_choice: 'Multiple Choice', multiple_select: 'Multiple Select',
+  true_false: 'True / False', dropdown: 'Dropdown', matching: 'Matching',
+  file_upload: 'File Upload',
+};
+const OPTION_TYPES = new Set(['multiple_choice', 'multiple_select', 'true_false', 'dropdown']);
+
+function addBuilderQuestion() {
+  _editingQuestions.push({
+    text: '', type: 'short_answer', points: 1, required: true,
+    order_num: _editingQuestions.length, options: [],
+  });
+  renderQuestionBuilder();
+}
+
+function qbUpdateField(qi, field, value) {
+  const q = _editingQuestions[qi];
+  if (!q) return;
+  if (field === 'type') {
+    q.type = value;
+    if (OPTION_TYPES.has(value) && value !== 'true_false' && q.options.length === 0) {
+      q.options = [{ text: '', is_correct: false, order_num: 0 }, { text: '', is_correct: false, order_num: 1 }];
+    } else if (value === 'true_false') {
+      q.options = [{ text: 'True', is_correct: true, order_num: 0 }, { text: 'False', is_correct: false, order_num: 1 }];
+    } else if (value === 'matching' && q.options.length === 0) {
+      q.options = [{ text: '', match_value: '', order_num: 0 }, { text: '', match_value: '', order_num: 1 }];
+    }
+    renderQuestionBuilder();
+    return;
+  }
+  if (field === 'points') { q.points = parseFloat(value) || 0; return; }
+  q[field] = value;
+}
+
+function qbAddOption(qi) {
+  const q = _editingQuestions[qi];
+  q.options.push(q.type === 'matching'
+    ? { text: '', match_value: '', order_num: q.options.length }
+    : { text: '', is_correct: false, order_num: q.options.length });
+  renderQuestionBuilder();
+}
+
+function qbRemoveOption(qi, oi) {
+  _editingQuestions[qi].options.splice(oi, 1);
+  renderQuestionBuilder();
+}
+
+function qbUpdateOptionText(qi, oi, field, value) {
+  _editingQuestions[qi].options[oi][field] = value;
+}
+
+function qbSetCorrectSingle(qi, oi) {
+  _editingQuestions[qi].options.forEach((o, i) => { o.is_correct = i === oi; });
+}
+
+function qbToggleCorrectMulti(qi, oi, checked) {
+  _editingQuestions[qi].options[oi].is_correct = checked;
+}
+
+function qbMoveQuestion(qi, dir) {
+  const newIdx = qi + dir;
+  if (newIdx < 0 || newIdx >= _editingQuestions.length) return;
+  const [q] = _editingQuestions.splice(qi, 1);
+  _editingQuestions.splice(newIdx, 0, q);
+  _editingQuestions.forEach((q, i) => { q.order_num = i; });
+  renderQuestionBuilder();
+}
+
+function qbDuplicateQuestion(qi) {
+  const q = _editingQuestions[qi];
+  const copy = JSON.parse(JSON.stringify(q));
+  delete copy.id;
+  copy.options.forEach(o => delete o.id);
+  _editingQuestions.splice(qi + 1, 0, copy);
+  _editingQuestions.forEach((q, i) => { q.order_num = i; });
+  renderQuestionBuilder();
+}
+
+function qbDeleteQuestion(qi) {
+  if (!confirm('Delete this question? This cannot be undone once you save.')) return;
+  _editingQuestions.splice(qi, 1);
+  _editingQuestions.forEach((q, i) => { q.order_num = i; });
+  renderQuestionBuilder();
+}
+
+function validateQuestionBuilder() {
+  for (let qi = 0; qi < _editingQuestions.length; qi++) {
+    const q = _editingQuestions[qi];
+    if (!q.text || !q.text.trim()) return `Question ${qi + 1} needs question text.`;
+    if (OPTION_TYPES.has(q.type)) {
+      if (q.options.length < 2) return `Question ${qi + 1} needs at least 2 options.`;
+      if (!q.options.some(o => o.is_correct)) return `Question ${qi + 1}: mark a correct answer.`;
+      if (q.options.some(o => !o.text || !o.text.trim())) return `Question ${qi + 1} has an empty option.`;
+    }
+    if (q.type === 'matching') {
+      if (q.options.length < 2) return `Question ${qi + 1} needs at least 2 matching pairs.`;
+      if (q.options.some(o => !o.text?.trim() || !o.match_value?.trim())) return `Question ${qi + 1} has an incomplete matching pair.`;
+    }
+  }
+  return null;
+}
+
+function renderQuestionBuilder() {
+  const el = document.getElementById('questionBuilderList');
+  const emptyNote = document.getElementById('qbEmptyNote');
+  const totalEl = document.getElementById('qbTotalPoints');
+  if (!el) return;
+  emptyNote.style.display = _editingQuestions.length ? 'none' : 'block';
+  const total = _editingQuestions.reduce((sum, q) => sum + (parseFloat(q.points) || 0), 0);
+  totalEl.textContent = _editingQuestions.length ? `(${total} pts total)` : '';
+
+  el.innerHTML = _editingQuestions.map((q, qi) => `
+    <div class="qb-card">
+      <div class="qb-card-head">
+        <span class="qb-num">Q${qi + 1}</span>
+        <select onchange="qbUpdateField(${qi},'type',this.value)">
+          ${Object.entries(QUESTION_TYPE_LABELS).map(([v, l]) =>
+            `<option value="${v}" ${q.type === v ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <input type="number" min="0" step="0.5" value="${q.points}" title="Points" oninput="qbUpdateField(${qi},'points',this.value)">
+        <div class="qb-card-actions">
+          <button type="button" class="qb-icon-btn" onclick="qbMoveQuestion(${qi},-1)" title="Move up" ${qi === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="qb-icon-btn" onclick="qbMoveQuestion(${qi},1)" title="Move down" ${qi === _editingQuestions.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" class="qb-icon-btn" onclick="qbDuplicateQuestion(${qi})" title="Duplicate">⧉</button>
+          <button type="button" class="qb-icon-btn danger" onclick="qbDeleteQuestion(${qi})" title="Delete">🗑</button>
+        </div>
+      </div>
+      <textarea class="qb-text" rows="2" placeholder="Question text…" oninput="qbUpdateField(${qi},'text',this.value)">${esc(q.text)}</textarea>
+      ${_qbOptionsHtml(q, qi)}
+      <div class="qb-required-row">
+        <label><input type="checkbox" ${q.required ? 'checked' : ''} onchange="qbUpdateField(${qi},'required',this.checked)"> Required</label>
+      </div>
+    </div>`).join('');
+}
+
+function _qbOptionsHtml(q, qi) {
+  if (q.type === 'short_answer' || q.type === 'long_answer') {
+    return `<p style="color:#aaa;font-size:12px;margin-bottom:4px">Students will type a ${q.type === 'short_answer' ? 'short' : 'long'} text answer. This is graded manually.</p>`;
+  }
+  if (q.type === 'file_upload') {
+    return `<p style="color:#aaa;font-size:12px;margin-bottom:4px">Students will upload a file (PDF/image/document). Graded manually.</p>`;
+  }
+  if (q.type === 'matching') {
+    const rows = q.options.map((o, oi) => `
+      <div class="qb-option-row">
+        <input type="text" placeholder="Item" value="${esc(o.text || '')}" oninput="qbUpdateOptionText(${qi},${oi},'text',this.value)">
+        <span class="qb-match-arrow">→</span>
+        <input type="text" placeholder="Correct match" value="${esc(o.match_value || '')}" oninput="qbUpdateOptionText(${qi},${oi},'match_value',this.value)">
+        <button type="button" class="qb-icon-btn danger" onclick="qbRemoveOption(${qi},${oi})" title="Remove pair">✕</button>
+      </div>`).join('');
+    return rows + `<button type="button" class="btn-sm btn-outline" onclick="qbAddOption(${qi})">+ Add Pair</button>`;
+  }
+  // multiple_choice / multiple_select / dropdown / true_false
+  const isMulti = q.type === 'multiple_select';
+  const isFixed = q.type === 'true_false';
+  const rows = q.options.map((o, oi) => `
+    <div class="qb-option-row">
+      <input type="${isMulti ? 'checkbox' : 'radio'}" name="qb-correct-${qi}" ${o.is_correct ? 'checked' : ''}
+        onchange="${isMulti ? `qbToggleCorrectMulti(${qi},${oi},this.checked)` : `qbSetCorrectSingle(${qi},${oi})`}">
+      <input type="text" placeholder="Option ${oi + 1}" value="${esc(o.text || '')}"
+        oninput="qbUpdateOptionText(${qi},${oi},'text',this.value)" ${isFixed ? 'readonly' : ''}>
+      ${isFixed ? '' : `<button type="button" class="qb-icon-btn danger" onclick="qbRemoveOption(${qi},${oi})" title="Remove option">✕</button>`}
+    </div>`).join('');
+  return rows + (isFixed ? '' : `<button type="button" class="btn-sm btn-outline" onclick="qbAddOption(${qi})">+ Add Option</button>`);
+}
+
+let _viewingSubmissionsFor = null;
+
 async function viewSubmissions(asgnId, title) {
+  _viewingSubmissionsFor = { asgnId, title };
   document.getElementById('modalSubmissions').classList.remove('hidden');
   document.getElementById('submissionsTitle').textContent = `Submissions – ${title}`;
   const body = document.getElementById('submissionsBody');
@@ -793,23 +1052,71 @@ function submissionCard(s, asgn) {
   } else if (s.content) {
     preview = `<p class="sub-text-preview">${esc(s.content)}</p>`;
   }
+  const answers = s.answers || [];
   return `
-    <div class="asgn-card" style="margin-bottom:10px">
-      <div class="asgn-left">
-        <h3>${esc(student)}</h3>
-        ${preview}
-        <p style="font-size:12px;color:var(--text-sub);margin-top:4px">Submitted: ${fmtDate(s.submitted_at)}</p>
-        ${s.grade !== null && s.grade !== undefined
-          ? `<p style="color:var(--success);font-weight:600;margin-top:4px">Grade: ${s.grade} / ${asgn.max_score || 100}</p>`
-          : '<p style="color:var(--warning);font-size:12px;margin-top:4px">Not graded yet</p>'}
-        ${s.feedback ? `<p style="font-size:12px;margin-top:3px;font-style:italic">💬 ${esc(s.feedback)}</p>` : ''}
+    <div class="asgn-card" style="margin-bottom:10px;flex-direction:column;align-items:stretch">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="asgn-left">
+          <h3>${esc(student)} ${s.attempt_number > 1 ? `<small style="color:#aaa;font-weight:normal">(attempt ${s.attempt_number})</small>` : ''}</h3>
+          ${preview}
+          <p style="font-size:12px;color:var(--text-sub);margin-top:4px">Submitted: ${fmtDate(s.submitted_at)}</p>
+          ${s.grade !== null && s.grade !== undefined
+            ? `<p style="color:var(--success);font-weight:600;margin-top:4px">Grade: ${s.grade} / ${asgn.max_score || 100}</p>`
+            : '<p style="color:var(--warning);font-size:12px;margin-top:4px">Not graded yet</p>'}
+          ${s.feedback ? `<p style="font-size:12px;margin-top:3px;font-style:italic">💬 ${esc(s.feedback)}</p>` : ''}
+        </div>
+        <div class="asgn-right">
+          <button class="btn-sm" onclick="openGradeModal(${s.id}, ${asgn.max_score||100}, '${esc(student)}')">
+            ${s.grade !== null && s.grade !== undefined ? 'Re-grade' : 'Grade'}
+          </button>
+        </div>
       </div>
-      <div class="asgn-right">
-        <button class="btn-sm" onclick="openGradeModal(${s.id}, ${asgn.max_score||100}, '${esc(student)}')">
-          ${s.grade !== null && s.grade !== undefined ? 'Re-grade' : 'Grade'}
-        </button>
-      </div>
+      ${answers.length ? `<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px">${answers.map(a => answerReviewRow(a)).join('')}</div>` : ''}
     </div>`;
+}
+
+function answerReviewRow(a) {
+  const objective = a.is_correct !== null && a.is_correct !== undefined;
+  const badge = objective
+    ? (a.is_correct
+        ? `<span style="color:#1a8a5a">✓ ${a.points_awarded}/${a.question_points}</span>`
+        : `<span style="color:#c0392b">✗ ${a.points_awarded ?? 0}/${a.question_points}</span>`)
+    : (a.points_awarded !== null && a.points_awarded !== undefined
+        ? `<span style="color:#1a8a5a">${a.points_awarded}/${a.question_points}</span>`
+        : `<span style="color:#c47f00">Needs grading</span>`);
+
+  let answerHtml = '';
+  if (a.answer_text) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${esc(a.answer_text)}</p>`;
+  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('/uploads/${esc(a.file_path)}','Answer')">📎 View uploaded file</button>`;
+  else if (a.selected_option_ids) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">Selected option(s): ${a.selected_option_ids.join(', ')}</p>`;
+  else if (a.matching_answers) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${Object.entries(a.matching_answers).map(([k,v]) => `${esc(k)} → ${esc(v)}`).join('; ')}</p>`;
+
+  const needsManualGrading = !objective;
+  return `
+    <div style="padding:6px 0;border-bottom:1px dashed #eee">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px">
+        <strong>${esc(a.question_text || '')}</strong>
+        ${badge}
+      </div>
+      ${answerHtml}
+      ${needsManualGrading ? `
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+          <input type="number" id="answer-pts-${a.id}" min="0" max="${a.question_points}" step="0.5"
+            value="${a.points_awarded ?? ''}" placeholder="Points" style="width:70px;padding:4px 6px;font-size:12px;border:1px solid var(--border);border-radius:5px">
+          <button class="btn-sm" onclick="gradeAnswer(${a.id}, ${a.question_points})">Save</button>
+        </div>` : ''}
+    </div>`;
+}
+
+async function gradeAnswer(responseId, maxPoints) {
+  const input = document.getElementById(`answer-pts-${responseId}`);
+  const points = parseFloat(input.value);
+  if (isNaN(points) || points < 0 || points > maxPoints) { showToast(`Enter 0–${maxPoints}`, 'error'); return; }
+  try {
+    await apiPost(`/assignments/answers/${responseId}/grade`, { points_awarded: points });
+    showToast('Question graded!');
+    if (_viewingSubmissionsFor) viewSubmissions(_viewingSubmissionsFor.asgnId, _viewingSubmissionsFor.title);
+  } catch (e) { showToast('Could not save grade.', 'error'); }
 }
 
 function openGradeModal(subId, maxScore, studentName) {

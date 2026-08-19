@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Facilitator Dashboard – Homework</title>
-<link rel="stylesheet" href="facilitator.css?v=3">
+<link rel="stylesheet" href="facilitator.css?v=4">
 </head>
 <body>
 <div class="layout">
@@ -110,6 +110,7 @@
         <nav style="display:flex;gap:2px;padding:0 12px;border-bottom:2px solid #e5e8ef;background:#f8f9fd;overflow-x:auto;white-space:nowrap;flex-shrink:0">
           <button class="cdtab active" data-ftab="overview" onclick="switchFTab('overview')">📋 Overview</button>
           <button class="cdtab" data-ftab="modules" onclick="switchFTab('modules')">📘 Modules</button>
+          <button class="cdtab" data-ftab="assignments" onclick="switchFTab('assignments')">📝 Assignments</button>
           <button class="cdtab" data-ftab="announcements" onclick="switchFTab('announcements')">📢 Announcements</button>
           <button class="cdtab" data-ftab="syllabus" onclick="switchFTab('syllabus')">📅 Syllabus</button>
           <button class="cdtab" data-ftab="students" onclick="switchFTab('students')">👥 Students</button>
@@ -128,6 +129,14 @@
             <textarea id="moduleContent" placeholder="Module content/description"></textarea>
             <button class="btn-primary" onclick="addModule()">Add Module</button>
           </div>
+        </div>
+        <!-- Assignments (scoped to this course) -->
+        <div class="fpane" id="fpane-assignments" style="padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <h4 style="margin:0;font-size:14px">Course Assignments</h4>
+            <button class="btn-sm" onclick="openCreateAssignmentForCourse()">+ New Assignment</button>
+          </div>
+          <div id="courseAssignmentsList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
         </div>
         <!-- Announcements -->
         <div class="fpane" id="fpane-announcements" style="padding:18px">
@@ -436,12 +445,19 @@
       </div>
       <div class="form-row"><label>Due Date</label><input type="datetime-local" id="caDue"></div>
       <div class="form-row"><label>Max Score</label><input type="number" id="caScore" value="100"></div>
+      <div class="form-row"><label>Status</label>
+        <select id="caStatus">
+          <option value="draft">Draft (add questions before publishing)</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
       <div class="form-row"><label>Attachment URL <small style="color:#888">(optional link / Google Doc)</small></label><input type="url" id="caAttachUrl" placeholder="https://…"></div>
       <div class="form-row">
         <label>Attachments <small style="color:#888">(optional — PDF, images, Word, PowerPoint, Excel; select multiple)</small></label>
         <input type="file" id="caAttachFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" onchange="renderPickedFiles('caAttachFiles','caPickedFiles')">
         <div id="caPickedFiles" class="picked-files"></div>
       </div>
+      <p style="font-size:12px;color:#888;margin-bottom:10px">You'll be able to add questions right after creating this.</p>
       <button class="btn-primary" onclick="submitCreateAssignment()">Create Assignment</button>
     </div>
   </div>
@@ -449,7 +465,7 @@
 
 <!-- MODAL: Edit Assignment -->
 <div class="modal-overlay hidden" id="modalEditAssignment">
-  <div class="modal">
+  <div class="modal" style="max-width:720px">
     <div class="modal-head">
       <h3>Edit Assignment</h3>
       <button class="modal-close" onclick="closeModal('modalEditAssignment')">✕</button>
@@ -457,7 +473,7 @@
     <div class="modal-body">
       <input type="hidden" id="editAsgnId">
       <div class="form-row"><label>Title</label><input type="text" id="editTitle"></div>
-      <div class="form-row"><label>Description</label><textarea id="editDesc" rows="3"></textarea></div>
+      <div class="form-row"><label>Description / Instructions</label><textarea id="editDesc" rows="3"></textarea></div>
       <div class="form-row"><label>Type</label>
         <select id="editType">
           <option value="homework">Homework</option>
@@ -468,12 +484,25 @@
       </div>
       <div class="form-row"><label>Due Date</label><input type="datetime-local" id="editDue"></div>
       <div class="form-row"><label>Max Score</label><input type="number" id="editScore"></div>
-      <div class="form-row"><label>Published</label>
-        <select id="editPublished">
-          <option value="true">Published</option>
-          <option value="false">Draft</option>
+      <div class="form-row"><label>Status</label>
+        <select id="editStatus">
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="closed">Closed</option>
         </select>
       </div>
+
+      <div style="background:#f8f9fd;border-radius:10px;padding:12px 14px;margin:14px 0">
+        <h4 style="margin:0 0 10px;font-size:13px">Submission Settings</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-row" style="margin-bottom:0"><label>Time Limit <small style="color:#888">(minutes, optional)</small></label><input type="number" id="editTimeLimit" min="1" placeholder="No limit"></div>
+          <div class="form-row" style="margin-bottom:0"><label>Max Attempts</label><input type="number" id="editMaxAttempts" min="1" value="1"></div>
+        </div>
+        <div class="form-row"><label>Available From <small style="color:#888">(optional)</small></label><input type="datetime-local" id="editAvailFrom"></div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:6px"><input type="checkbox" id="editRandomizeQ"> Randomize question order</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" id="editRandomizeC"> Randomize answer-choice order</label>
+      </div>
+
       <div class="form-row"><label>Attachment URL <small style="color:#888">(optional link / Google Doc)</small></label><input type="url" id="editAttachUrl" placeholder="https://…"></div>
       <div class="form-row">
         <label>Current Attachments</label>
@@ -484,7 +513,18 @@
         <input type="file" id="editAttachFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" onchange="renderPickedFiles('editAttachFiles','editPickedFiles')">
         <div id="editPickedFiles" class="picked-files"></div>
       </div>
-      <button class="btn-primary" onclick="submitEditAssignment()">Save Changes</button>
+
+      <!-- Question builder -->
+      <div style="border-top:2px solid #e5e8ef;margin-top:16px;padding-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h4 style="margin:0;font-size:14px">Questions <span id="qbTotalPoints" style="color:#888;font-weight:normal;font-size:12px"></span></h4>
+          <button type="button" class="btn-sm btn-outline" onclick="addBuilderQuestion()">+ Add Question</button>
+        </div>
+        <div id="questionBuilderList"></div>
+        <p id="qbEmptyNote" style="color:#aaa;font-size:12px">No questions yet — this will behave as a plain description-only assignment until you add some.</p>
+      </div>
+
+      <button class="btn-primary" style="margin-top:16px" onclick="submitEditAssignment()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -601,6 +641,6 @@
 
 <script src="../js/api.js?v=2"></script>
 <script src="../js/i18n.js?v=2"></script>
-<script src="facilitator.js?v=4"></script>
+<script src="facilitator.js?v=5"></script>
 </body>
 </html>

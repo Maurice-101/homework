@@ -1028,6 +1028,18 @@ function openAssignmentDetail(aOrId) {
         </div>` : ""}
     `;
 
+    const grid = document.getElementById("adetailGrid");
+    const quizEl = document.getElementById("quizContainer");
+    if (a.question_count > 0) {
+        grid.style.display = "none";
+        quizEl.style.display = "block";
+        loadQuizForAssignment(a);
+        return;
+    }
+    grid.style.display = "grid";
+    quizEl.style.display = "none";
+    quizEl.innerHTML = "";
+
     const existEl = document.getElementById("existingSubmission");
     const formEl  = document.getElementById("submitForm");
 
@@ -1068,6 +1080,218 @@ function closeAssignmentDetail() {
     document.getElementById("assignmentDetailPanel").classList.add("hidden");
     document.querySelectorAll("#sec-assignments .hidden-for-detail").forEach(el => el.classList.remove("hidden-for-detail"));
     activeAssignData = null;
+}
+
+// ── Quiz taking (question-based assignments) ─────────────────────────────────
+let _quizData = null;        // {questions, time_limit_minutes, max_attempts, attempts_used, attempts_remaining}
+let _quizAssignmentId = null;
+let _quizTimerInterval = null;
+let _quizDeadline = null;
+
+async function loadQuizForAssignment(a) {
+    _quizAssignmentId = a.id;
+    const el = document.getElementById("quizContainer");
+    el.innerHTML = '<p class="empty">Loading…</p>';
+
+    if (a.student_submission_id) {
+        try {
+            const sub = await apiGet(`/assignments/submissions/${a.student_submission_id}`);
+            renderQuizResults(a, sub);
+        } catch (e) { el.innerHTML = '<p class="empty">Could not load your submission.</p>'; }
+        return;
+    }
+    try {
+        _quizData = await apiGet(`/assignments/${a.id}/questions`);
+        if (!_quizData.attempts_remaining) {
+            el.innerHTML = '<p class="empty">No attempts remaining for this assignment.</p>';
+            return;
+        }
+        renderQuizTakingForm(a);
+    } catch (e) { el.innerHTML = '<p class="empty">Could not load the quiz.</p>'; }
+}
+
+function renderQuizTakingForm(a) {
+    const el = document.getElementById("quizContainer");
+    const d = _quizData;
+    clearInterval(_quizTimerInterval);
+
+    el.innerHTML = `
+        <div class="quiz-meta-bar">
+          ${d.time_limit_minutes ? `<span>⏱ <strong id="quizTimer">${d.time_limit_minutes}:00</strong></span>` : ""}
+          <span>📝 ${d.questions.length} question${d.questions.length === 1 ? "" : "s"}</span>
+          <span>🔁 Attempt ${d.attempts_used + 1} of ${d.max_attempts}</span>
+        </div>
+        <div id="quizQuestions">${d.questions.map((q, i) => renderQuizQuestion(q, i)).join("")}</div>
+        <button class="btn-p" style="width:100%;margin-top:8px" onclick="submitQuizAnswers()">Submit Quiz</button>
+    `;
+
+    if (d.time_limit_minutes) {
+        _quizDeadline = Date.now() + d.time_limit_minutes * 60000;
+        _quizTimerInterval = setInterval(updateQuizTimer, 1000);
+        updateQuizTimer();
+    }
+}
+
+function updateQuizTimer() {
+    const remainingMs = _quizDeadline - Date.now();
+    const timerEl = document.getElementById("quizTimer");
+    if (!timerEl) { clearInterval(_quizTimerInterval); return; }
+    if (remainingMs <= 0) {
+        clearInterval(_quizTimerInterval);
+        timerEl.textContent = "0:00";
+        showToast("Time's up — submitting your quiz.", "error");
+        submitQuizAnswers();
+        return;
+    }
+    const mins = Math.floor(remainingMs / 60000);
+    const secs = Math.floor((remainingMs % 60000) / 1000);
+    timerEl.textContent = `${mins}:${String(secs).padStart(2, "0")}`;
+}
+
+function renderQuizQuestion(q, idx) {
+    return `
+        <div class="quiz-question">
+          <div class="quiz-q-head">
+            <span class="quiz-q-num">Q${idx + 1}. ${q.required ? "" : "(optional)"}</span>
+            <span class="quiz-q-points">${q.points} pt${q.points === 1 ? "" : "s"}</span>
+          </div>
+          <div class="quiz-q-text">${esc(q.text)}</div>
+          ${_quizInputHtml(q)}
+        </div>`;
+}
+
+function _quizInputHtml(q) {
+    if (q.type === "short_answer") {
+        return `<input type="text" class="quiz-answer-input" id="qa-${q.id}" placeholder="Your answer…">`;
+    }
+    if (q.type === "long_answer") {
+        return `<textarea class="quiz-answer-input" id="qa-${q.id}" rows="5" placeholder="Your answer…"></textarea>`;
+    }
+    if (q.type === "file_upload") {
+        return `<input type="file" id="qa-${q.id}" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp">`;
+    }
+    if (q.type === "dropdown") {
+        return `<select class="quiz-answer-input" id="qa-${q.id}">
+          <option value="">Select…</option>
+          ${q.options.map(o => `<option value="${o.id}">${esc(o.text)}</option>`).join("")}
+        </select>`;
+    }
+    if (q.type === "true_false" || q.type === "multiple_choice") {
+        return q.options.map(o => `
+          <label class="quiz-option-row">
+            <input type="radio" name="qa-${q.id}" value="${o.id}"> ${esc(o.text)}
+          </label>`).join("");
+    }
+    if (q.type === "multiple_select") {
+        return q.options.map(o => `
+          <label class="quiz-option-row">
+            <input type="checkbox" name="qa-${q.id}" value="${o.id}"> ${esc(o.text)}
+          </label>`).join("");
+    }
+    if (q.type === "matching") {
+        return q.options.map(o => `
+          <div class="quiz-matching-row">
+            <span class="qm-left">${esc(o.text)}</span> →
+            <select id="qa-${q.id}-${o.id}">
+              <option value="">Select match…</option>
+              ${(q.right_choices || []).map(rc => `<option value="${esc(rc)}">${esc(rc)}</option>`).join("")}
+            </select>
+          </div>`).join("");
+    }
+    return "";
+}
+
+async function submitQuizAnswers() {
+    clearInterval(_quizTimerInterval);
+    const answers = [];
+    const fileEntries = [];
+    for (const q of _quizData.questions) {
+        if (q.type === "short_answer" || q.type === "long_answer") {
+            const v = document.getElementById(`qa-${q.id}`)?.value.trim();
+            if (v) answers.push({ question_id: q.id, answer_text: v });
+        } else if (q.type === "dropdown") {
+            const v = document.getElementById(`qa-${q.id}`)?.value;
+            if (v) answers.push({ question_id: q.id, selected_option_ids: [parseInt(v)] });
+        } else if (q.type === "true_false" || q.type === "multiple_choice") {
+            const checked = document.querySelector(`input[name="qa-${q.id}"]:checked`);
+            if (checked) answers.push({ question_id: q.id, selected_option_ids: [parseInt(checked.value)] });
+        } else if (q.type === "multiple_select") {
+            const checked = Array.from(document.querySelectorAll(`input[name="qa-${q.id}"]:checked`));
+            if (checked.length) answers.push({ question_id: q.id, selected_option_ids: checked.map(c => parseInt(c.value)) });
+        } else if (q.type === "matching") {
+            const matching_answers = {};
+            let any = false;
+            for (const o of q.options) {
+                const v = document.getElementById(`qa-${q.id}-${o.id}`)?.value;
+                if (v) { matching_answers[o.id] = v; any = true; }
+            }
+            if (any) answers.push({ question_id: q.id, matching_answers });
+        } else if (q.type === "file_upload") {
+            const f = document.getElementById(`qa-${q.id}`)?.files[0];
+            if (f) fileEntries.push([q.id, f]);
+        }
+    }
+
+    const missingRequired = _quizData.questions.some(q => q.required &&
+        !answers.some(a => a.question_id === q.id) && !fileEntries.some(([qid]) => qid === q.id));
+    if (missingRequired && !confirm("Some required questions are unanswered. Submit anyway?")) return;
+
+    try {
+        const fd = new FormData();
+        fd.append("answers", JSON.stringify(answers));
+        fileEntries.forEach(([qid, f]) => { fd.append("file_question_ids", qid); fd.append("files", f); });
+        await apiFetch(`/assignments/${_quizAssignmentId}/answers`, { method: "POST", body: fd });
+        showToast("Quiz submitted!");
+        await loadAssignments();
+        openAssignmentDetail(_quizAssignmentId);
+    } catch (e) { showToast(e.message || "Could not submit quiz.", "error"); }
+}
+
+function renderQuizResults(a, sub) {
+    const el = document.getElementById("quizContainer");
+    const graded = sub.grade !== null && sub.grade !== undefined;
+    el.innerHTML = `
+        <div class="quiz-summary-card">
+          ${graded
+            ? `<h2>${sub.grade} / ${a.max_score}</h2><p>Your score</p>`
+            : `<h2>✓ Submitted</h2><p>Awaiting grading for some questions</p>`}
+        </div>
+        ${(sub.answers || []).map((ans, i) => renderQuizAnswerReview(ans, i)).join("")}
+        ${_quizData && _quizData.attempts_remaining > 0
+          ? `<button class="btn-s" style="width:100%" onclick="retakeQuiz()">↻ Retake Quiz (${_quizData.attempts_remaining} attempt${_quizData.attempts_remaining === 1 ? "" : "s"} left)</button>`
+          : ""}
+    `;
+}
+
+function renderQuizAnswerReview(ans, idx) {
+    const objective = ans.is_correct !== null && ans.is_correct !== undefined;
+    let badge = '<span class="quiz-result-badge pending">Pending review</span>';
+    if (objective) {
+        badge = ans.is_correct
+            ? `<span class="quiz-result-badge correct">✓ Correct — ${ans.points_awarded}/${ans.question_points}</span>`
+            : `<span class="quiz-result-badge incorrect">✗ Incorrect — ${ans.points_awarded ?? 0}/${ans.question_points}</span>`;
+    } else if (ans.points_awarded !== null && ans.points_awarded !== undefined) {
+        badge = `<span class="quiz-result-badge correct">${ans.points_awarded}/${ans.question_points}</span>`;
+    }
+    let answerHtml = "";
+    if (ans.answer_text) answerHtml = `<p style="font-size:13px;color:#555;margin-top:6px">${esc(ans.answer_text)}</p>`;
+    else if (ans.file_path) answerHtml = `<button class="btn-tiny" style="margin-top:6px" onclick="openPdf('/uploads/${esc(ans.file_path)}','Your answer')">📎 View your file</button>`;
+
+    return `
+        <div class="quiz-question">
+          <div class="quiz-q-head">
+            <span class="quiz-q-num">Q${idx + 1}. ${esc(ans.question_text || "")}</span>
+            ${badge}
+          </div>
+          ${answerHtml}
+        </div>`;
+}
+
+function retakeQuiz() {
+    const a = assignmentMap[_quizAssignmentId];
+    if (!a) return;
+    a.student_submission_id = null;
+    loadQuizForAssignment(a);
 }
 
 function selectSubType(btn, type) {
