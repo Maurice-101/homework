@@ -38,7 +38,7 @@ def get_facilitator_courses(facilitator_id: int, db: Session) -> List[CourseOut]
 
 def create_course(data: CourseCreate, creator_id: int, db: Session) -> CourseOut:
     course = Course(
-        title=data.title, description=data.description, subject=data.subject,
+        title=data.title, description=data.description, goals=data.goals, subject=data.subject,
         grade_level=data.grade_level, facilitator_id=creator_id,
         is_public=data.is_public, cover_color=data.cover_color or "#2f6df6",
     )

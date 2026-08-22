@@ -9,6 +9,31 @@ class AnnouncementCreate(BaseModel):
     content: str
 
 
+class AnnouncementCommentCreate(BaseModel):
+    content: str
+
+
+class AnnouncementCommentOut(BaseModel):
+    id: int
+    announcement_id: int
+    author_id: int
+    author_name: str = ""
+    content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AnnouncementReaderOut(BaseModel):
+    student_id: int
+    student_name: str = ""
+    read_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class AnnouncementOut(BaseModel):
     id: int
     course_id: int
@@ -17,6 +42,11 @@ class AnnouncementOut(BaseModel):
     author_id: int
     author_name: str = ""
     created_at: datetime
+    read_count: int = 0
+    readers: List[AnnouncementReaderOut] = []
+    comment_count: int = 0
+    comments: List[AnnouncementCommentOut] = []
+    read_by_me: bool = False
 
     class Config:
         from_attributes = True

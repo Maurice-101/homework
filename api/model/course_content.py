@@ -15,6 +15,30 @@ class Announcement(Base):
 
     course  = relationship("Course", back_populates="announcements")
     author  = relationship("User")
+    reads    = relationship("AnnouncementRead", cascade="all, delete-orphan")
+    comments = relationship("AnnouncementComment", cascade="all, delete-orphan",
+                             order_by="AnnouncementComment.created_at")
+
+
+class AnnouncementRead(Base):
+    __tablename__ = "announcement_reads"
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    announcement_id = Column(Integer, ForeignKey("announcements.id"), nullable=False)
+    student_id      = Column(Integer, ForeignKey("users.id"), nullable=False)
+    read_at         = Column(DateTime, default=datetime.utcnow)
+
+    student = relationship("User")
+
+
+class AnnouncementComment(Base):
+    __tablename__ = "announcement_comments"
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    announcement_id = Column(Integer, ForeignKey("announcements.id"), nullable=False)
+    author_id       = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content         = Column(Text, nullable=False)
+    created_at      = Column(DateTime, default=datetime.utcnow)
+
+    author = relationship("User")
 
 
 class Discussion(Base):

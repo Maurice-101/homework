@@ -6,6 +6,7 @@ from datetime import datetime
 class CourseCreate(BaseModel):
     title: str
     description: Optional[str] = None
+    goals: Optional[str] = None
     subject: str
     grade_level: Optional[str] = None
     is_public: bool = False
@@ -16,6 +17,7 @@ class CourseOut(BaseModel):
     id: int
     title: str
     description: Optional[str] = None
+    goals: Optional[str] = None
     subject: str
     grade_level: Optional[str] = None
     facilitator_id: Optional[int] = None

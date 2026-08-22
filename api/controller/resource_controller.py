@@ -14,9 +14,7 @@ _papers_cache: tuple | None = None
 _CACHE_TTL = 120  # seconds
 
 
-def _proxy_url(key: str) -> str:
-    """Return a FastAPI proxy URL for the given R2 object key."""
-    return f"/api/resources/serve?key={urllib.parse.quote(key, safe='')}"
+_proxy_url = r2.proxy_url  # shared helper, kept as a local alias to avoid touching every call site
 
 # Maps folder-name segments (case-insensitive) → canonical subject label
 # (used for past-paper folders, which are still one-subject-per-folder)
@@ -85,6 +83,12 @@ _GRADE_PRIMARY_RE   = re.compile(r"^Primary_(\d)$", re.I)
 _GRADE_SECONDARY_RE = re.compile(r"^s(\d)$", re.I)
 _GRADE_YEAR_RE      = re.compile(r"^Year_(\d)$", re.I)
 _TYPE_TG_RE         = re.compile(r"\bTG\b|teacher.?s?\s*guide", re.I)
+
+# R2 key prefixes reserved for app-managed uploads (facilitator resources,
+# assignment attachments, submissions) — never part of the scanned curriculum
+# library, so they must be excluded when r2_books_prefix is "" and scan_books()
+# would otherwise walk the whole bucket, including these.
+_APP_UPLOAD_PREFIXES = ("resources/", "assignments/", "submissions/")
 
 
 def _year(name: str) -> str:
@@ -180,6 +184,8 @@ def scan_books() -> list:
             continue
         if "/past-papers/" in key:
             continue
+        if key.startswith(_APP_UPLOAD_PREFIXES):
+            continue  # facilitator/student uploads — tracked separately via the Resource table
 
         rel = key[prefix_len:]
         folders = rel.split("/")[:-1]

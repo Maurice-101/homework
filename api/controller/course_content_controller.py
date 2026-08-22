@@ -1,9 +1,13 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from api.model.course_content import Announcement, Discussion, DiscussionReply, SyllabusWeek, CourseGroup, GroupMember
+from api.model.course_content import (
+    Announcement, AnnouncementRead, AnnouncementComment,
+    Discussion, DiscussionReply, SyllabusWeek, CourseGroup, GroupMember,
+)
 from api.model.course import Course, Enrollment
 from api.schemas.course_content import (
-    AnnouncementCreate, AnnouncementOut,
+    AnnouncementCreate, AnnouncementOut, AnnouncementCommentCreate,
+    AnnouncementCommentOut, AnnouncementReaderOut,
     DiscussionCreate, DiscussionOut, ReplyCreate, ReplyOut,
     SyllabusWeekCreate, SyllabusWeekOut,
     GroupCreate, GroupMemberAdd, GroupOut, GroupMemberOut,
@@ -41,20 +45,43 @@ def _assert_facilitator(course_id: int, user_id: int, db: Session):
 
 
 # ── Announcements ────────────────────────────────────────────────────────────
+def _ann_out(r: Announcement, viewer_id: int) -> AnnouncementOut:
+    return AnnouncementOut(
+        id=r.id, course_id=r.course_id, title=r.title, content=r.content,
+        author_id=r.author_id, author_name=_name(r.author),
+        created_at=r.created_at,
+        read_count=len(r.reads),
+        readers=[
+            AnnouncementReaderOut(student_id=rd.student_id, student_name=_name(rd.student), read_at=rd.read_at)
+            for rd in r.reads
+        ],
+        comment_count=len(r.comments),
+        comments=[
+            AnnouncementCommentOut(
+                id=c.id, announcement_id=c.announcement_id, author_id=c.author_id,
+                author_name=_name(c.author), content=c.content, created_at=c.created_at,
+            )
+            for c in r.comments
+        ],
+        read_by_me=any(rd.student_id == viewer_id for rd in r.reads),
+    )
+
+
 def list_announcements(course_id: int, user_id: int, db: Session):
-    _assert_enrolled_or_facilitator(course_id, user_id, db)
+    course = _assert_enrolled_or_facilitator(course_id, user_id, db)
     rows = (db.query(Announcement)
             .filter(Announcement.course_id == course_id)
             .order_by(Announcement.created_at.desc())
             .all())
-    return [
-        AnnouncementOut(
-            id=r.id, course_id=r.course_id, title=r.title, content=r.content,
-            author_id=r.author_id, author_name=_name(r.author),
-            created_at=r.created_at,
-        )
-        for r in rows
-    ]
+    # Students viewing the list are considered to have read every announcement shown.
+    if course.facilitator_id != user_id:
+        for r in rows:
+            if not any(rd.student_id == user_id for rd in r.reads):
+                db.add(AnnouncementRead(announcement_id=r.id, student_id=user_id))
+        db.commit()
+        for r in rows:
+            db.refresh(r)
+    return [_ann_out(r, user_id) for r in rows]
 
 
 def create_announcement(course_id: int, data: AnnouncementCreate, author_id: int, db: Session):
@@ -64,11 +91,7 @@ def create_announcement(course_id: int, data: AnnouncementCreate, author_id: int
     db.add(ann)
     db.commit()
     db.refresh(ann)
-    return AnnouncementOut(
-        id=ann.id, course_id=ann.course_id, title=ann.title, content=ann.content,
-        author_id=ann.author_id, author_name=_name(ann.author),
-        created_at=ann.created_at,
-    )
+    return _ann_out(ann, author_id)
 
 
 def delete_announcement(course_id: int, ann_id: int, user_id: int, db: Session):
@@ -81,6 +104,21 @@ def delete_announcement(course_id: int, ann_id: int, user_id: int, db: Session):
     db.delete(ann)
     db.commit()
     return {"message": "Deleted"}
+
+
+def add_announcement_comment(course_id: int, ann_id: int, data: AnnouncementCommentCreate,
+                              author_id: int, db: Session):
+    _assert_enrolled_or_facilitator(course_id, author_id, db)
+    ann = db.query(Announcement).filter(
+        Announcement.id == ann_id, Announcement.course_id == course_id
+    ).first()
+    if not ann:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    c = AnnouncementComment(announcement_id=ann_id, author_id=author_id, content=data.content)
+    db.add(c)
+    db.commit()
+    db.refresh(ann)
+    return _ann_out(ann, author_id)
 
 
 # ── Discussions ──────────────────────────────────────────────────────────────

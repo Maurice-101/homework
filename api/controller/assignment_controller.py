@@ -1,4 +1,3 @@
-import os
 import random
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -10,7 +9,7 @@ from api.model.assignment import (
 )
 from api.model.course import Enrollment
 from api.model.notification import Notification
-from api.settings import settings
+from api.utils import r2
 from api.schemas.assignment import (
     AssignmentCreate, AssignmentUpdate, AssignmentOut,
     SubmissionCreate, SubmissionOut, GradeSubmission,
@@ -115,14 +114,10 @@ def delete_attachment(assignment_id: int, attachment_id: int, facilitator_id: in
     ).first()
     if not att:
         raise HTTPException(status_code=404, detail="Attachment not found")
-    full_path = os.path.join(settings.upload_dir_abs, att.file_path)
+    key = att.file_path
     db.delete(att)
     db.commit()
-    if os.path.exists(full_path):
-        try:
-            os.remove(full_path)
-        except OSError:
-            pass
+    r2.delete_object(key)
     return {"message": "Attachment deleted"}
 
 
@@ -404,11 +399,11 @@ def submit_file(assignment_id: int, student_id: int, file_path: str, db: Session
         raise HTTPException(status_code=404, detail="Assignment not found")
     if db.query(Submission).filter(Submission.assignment_id == assignment_id, Submission.student_id == student_id).first():
         raise HTTPException(status_code=400, detail="Already submitted")
-    s = Submission(assignment_id=assignment_id, student_id=student_id, submission_type="pdf", file_path=file_path)
+    s = Submission(assignment_id=assignment_id, student_id=student_id, submission_type="file", file_path=file_path)
     db.add(s)
     if a.created_by:
-        db.add(Notification(user_id=a.created_by, title="New PDF Submission",
-            message=f"A student submitted a PDF for '{a.title}'.", type="assignment"))
+        db.add(Notification(user_id=a.created_by, title="New File Submission",
+            message=f"A student submitted a file for '{a.title}'.", type="assignment"))
     db.commit()
     db.refresh(s)
     out = SubmissionOut.model_validate(s)

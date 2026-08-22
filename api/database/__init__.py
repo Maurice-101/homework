@@ -46,6 +46,9 @@ def _migrate():
             "ALTER TABLE assignments ADD COLUMN randomize_choices BOOLEAN DEFAULT 0",
             "UPDATE assignments SET status = CASE WHEN is_published THEN 'published' ELSE 'draft' END WHERE status IS NULL",
             "ALTER TABLE submissions ADD COLUMN attempt_number INTEGER DEFAULT 1",
+            "ALTER TABLE courses ADD COLUMN goals TEXT",
+            "CREATE TABLE IF NOT EXISTS announcement_reads (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER NOT NULL REFERENCES announcements(id), student_id INTEGER NOT NULL REFERENCES users(id), read_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "CREATE TABLE IF NOT EXISTS announcement_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER NOT NULL REFERENCES announcements(id), author_id INTEGER NOT NULL REFERENCES users(id), content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         ]
     else:
         # PostgreSQL syntax
@@ -82,6 +85,20 @@ def _migrate():
             "ALTER TABLE assignments ADD COLUMN IF NOT EXISTS randomize_choices BOOLEAN DEFAULT FALSE",
             "UPDATE assignments SET status = CASE WHEN is_published THEN 'published' ELSE 'draft' END WHERE status IS NULL",
             "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS attempt_number INTEGER DEFAULT 1",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS goals TEXT",
+            """CREATE TABLE IF NOT EXISTS announcement_reads (
+                id SERIAL PRIMARY KEY,
+                announcement_id INTEGER NOT NULL REFERENCES announcements(id),
+                student_id INTEGER NOT NULL REFERENCES users(id),
+                read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""",
+            """CREATE TABLE IF NOT EXISTS announcement_comments (
+                id SERIAL PRIMARY KEY,
+                announcement_id INTEGER NOT NULL REFERENCES announcements(id),
+                author_id INTEGER NOT NULL REFERENCES users(id),
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""",
         ]
 
     with engine.connect() as conn:

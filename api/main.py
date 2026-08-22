@@ -1,15 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.types import Scope
 import os
+
+
+class NoCacheStaticFiles(StaticFiles):
+    """Frontend assets change often during active development; browsers were
+    heuristically caching facilitator.js/css across edits with no explicit
+    Cache-Control header, so users kept seeing stale UI after real reload.
+    Force revalidation on every request instead."""
+
+    async def get_response(self, path: str, scope: Scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
 
 from api.database import init_db
 from api.router import auth, courses, assignments, resources, messages, admin, course_content
 from api.settings import settings
 
 app = FastAPI(
-    title="Homework Platform API",
-    description="Backend API for the Homework digital learning platform",
+    title="Abahizi Platform API",
+    description="Backend API for the Abahizi digital learning platform",
     version="1.0.0",
 )
 
@@ -47,7 +60,7 @@ if os.path.isdir(settings.upload_dir_abs):
 # Serve frontend as static files — must be mounted last
 _frontend = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.isdir(_frontend):
-    app.mount("/", StaticFiles(directory=_frontend, html=True), name="frontend")
+    app.mount("/", NoCacheStaticFiles(directory=_frontend, html=True), name="frontend")
 
 
 if __name__ == "__main__":

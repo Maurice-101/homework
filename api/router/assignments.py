@@ -1,4 +1,4 @@
-import os, uuid, json
+import os, json
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from fastapi import Body
 from sqlalchemy.orm import Session
@@ -10,13 +10,20 @@ from api.schemas.assignment import (
 )
 from api.controller import assignment_controller
 from api.utils.auth import get_current_user, require_role
+from api.utils import r2
 from api.model.user import User
-from api.settings import settings
 
-# File-upload questions accept the same document/image types as assignment attachments.
+# Accepted for assignment submissions and file-upload question answers alike —
+# an allowlist rather than "anything" to keep this from becoming an arbitrary-file-upload hole.
 _ALLOWED_ANSWER_FILE_EXT = {
-    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
-    ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    # Documents
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".rtf", ".odt",
+    # Images
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp",
+    # Audio
+    ".mp3", ".wav", ".m4a", ".ogg", ".aac",
+    # Video
+    ".mp4", ".mov", ".avi", ".webm", ".mkv",
 }
 
 router = APIRouter(prefix="/assignments", tags=["Assignments"])
@@ -30,7 +37,7 @@ _ALLOWED_ATTACHMENT_EXT = {
 
 
 async def _save_attachments(files: Optional[List[UploadFile]]) -> list[tuple[str, str]]:
-    """Validate + save each uploaded file. Returns [(relative_path, original_filename), ...]."""
+    """Validate + upload each file to R2. Returns [(r2_key, original_filename), ...]."""
     saved = []
     for f in files or []:
         if not f or not f.filename:
@@ -38,13 +45,9 @@ async def _save_attachments(files: Optional[List[UploadFile]]) -> list[tuple[str
         ext = os.path.splitext(f.filename)[1].lower()
         if ext not in _ALLOWED_ATTACHMENT_EXT:
             raise HTTPException(status_code=400, detail=f"Unsupported file type: {f.filename}")
-        fname = f"{uuid.uuid4()}_{f.filename}"
-        dest = os.path.join(settings.upload_dir_abs, "assignments", fname)
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
         content = await f.read()
-        with open(dest, "wb") as out:
-            out.write(content)
-        saved.append((f"assignments/{fname}", f.filename))
+        key = r2.upload_file(content, f.filename, prefix="assignments")
+        saved.append((key, f.filename))
     return saved
 
 
@@ -95,13 +98,8 @@ async def create(
     if attachment_file and attachment_file.filename:
         if not attachment_file.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=400, detail="Only PDF files accepted for attachment")
-        fname = f"{uuid.uuid4()}_{attachment_file.filename}"
-        dest = os.path.join(settings.upload_dir_abs, "assignments", fname)
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
         content = await attachment_file.read()
-        with open(dest, "wb") as f:
-            f.write(content)
-        file_path = f"assignments/{fname}"
+        file_path = r2.upload_file(content, attachment_file.filename, prefix="assignments")
 
     saved_files = await _save_attachments(attachment_files)
 
@@ -157,13 +155,8 @@ async def update(
     if attachment_file and attachment_file.filename:
         if not attachment_file.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=400, detail="Only PDF files accepted for attachment")
-        fname = f"{uuid.uuid4()}_{attachment_file.filename}"
-        dest = os.path.join(settings.upload_dir_abs, "assignments", fname)
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
         content = await attachment_file.read()
-        with open(dest, "wb") as f:
-            f.write(content)
-        file_path = f"assignments/{fname}"
+        file_path = r2.upload_file(content, attachment_file.filename, prefix="assignments")
 
     saved_files = await _save_attachments(attachment_files)
 
@@ -195,15 +188,12 @@ def submit(assignment_id: int, data: SubmissionCreate, db: Session = Depends(get
 async def submit_file(assignment_id: int, file: UploadFile = File(...),
                       db: Session = Depends(get_db),
                       current_user: User = Depends(require_role("student"))):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files accepted")
-    filename = f"{uuid.uuid4()}_{file.filename}"
-    dest = os.path.join(settings.upload_dir_abs, "submissions", filename)
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in _ALLOWED_ANSWER_FILE_EXT:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.filename}")
     content = await file.read()
-    with open(dest, "wb") as f:
-        f.write(content)
-    return assignment_controller.submit_file(assignment_id, current_user.id,
-                                             f"submissions/{filename}", db)
+    key = r2.upload_file(content, file.filename, prefix="submissions")
+    return assignment_controller.submit_file(assignment_id, current_user.id, key, db)
 
 
 @router.get("/{assignment_id}/submissions")
@@ -256,13 +246,9 @@ async def submit_answers(
         ext = os.path.splitext(f.filename)[1].lower()
         if ext not in _ALLOWED_ANSWER_FILE_EXT:
             raise HTTPException(status_code=400, detail=f"Unsupported file type: {f.filename}")
-        fname = f"{uuid.uuid4()}_{f.filename}"
-        dest = os.path.join(settings.upload_dir_abs, "submissions", fname)
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
         content = await f.read()
-        with open(dest, "wb") as out:
-            out.write(content)
-        file_answers[qid] = (f"submissions/{fname}", f.filename)
+        key = r2.upload_file(content, f.filename, prefix="submissions")
+        file_answers[qid] = (key, f.filename)
 
     return assignment_controller.submit_answers(assignment_id, current_user.id, payload, file_answers, db)
 

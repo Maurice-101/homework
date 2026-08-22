@@ -10,6 +10,7 @@ if (_u && _u.role !== 'facilitator') {
 // ---- INIT ----
 let myCourses = [];
 let activeCourseId = null;
+let _activeCourseDetail = null;
 let allMsgPeople = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -134,20 +135,27 @@ async function loadDashboard() {
     document.getElementById('statPending').textContent = pending;
 
     // recent submissions
+    _allAsgnData = asgnList;
     const recentEl = document.getElementById('recentSubmissions');
     if (asgnList.length === 0) {
       recentEl.innerHTML = '<li class="empty">No assignments yet.</li>';
     } else {
-      recentEl.innerHTML = asgnList.slice(0, 5).map(a =>
-        `<li>${esc(a.title)} <small style="float:right">${esc(a.assignment_type || a.type || '')}</small></li>`
-      ).join('');
+      recentEl.innerHTML = asgnList.slice(0, 5).map(a => `
+        <li onclick="goTo('assignments');viewSubmissions(${a.id}, '${esc(a.title)}')">
+          <span>${esc(a.title)} <small style="color:#aaa">${esc(a.assignment_type || a.type || '')}</small></span>
+          <span class="dash-row-arrow">→</span>
+        </li>`).join('');
     }
 
     // upcoming due
     const upcomEl = document.getElementById('upcomingDue');
     const upcoming = asgnList.filter(a => a.due_date && new Date(a.due_date) > new Date()).slice(0, 5);
     upcomEl.innerHTML = upcoming.length
-      ? upcoming.map(a => `<li>${esc(a.title)} <small style="float:right">${fmtDate(a.due_date)}</small></li>`).join('')
+      ? upcoming.map(a => `
+          <li onclick="goTo('assignments')">
+            <span>${esc(a.title)}</span>
+            <span style="display:flex;align-items:center;gap:8px"><small style="color:#aaa">${fmtDate(a.due_date)}</small><span class="dash-row-arrow">→</span></span>
+          </li>`).join('')
       : '<li class="empty">None upcoming.</li>';
 
   } catch(e) { console.error(e); }
@@ -192,6 +200,7 @@ async function openCourseDetail(id) {
 
   try {
     const c = await apiGet(`/courses/${id}`);
+    _activeCourseDetail = c;
     document.getElementById('courseDetailContent').innerHTML = `
       <h2>${esc(c.title)}</h2>
       <p style="color:var(--text-sub);margin:8px 0">${esc(c.description || '')}</p>
@@ -202,16 +211,17 @@ async function openCourseDetail(id) {
         <span>👥 ${(c.enrollments || []).length} enrolled</span>
       </div>
     `;
+    renderOverviewTab(c);
 
     const modules = c.modules || [];
     const ml = document.getElementById('moduleList');
     ml.innerHTML = modules.length
       ? modules.map(m => `
-          <li>
+          <li onclick="openModuleDetail(${m.id})">
             <h4>${esc(m.title)}</h4>
-            ${m.content ? `<p>${esc(m.content)}</p>` : ''}
+            ${m.content ? `<p>${esc(m.content.length > 140 ? m.content.slice(0,140)+'…' : m.content)}</p>` : ''}
           </li>`).join('')
-      : '<li style="color:var(--text-sub);font-style:italic">No modules yet.</li>';
+      : '<li style="color:var(--text-sub);font-style:italic;cursor:default">No modules yet.</li>';
 
     // Show enrolled students
     const enrollments = c.enrollments || [];
@@ -250,6 +260,103 @@ function closeDetail() {
   document.getElementById('courseGrid').classList.remove('hidden');
   document.querySelector('#sec-subjects .sec-header').classList.remove('hidden');
   activeCourseId = null;
+  _activeCourseDetail = null;
+}
+
+// ── Overview tab ──────────────────────────────────────────────────────────────
+function renderOverviewTab(c) {
+  const modules = c.modules || [];
+  document.getElementById('fpane-overview').innerHTML = `
+    <div class="ov-box">
+      <h4>Description</h4>
+      ${c.description ? formatRichText(c.description) : '<p>No description added yet.</p>'}
+    </div>
+    <div class="ov-box">
+      <h4>Goals</h4>
+      ${c.goals ? formatRichText(c.goals) : '<p>No goals added yet.</p>'}
+    </div>
+    <div class="ov-box">
+      <h4>Modules (${modules.length})</h4>
+      ${modules.length
+        ? modules.map(m => `
+            <div class="ov-module-link" onclick="switchFTab('modules');openModuleDetail(${m.id})">
+              <span>📘 ${esc(m.title)}</span>
+              <span style="color:var(--text-sub)">→</span>
+            </div>`).join('')
+        : '<p style="color:#aaa;font-size:13px">No modules yet.</p>'}
+    </div>
+  `;
+}
+
+// ── Module detail (read-only) ───────────────────────────────────────────────
+function openModuleDetail(moduleId) {
+  const m = (_activeCourseDetail?.modules || []).find(x => x.id === moduleId);
+  if (!m) return;
+  document.getElementById('mdBody').innerHTML = `
+    <h2 style="font-size:17px;color:var(--text);margin-bottom:10px">${esc(m.title)}</h2>
+    <div class="detail-body">${m.content ? formatRichText(m.content) : '<p>No content added yet.</p>'}</div>
+  `;
+  document.getElementById('modalModuleDetail').classList.remove('hidden');
+}
+
+// ── Assignment detail (read-only, incl. full question set) ─────────────────
+function openAssignmentDetail(id) {
+  const a = _allAsgnData.find(x => x.id == id);
+  if (!a) return;
+  showAssignmentDetailModal(a);
+}
+
+async function showAssignmentDetailModal(a) {
+  const status = a.status || (a.is_published ? 'published' : 'draft');
+  const attachments = a.attachments || [];
+  const hasAttachments = attachments.length || a.attachment_url || a.attachment_path;
+  document.getElementById('adBody').innerHTML = `
+    <div class="detail-hero">
+      <h2>${esc(a.title)}</h2>
+      <div class="detail-tags">
+        <span class="asgn-tag" style="${STATUS_COLORS[status] || ''}">${status}</span>
+        <span class="asgn-tag type">${esc(a.assignment_type || a.type || '')}</span>
+        ${a.due_date ? `<span class="asgn-tag due">Due: ${fmtDate(a.due_date)}</span>` : ''}
+        <span class="asgn-tag">Max: ${a.max_score}</span>
+        ${a.time_limit_minutes ? `<span class="asgn-tag">⏱ ${a.time_limit_minutes} min</span>` : ''}
+        <span class="asgn-tag">🔁 ${a.max_attempts || 1} attempt${(a.max_attempts||1) === 1 ? '' : 's'}</span>
+        ${a.course_title ? `<span class="asgn-tag">📚 ${esc(a.course_title)}</span>` : ''}
+      </div>
+    </div>
+    <div class="detail-body">${a.description ? formatRichText(a.description) : '<p>No description provided.</p>'}</div>
+    ${hasAttachments ? `
+      <div class="detail-section-title">Attachments</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">🔗 Link</a>` : ''}
+        ${a.attachment_path ? `<a href="${r2FileUrl(a.attachment_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">📎 PDF</a>` : ''}
+        ${attachments.map(att => `<a href="${r2FileUrl(att.file_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join('')}
+      </div>` : ''}
+    <div class="detail-section-title">Questions</div>
+    <div id="adQuestions"><p style="color:#aaa;font-size:13px">Loading…</p></div>
+  `;
+  document.getElementById('modalAssignmentDetail').classList.remove('hidden');
+  try {
+    const questions = await apiGet(`/assignments/${a.id}/questions`);
+    document.getElementById('adQuestions').innerHTML = renderQuestionsReadOnly(questions);
+  } catch (e) {
+    document.getElementById('adQuestions').innerHTML = '<p style="color:#aaa;font-size:13px">No questions added yet.</p>';
+  }
+}
+
+function renderQuestionsReadOnly(questions) {
+  if (!Array.isArray(questions) || !questions.length) return '<p style="color:#aaa;font-size:13px">No questions added yet.</p>';
+  return questions.map((q, i) => `
+    <div class="qv-card">
+      <div class="qv-head">
+        <span class="qv-num">Q${i+1}</span>
+        <span class="qv-type">${esc((q.type || '').replace('_',' '))}</span>
+        <span class="qv-points">${q.points} pt${q.points === 1 ? '' : 's'}${q.required ? ' • required' : ''}</span>
+      </div>
+      <div class="qv-text">${esc(q.text)}</div>
+      ${(q.options || []).length ? (q.options || []).map(o => `
+        <div class="qv-option ${o.is_correct ? 'correct' : ''}">${o.is_correct ? '✓' : '•'} ${esc(o.text)}${o.match_value ? ` → ${esc(o.match_value)}` : ''}</div>
+      `).join('') : ''}
+    </div>`).join('');
 }
 
 // ── Facilitator course tab switching ─────────────────────────────────────────
@@ -290,11 +397,15 @@ async function loadCourseMaterials() {
     const data = await apiGet(`/resources/?course_id=${activeCourseId}`);
     const items = data?.uploaded || [];
     el.innerHTML = items.length
-      ? items.map(r => `
-          <div class="attach-file-row" style="margin-bottom:6px">
-            <a href="${esc(r.url)}" target="_blank">📄 ${esc(r.title)}</a>
-            <button type="button" class="attach-remove-btn" onclick="deleteCourseMaterial('${r.id.replace('db_','')}', this)" title="Remove">✕</button>
-          </div>`).join('')
+      ? `<div class="resource-grid">${items.map(r => `
+          <div class="resource-card" id="mat-${esc(r.id.replace('db_',''))}">
+            <div class="res-icon">${fileIcon(r.title)}</div>
+            <div class="res-title">${esc(r.title)}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+              <button class="res-dl" onclick="openPdf('${esc(r.url)}','${esc(r.title)}')">📖 View</button>
+              <button class="res-dl danger" onclick="deleteCourseMaterial('${esc(r.id.replace('db_',''))}', this)">✕ Remove</button>
+            </div>
+          </div>`).join('')}</div>`
       : '<p style="color:#aaa;font-size:13px">No materials yet — upload a PDF or attach one from the library.</p>';
   } catch (e) {
     el.innerHTML = '<p style="color:#aaa;font-size:13px">Could not load materials.</p>';
@@ -320,7 +431,7 @@ async function deleteCourseMaterial(resourceId, btn) {
   if (!confirm('Remove this material?')) return;
   try {
     await apiFetch(`/resources/${resourceId}`, { method: 'DELETE' });
-    btn.closest('.attach-file-row').remove();
+    btn.closest('.resource-card').remove();
     showToast('Material removed.');
   } catch (e) { showToast('Could not remove material.', 'error'); }
 }
@@ -372,26 +483,69 @@ async function attachLibraryItem(key, btn) {
 }
 
 // ── Announcements ─────────────────────────────────────────────────────────────
+let _annData = [];
+
 async function loadAnnouncements() {
   const el = document.getElementById('annList');
   if (!activeCourseId) return;
   el.innerHTML = '<p style="color:#aaa;font-size:13px">Loading…</p>';
   try {
-    const anns = await apiGet(`/courses/${activeCourseId}/announcements`) || [];
-    el.innerHTML = anns.length
-      ? anns.map(a => `
-          <div class="ann-card" style="border:1px solid #e5e8ef;border-radius:10px;padding:14px 18px;margin-bottom:10px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-              <strong style="font-size:14px">${esc(a.title)}</strong>
-              <div style="display:flex;align-items:center;gap:8px">
-                <small style="color:#aaa;font-size:12px">${new Date(a.created_at).toLocaleDateString()}</small>
-                <button class="btn-tiny danger" onclick="deleteAnn(${a.id})">Delete</button>
-              </div>
-            </div>
-            <p style="font-size:13px;color:#444;line-height:1.6">${esc(a.content)}</p>
-          </div>`).join('')
-      : '<p style="color:#aaa;font-size:13px">No announcements yet.</p>';
+    _annData = await apiGet(`/courses/${activeCourseId}/announcements`) || [];
+    renderAnnouncements();
   } catch(e) { el.innerHTML = '<p style="color:#aaa;font-size:13px">Failed to load.</p>'; }
+}
+
+function renderAnnouncements() {
+  const el = document.getElementById('annList');
+  const anns = _annData || [];
+  el.innerHTML = anns.length
+    ? anns.map(a => `
+        <div class="ann-card2">
+          <div class="ann-card2-top">
+            <strong style="font-size:14.5px">${esc(a.title)}</strong>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <small style="color:#aaa;font-size:12px">${new Date(a.created_at).toLocaleDateString()}</small>
+              <button class="btn-tiny danger" onclick="deleteAnn(${a.id})">Delete</button>
+            </div>
+          </div>
+          <p class="ann-card2-body">${esc(a.content)}</p>
+          <div class="ann-stats-row">
+            <button class="ann-stat-chip" onclick="toggleAnnPanel(${a.id},'readers')">📖 ${a.read_count} read</button>
+            <button class="ann-stat-chip" onclick="toggleAnnPanel(${a.id},'comments')">💬 ${a.comment_count} comment${a.comment_count===1?'':'s'}</button>
+          </div>
+          <div class="ann-names-panel" id="ann-readers-${a.id}">
+            ${a.readers.length ? a.readers.map(r => esc(r.student_name)).join(', ') : 'No one has read this yet.'}
+          </div>
+          <div class="ann-names-panel" id="ann-comments-${a.id}">
+            ${a.comments.length ? a.comments.map(c => `
+              <div class="ann-comment-row"><strong>${esc(c.author_name)}:</strong> ${esc(c.content)}</div>`).join('')
+              : '<div style="padding:2px 0">No comments yet.</div>'}
+            <div class="ann-add-comment">
+              <input type="text" id="ann-comment-input-${a.id}" placeholder="Write a comment…" onkeydown="if(event.key==='Enter')postAnnComment(${a.id})">
+              <button onclick="postAnnComment(${a.id})">Send</button>
+            </div>
+          </div>
+        </div>`).join('')
+    : '<p style="color:#aaa;font-size:13px">No announcements yet.</p>';
+}
+
+function toggleAnnPanel(annId, kind) {
+  const other = kind === 'readers' ? 'comments' : 'readers';
+  document.getElementById(`ann-${other}-${annId}`)?.classList.remove('open');
+  document.getElementById(`ann-${kind}-${annId}`)?.classList.toggle('open');
+}
+
+async function postAnnComment(annId) {
+  const input = document.getElementById(`ann-comment-input-${annId}`);
+  const content = (input.value || '').trim();
+  if (!content) return;
+  try {
+    const updated = await apiPost(`/courses/${activeCourseId}/announcements/${annId}/comments`, { content });
+    const idx = _annData.findIndex(a => a.id === annId);
+    if (idx !== -1) _annData[idx] = updated;
+    renderAnnouncements();
+    document.getElementById(`ann-comments-${annId}`)?.classList.add('open');
+  } catch(e) { showToast(e.message || 'Could not post comment.', 'error'); }
 }
 
 async function postAnnouncement() {
@@ -423,16 +577,16 @@ async function loadSyllabus() {
   try {
     const weeks = await apiGet(`/courses/${activeCourseId}/syllabus`) || [];
     el.innerHTML = weeks.length
-      ? `<div class="syllabus-list">${weeks.map(w => `
-          <div class="syllabus-week" style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #e5e8ef;align-items:flex-start">
-            <div style="min-width:56px;text-align:center;background:#2f6df6;color:#fff;border-radius:8px;padding:8px;font-weight:700;font-size:13px">Week ${w.week_num}</div>
-            <div style="flex:1">
-              <h4 style="font-size:14px;margin-bottom:4px">${esc(w.title)}</h4>
-              ${w.description ? `<p style="font-size:13px;color:#555;line-height:1.5;margin-bottom:4px">${esc(w.description)}</p>` : ''}
-              ${w.topics ? `<ul style="list-style:disc;padding-left:16px;font-size:13px;color:#444">${w.topics.split('\n').filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      ? weeks.map(w => `
+          <div class="syl-week-card">
+            <div class="syl-badge">Week<br>${w.week_num}<small>${(w.topics||'').split('\n').filter(Boolean).length} topics</small></div>
+            <div class="syl-week-body" style="flex:1">
+              <h4>${esc(w.title)}</h4>
+              ${w.description ? `<p>${esc(w.description)}</p>` : ''}
+              ${w.topics ? w.topics.split('\n').filter(Boolean).map(t => `<span class="syl-topic-tag">${esc(t)}</span>`).join('') : ''}
             </div>
             <button class="btn-tiny danger" style="flex-shrink:0" onclick="deleteSyllabusWeek(${w.id})">Delete</button>
-          </div>`).join('')}</div>`
+          </div>`).join('')
       : '<p style="color:#aaa;font-size:13px">No syllabus weeks added yet.</p>';
   } catch(e) { el.innerHTML = '<p style="color:#aaa;font-size:13px">Failed to load.</p>'; }
 }
@@ -467,27 +621,28 @@ async function loadFGroups() {
   if (!activeCourseId) return;
   el.innerHTML = '<p style="color:#aaa;font-size:13px">Loading…</p>';
   try {
-    const groups = await apiGet(`/courses/${activeCourseId}/groups`) || [];
-    if (!groups.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px">No groups yet.</p>'; return; }
-    el.innerHTML = groups.map(g => `
-      <div style="background:#fff;border:1px solid #e5e8ef;border-radius:12px;margin-bottom:12px;overflow:hidden">
-        <div style="padding:12px 16px;background:#f8f9fd;display:flex;justify-content:space-between;align-items:center">
+    _groupsData = await apiGet(`/courses/${activeCourseId}/groups`) || [];
+    if (!_groupsData.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px">No groups yet.</p>'; return; }
+    el.innerHTML = _groupsData.map(g => `
+      <div class="group-card">
+        <div class="group-card-head">
           <div>
-            <strong style="font-size:14px">${esc(g.name)}</strong>
-            ${g.description ? `<p style="font-size:12px;color:#666;margin:2px 0 0">${esc(g.description)}</p>` : ''}
+            <strong>${esc(g.name)}</strong>
+            ${g.description ? `<p>${esc(g.description)}</p>` : ''}
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:12px;color:#888">${g.members.length} members</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="group-member-count">${g.members.length} member${g.members.length===1?'':'s'}</span>
             <button class="btn-tiny danger" onclick="deleteGroup(${g.id})">Delete</button>
           </div>
         </div>
-        <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <div class="group-members-row">
           ${g.members.map(m => `
-            <span style="display:inline-flex;align-items:center;gap:4px;background:#f0f4ff;border:1px solid #d0daee;border-radius:16px;padding:3px 10px;font-size:12px">
+            <span class="member-chip">
+              <span class="mc-init">${esc((m.student_name||'?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase())}</span>
               ${esc(m.student_name)}
-              <button onclick="removeGroupMember(${g.id},${m.student_id})" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:12px;padding:0 0 0 4px">×</button>
+              <button onclick="removeGroupMember(${g.id},${m.student_id})" title="Remove">×</button>
             </span>`).join('')}
-          <button class="btn-tiny" onclick="openAddMemberModal(${g.id})">+ Add Member</button>
+          <button class="add-member-btn" onclick="openAddMemberModal(${g.id})">+ Add Member</button>
         </div>
       </div>`).join('');
   } catch(e) { el.innerHTML = '<p style="color:#aaa;font-size:13px">Failed to load.</p>'; }
@@ -513,18 +668,69 @@ async function deleteGroup(groupId) {
   } catch(e) { showToast(e.message || 'Failed.', 'error'); }
 }
 
+let _groupsData = [];
+let _addMemberGroupId = null;
+
 async function openAddMemberModal(groupId) {
-  // Fetch enrolled students and let facilitator pick
+  _addMemberGroupId = groupId;
+  document.getElementById('gmSearch').value = '';
+  document.getElementById('modalAddGroupMember').classList.remove('hidden');
+  document.getElementById('gmList').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:12px">Loading…</p>';
   try {
     const course = await apiGet(`/courses/${activeCourseId}`);
-    const students = (course.enrollments||[]).map(e=>e.student).filter(Boolean);
-    if (!students.length) { showToast('No students enrolled yet.', 'error'); return; }
-    const opts = students.map(s=>`${s.first_name||''} ${s.last_name||''} (ID:${s.id})`).join('\n');
-    const chosen = prompt(`Select student by ID:\n${opts}\n\nEnter student ID:`);
-    if (!chosen || isNaN(parseInt(chosen))) return;
-    await apiPost(`/courses/${activeCourseId}/groups/${groupId}/members`, { student_id: parseInt(chosen) });
-    showToast('Member added!'); loadFGroups();
-  } catch(e) { showToast(e.message || 'Failed.', 'error'); }
+    _gmStudents = (course.enrollments || []).map(e => e.student).filter(Boolean);
+    renderAddMemberList(_gmStudents);
+  } catch (e) {
+    document.getElementById('gmList').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:12px">Could not load students.</p>';
+  }
+}
+
+let _gmStudents = [];
+
+function filterAddMemberList() {
+  const q = document.getElementById('gmSearch').value.toLowerCase();
+  renderAddMemberList(_gmStudents.filter(s =>
+    (s.first_name+' '+s.last_name).toLowerCase().includes(q) || (s.email||'').toLowerCase().includes(q)));
+}
+
+function renderAddMemberList(students) {
+  const el = document.getElementById('gmList');
+  const group = (_groupsData || []).find(g => g.id === _addMemberGroupId);
+  const memberIds = new Set((group?.members || []).map(m => m.student_id));
+  if (!students.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:12px">No students enrolled in this course yet.</p>'; return; }
+  el.innerHTML = students.map(s => {
+    const init = ((s.first_name||'?')[0] + (s.last_name||'?')[0]).toUpperCase();
+    const inGroup = memberIds.has(s.id);
+    return `
+      <div class="pick-row">
+        <div class="stud-initials" style="width:34px;height:34px;font-size:12px">${init}</div>
+        <div style="flex:1">
+          <div class="pick-row-name">${esc(s.first_name)} ${esc(s.last_name)}</div>
+          <div class="pick-row-sub">${esc(s.email || '')}</div>
+        </div>
+        ${inGroup
+          ? `<button class="btn-tiny danger" onclick="toggleGroupMember(${s.id},this,false)">− Remove</button>`
+          : `<button class="btn-tiny" onclick="toggleGroupMember(${s.id},this,true)">+ Add</button>`}
+      </div>`;
+  }).join('');
+}
+
+async function toggleGroupMember(studentId, btn, adding) {
+  btn.disabled = true;
+  try {
+    if (adding) {
+      await apiPost(`/courses/${activeCourseId}/groups/${_addMemberGroupId}/members`, { student_id: studentId });
+    } else {
+      await apiDelete(`/courses/${activeCourseId}/groups/${_addMemberGroupId}/members/${studentId}`);
+    }
+    const groups = await apiGet(`/courses/${activeCourseId}/groups`) || [];
+    _groupsData = groups;
+    renderAddMemberList(_gmStudents);
+    loadFGroups();
+  } catch (e) {
+    btn.disabled = false;
+    showToast(e.message || 'Failed.', 'error');
+  }
 }
 
 async function removeGroupMember(groupId, studentId) {
@@ -555,13 +761,14 @@ function openCreateCourse() {
 async function submitCreateCourse() {
   const title     = document.getElementById('ccTitle').value.trim();
   const desc      = document.getElementById('ccDesc').value.trim();
+  const goals     = document.getElementById('ccGoals').value.trim();
   const subject   = document.getElementById('ccSubject').value.trim();
   const grade     = document.getElementById('ccGrade').value.trim();
   const pub       = document.getElementById('ccPublic').value === 'true';
   const materials = Array.from(document.getElementById('ccMaterials').files || []);
   if (!title) { showToast('Title required', 'error'); return; }
   try {
-    const course = await apiPost('/courses/', { title, description: desc, subject, grade_level: grade, is_public: pub });
+    const course = await apiPost('/courses/', { title, description: desc, goals, subject, grade_level: grade, is_public: pub });
     if (materials.length) {
       const fd = new FormData();
       fd.append('course_id', course.id);
@@ -574,6 +781,7 @@ async function submitCreateCourse() {
     closeModal('modalCreateCourse');
     document.getElementById('ccMaterials').value = '';
     document.getElementById('ccPickedFiles').innerHTML = '';
+    document.getElementById('ccGoals').value = '';
     loadCourses();
     showToast('Subject created!');
   } catch(e) { showToast('Could not create subject.', 'error'); }
@@ -618,6 +826,17 @@ async function loadAssignments() {
   }
 }
 
+// Assignment attachments / submissions / answer files are R2 keys now.
+// r2FileUrl embeds the JWT for plain <a href> use (which can't set an
+// Authorization header); r2ServeUrl is token-free for passing to openPdf(),
+// which already appends the token itself.
+function r2ServeUrl(key) {
+  return `/api/resources/serve?key=${encodeURIComponent(key)}`;
+}
+function r2FileUrl(key) {
+  return `${r2ServeUrl(key)}&token=${encodeURIComponent(getToken())}`;
+}
+
 function fileIcon(filename) {
   const ext = (filename || '').split('.').pop().toLowerCase();
   if (ext === 'pdf') return '📄';
@@ -636,7 +855,7 @@ function asgnCard(a, showSubs) {
   const attachments = a.attachments || [];
   const status = a.status || (a.is_published ? 'published' : 'draft');
   return `
-    <div class="asgn-card">
+    <div class="asgn-card" onclick="openAssignmentDetail(${a.id})">
       <div class="asgn-left">
         <h3>${esc(a.title)}</h3>
         <p>${esc(a.description || '')}</p>
@@ -647,14 +866,14 @@ function asgnCard(a, showSubs) {
           ${a.due_date ? `<span class="asgn-tag due">Due: ${fmtDate(a.due_date)}</span>` : ''}
           <span class="asgn-tag">Max: ${a.max_score}</span>
           ${a.course_title ? `<span class="asgn-tag">📚 ${esc(a.course_title)}</span>` : ''}
-          ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">🔗 Link</a>` : ''}
-          ${a.attachment_path ? `<a href="/uploads/${esc(a.attachment_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">📎 PDF</a>` : ''}
-          ${attachments.map(att => `<a href="/uploads/${esc(att.file_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join('')}
+          ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">🔗 Link</a>` : ''}
+          ${a.attachment_path ? `<a href="${r2FileUrl(a.attachment_path)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">📎 PDF</a>` : ''}
+          ${attachments.map(att => `<a href="${r2FileUrl(att.file_path)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join('')}
         </div>
       </div>
       <div class="asgn-right">
-        ${showSubs ? `<button class="btn-sm" onclick="viewSubmissions(${a.id}, '${esc(a.title)}')">Submissions</button>` : ''}
-        <button class="btn-sm btn-outline" onclick="openEditAssignment(${a.id})">Edit</button>
+        ${showSubs ? `<button class="btn-sm" onclick="event.stopPropagation();viewSubmissions(${a.id}, '${esc(a.title)}')">Submissions</button>` : ''}
+        <button class="btn-sm btn-outline" onclick="event.stopPropagation();openEditAssignment(${a.id})">Edit</button>
       </div>
     </div>`;
 }
@@ -665,6 +884,11 @@ function renderPickedFiles(inputId, listId) {
   document.getElementById(listId).innerHTML = files.map(f =>
     `<div class="picked-file-row"><span>${fileIcon(f.name)} ${esc(f.name)}</span></div>`
   ).join('');
+}
+
+function updateFileName(inputId, nameId) {
+  const files = Array.from(document.getElementById(inputId).files || []);
+  document.getElementById(nameId).textContent = files.length ? files.map(f => f.name).join(', ') : 'No file chosen';
 }
 
 let _createForCourseId = null;
@@ -774,14 +998,14 @@ function renderCurrentAttachments(a) {
   const curEl = document.getElementById('editCurrentAttach');
   const rows = [];
   if (a.attachment_path) {
-    rows.push(`<div class="attach-file-row"><a href="/uploads/${esc(a.attachment_path)}" target="_blank">📄 Legacy PDF attachment</a></div>`);
+    rows.push(`<div class="attach-file-row"><a href="${r2FileUrl(a.attachment_path)}" target="_blank">📄 Legacy PDF attachment</a></div>`);
   }
   if (a.attachment_url) {
     rows.push(`<div class="attach-file-row"><a href="${esc(a.attachment_url)}" target="_blank">🔗 ${esc(a.attachment_url)}</a></div>`);
   }
   (a.attachments || []).forEach(att => {
     rows.push(`<div class="attach-file-row">
-      <a href="/uploads/${esc(att.file_path)}" target="_blank">${fileIcon(att.filename)} ${esc(att.filename)}</a>
+      <a href="${r2FileUrl(att.file_path)}" target="_blank">${fileIcon(att.filename)} ${esc(att.filename)}</a>
       <button type="button" class="attach-remove-btn" onclick="deleteAssignmentAttachment(${a.id}, ${att.id}, this)" title="Remove">✕</button>
     </div>`);
   });
@@ -1042,22 +1266,29 @@ async function viewSubmissions(asgnId, title) {
   } catch(e) { body.innerHTML = '<div class="empty-state">Could not load submissions.</div>'; }
 }
 
+// subId → {submission, assignment} — lets openGradeModal(subId) show full grading
+// context (assignment instructions, per-question rubric, the actual answer) without
+// cramming complex objects into onclick attributes.
+let _gradeContext = {};
+
 function submissionCard(s, asgn) {
+  _gradeContext[s.id] = { submission: s, assignment: asgn };
   const student = s.student_name || `Student #${s.student_id}`;
   let preview = '';
   if (s.submission_type === 'link' && s.content) {
-    preview = `<a href="${esc(s.content)}" target="_blank" class="sub-link-btn">🔗 Open Link / Drive</a>`;
-  } else if (s.submission_type === 'pdf' && s.file_path) {
-    preview = `<button class="sub-link-btn" onclick="openPdf('/uploads/${esc(s.file_path)}','Submission – ${esc(student)}')">📄 View PDF</button>`;
+    preview = `<a href="${esc(s.content)}" target="_blank" onclick="event.stopPropagation()" class="sub-link-btn">🔗 Open Link / Drive</a>`;
+  } else if ((s.submission_type === 'pdf' || s.submission_type === 'file') && s.file_path) {
+    preview = `<button class="sub-link-btn" onclick="event.stopPropagation();openPdf('${r2ServeUrl(s.file_path)}','Submission – ${esc(student)}')">${fileIcon(s.file_path)} View File</button>`;
   } else if (s.content) {
     preview = `<p class="sub-text-preview">${esc(s.content)}</p>`;
   }
   const answers = s.answers || [];
   return `
-    <div class="asgn-card" style="margin-bottom:10px;flex-direction:column;align-items:stretch">
+    <div class="asgn-card sub-card-clickable" style="margin-bottom:10px;flex-direction:column;align-items:stretch" onclick="openGradeModal(${s.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div class="asgn-left">
           <h3>${esc(student)} ${s.attempt_number > 1 ? `<small style="color:#aaa;font-weight:normal">(attempt ${s.attempt_number})</small>` : ''}</h3>
+          ${asgn.title ? `<p style="font-size:12px;color:var(--text-sub);margin-top:2px">📝 ${esc(asgn.title)}</p>` : ''}
           ${preview}
           <p style="font-size:12px;color:var(--text-sub);margin-top:4px">Submitted: ${fmtDate(s.submitted_at)}</p>
           ${s.grade !== null && s.grade !== undefined
@@ -1066,12 +1297,12 @@ function submissionCard(s, asgn) {
           ${s.feedback ? `<p style="font-size:12px;margin-top:3px;font-style:italic">💬 ${esc(s.feedback)}</p>` : ''}
         </div>
         <div class="asgn-right">
-          <button class="btn-sm" onclick="openGradeModal(${s.id}, ${asgn.max_score||100}, '${esc(student)}')">
+          <button class="btn-sm" onclick="event.stopPropagation();openGradeModal(${s.id})">
             ${s.grade !== null && s.grade !== undefined ? 'Re-grade' : 'Grade'}
           </button>
         </div>
       </div>
-      ${answers.length ? `<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px">${answers.map(a => answerReviewRow(a)).join('')}</div>` : ''}
+      ${answers.length ? `<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px" onclick="event.stopPropagation()">${answers.map(a => answerReviewRow(a)).join('')}</div>` : ''}
     </div>`;
 }
 
@@ -1087,7 +1318,7 @@ function answerReviewRow(a) {
 
   let answerHtml = '';
   if (a.answer_text) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${esc(a.answer_text)}</p>`;
-  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('/uploads/${esc(a.file_path)}','Answer')">📎 View uploaded file</button>`;
+  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('${r2ServeUrl(a.file_path)}','Answer')">📎 View uploaded file</button>`;
   else if (a.selected_option_ids) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">Selected option(s): ${a.selected_option_ids.join(', ')}</p>`;
   else if (a.matching_answers) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${Object.entries(a.matching_answers).map(([k,v]) => `${esc(k)} → ${esc(v)}`).join('; ')}</p>`;
 
@@ -1108,6 +1339,37 @@ function answerReviewRow(a) {
     </div>`;
 }
 
+// Same display as answerReviewRow but with no input/Save control — used inside the
+// grade modal, where the same answer is already editable in the list underneath;
+// duplicating that editable control here would create a second element with the
+// same id and break whichever one document.getElementById happens to find first.
+function answerReviewRowReadonly(a) {
+  const objective = a.is_correct !== null && a.is_correct !== undefined;
+  const badge = objective
+    ? (a.is_correct
+        ? `<span style="color:#1a8a5a">✓ ${a.points_awarded}/${a.question_points}</span>`
+        : `<span style="color:#c0392b">✗ ${a.points_awarded ?? 0}/${a.question_points}</span>`)
+    : (a.points_awarded !== null && a.points_awarded !== undefined
+        ? `<span style="color:#1a8a5a">${a.points_awarded}/${a.question_points}</span>`
+        : `<span style="color:#c47f00">Needs grading</span>`);
+
+  let answerHtml = '';
+  if (a.answer_text) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${esc(a.answer_text)}</p>`;
+  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('${r2ServeUrl(a.file_path)}','Answer')">📎 View uploaded file</button>`;
+  else if (a.selected_option_ids) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">Selected option(s): ${a.selected_option_ids.join(', ')}</p>`;
+  else if (a.matching_answers) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${Object.entries(a.matching_answers).map(([k,v]) => `${esc(k)} → ${esc(v)}`).join('; ')}</p>`;
+  else answerHtml = `<p style="font-size:12.5px;color:#aaa;margin:4px 0;font-style:italic">No answer given</p>`;
+
+  return `
+    <div style="padding:6px 0;border-bottom:1px dashed #eee">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px">
+        <strong>${esc(a.question_text || '')} <span style="font-weight:400;color:#999">(${a.question_points} pt${a.question_points===1?'':'s'})</span></strong>
+        ${badge}
+      </div>
+      ${answerHtml}
+    </div>`;
+}
+
 async function gradeAnswer(responseId, maxPoints) {
   const input = document.getElementById(`answer-pts-${responseId}`);
   const points = parseFloat(input.value);
@@ -1119,13 +1381,50 @@ async function gradeAnswer(responseId, maxPoints) {
   } catch (e) { showToast('Could not save grade.', 'error'); }
 }
 
-function openGradeModal(subId, maxScore, studentName) {
+function openGradeModal(subId) {
+  const ctx = _gradeContext[subId];
+  if (!ctx) { showToast('Could not load submission context.', 'error'); return; }
+  const { submission: s, assignment: asgn } = ctx;
+  const student = s.student_name || `Student #${s.student_id}`;
+  const maxScore = asgn.max_score || 100;
+
   document.getElementById('gradeSubId').value = subId;
   document.getElementById('gradeScore').max = maxScore;
   document.getElementById('gradeMaxScore').textContent = maxScore;
-  document.getElementById('gradeStudentName').textContent = `Student: ${studentName}`;
-  document.getElementById('gradeScore').value = '';
-  document.getElementById('gradeFeedback').value = '';
+  document.getElementById('gradeStudentName').textContent =
+    `Student: ${student}${s.attempt_number > 1 ? ` (attempt ${s.attempt_number})` : ''}`;
+  document.getElementById('gradeScore').value = s.grade ?? '';
+  document.getElementById('gradeFeedback').value = s.feedback || '';
+
+  const answers = s.answers || [];
+  let autoTotal = 0, gradedCount = 0;
+  answers.forEach(a => { if (a.points_awarded !== null && a.points_awarded !== undefined) { autoTotal += a.points_awarded; gradedCount++; } });
+
+  let html = `
+    <div class="grade-asgn-context">
+      <div class="grade-asgn-title">${esc(asgn.title || '')}</div>
+      ${asgn.description ? formatRichText(asgn.description) : '<p style="color:#aaa;font-size:12.5px">No instructions provided.</p>'}
+    </div>`;
+
+  if (answers.length) {
+    html += `<div class="grade-rubric-label">Questions &amp; Answers
+      <span class="grade-auto-total">${gradedCount}/${answers.length} scored — ${autoTotal} / ${maxScore} pts so far</span>
+    </div>`;
+    html += `<div class="grade-rubric-list">${answers.map(a => answerReviewRowReadonly(a)).join('')}</div>`;
+  } else {
+    html += `<div class="grade-rubric-label">Student Submission</div>`;
+    if (s.submission_type === 'link' && s.content) {
+      html += `<a href="${esc(s.content)}" target="_blank" class="sub-link-btn">🔗 Open Link / Drive</a>`;
+    } else if ((s.submission_type === 'pdf' || s.submission_type === 'file') && s.file_path) {
+      html += `<button class="sub-link-btn" onclick="openPdf('${r2ServeUrl(s.file_path)}','Submission – ${esc(student)}')">${fileIcon(s.file_path)} View File</button>`;
+    } else if (s.content) {
+      html += `<div class="grade-sub-text">${formatRichText(s.content)}</div>`;
+    } else {
+      html += `<p style="color:#aaa;font-size:12.5px">No submission content.</p>`;
+    }
+  }
+
+  document.getElementById('gradeSubmissionPreview').innerHTML = html;
   document.getElementById('modalGrade').classList.remove('hidden');
 }
 
@@ -1157,7 +1456,13 @@ async function loadStudents() {
         const detail = await apiGet(`/courses/${c.id}`);
         const enrollments = detail.enrollments || [];
         enrollments.forEach(e => {
-          if (e.student) studentMap[e.student.id] = { ...e.student, progress: e.progress_percent, course: c.title };
+          if (!e.student) return;
+          if (!studentMap[e.student.id]) studentMap[e.student.id] = { ...e.student, courses: [] };
+          studentMap[e.student.id].courses.push({
+            title: c.title,
+            progress: e.progress_percent || 0,
+            status: e.pass_status || (e.completed ? 'completed' : 'in_progress'),
+          });
         });
       } catch(e) {}
     }
@@ -1176,20 +1481,53 @@ function renderStudents(students) {
   }
   grid.innerHTML = students.map(s => {
     const init = ((s.first_name || '?')[0] + (s.last_name || '?')[0]).toUpperCase();
+    const courses = s.courses || [];
+    const avgProgress = courses.length ? Math.round(courses.reduce((sum, c) => sum + c.progress, 0) / courses.length) : 0;
     return `
-      <div class="student-card">
+      <div class="student-card" onclick="openStudentDetail(${s.id})">
         <div class="stud-initials">${init}</div>
         <h4>${esc(s.first_name)} ${esc(s.last_name)}</h4>
         <p>${esc(s.email || '')}</p>
         <p style="font-size:11px;color:#888">${esc(s.grade || s.school || '')}</p>
-        ${s.progress !== undefined ? `
-          <div class="prog-bar-wrap" style="margin-top:6px" title="${s.progress}%">
-            <div class="prog-bar" style="width:${s.progress}%"></div>
+        ${courses.length ? `
+          <div class="prog-bar-wrap" style="margin-top:6px" title="${avgProgress}%">
+            <div class="prog-bar" style="width:${avgProgress}%"></div>
           </div>
-          <p style="font-size:11px;color:#888;margin-top:3px">${s.progress}% • ${esc(s.course||'')}</p>` : ''}
-        <button class="btn-sm" style="margin-top:8px;width:100%" onclick="openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">✉ Message</button>
+          <p style="font-size:11px;color:#888;margin-top:3px">${avgProgress}% avg • ${courses.length} subject${courses.length===1?'':'s'}</p>` : ''}
+        <button class="btn-sm" style="margin-top:8px;width:100%" onclick="event.stopPropagation();openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">✉ Message</button>
       </div>`;
   }).join('');
+}
+
+function openStudentDetail(studentId) {
+  const s = (allStudents || []).find(x => x.id === studentId);
+  if (!s) return;
+  const init = ((s.first_name || '?')[0] + (s.last_name || '?')[0]).toUpperCase();
+  const courses = s.courses || [];
+  document.getElementById('sdBody').innerHTML = `
+    <div class="sd-head">
+      <div class="sd-avatar">${init}</div>
+      <div>
+        <h3>${esc(s.first_name)} ${esc(s.last_name)}</h3>
+        <p>${esc(s.email || '')}</p>
+        <p>${esc(s.grade || '')}${s.grade && s.school ? ' • ' : ''}${esc(s.school || '')}</p>
+      </div>
+    </div>
+    <div class="sd-section-label">Subjects with you (${courses.length})</div>
+    ${courses.length ? courses.map(c => `
+      <div class="sd-course-row">
+        <div class="sd-course-row-top">
+          <span>${esc(c.title)}</span>
+          <span class="sd-course-status ${esc(c.status)}">${esc((c.status||'').replace('_',' '))}</span>
+        </div>
+        <div class="prog-bar-wrap" style="margin-top:8px" title="${c.progress}%">
+          <div class="prog-bar" style="width:${c.progress}%"></div>
+        </div>
+        <p style="font-size:11px;color:#888;margin-top:4px">${c.progress}% complete</p>
+      </div>`).join('') : '<p style="font-size:13px;color:#888">Not enrolled in any of your subjects.</p>'}
+    <button class="btn-primary" style="width:100%;margin-top:10px" onclick="closeModal('modalStudentDetail');openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">✉ Message ${esc(s.first_name)}</button>
+  `;
+  document.getElementById('modalStudentDetail').classList.remove('hidden');
 }
 
 function filterStudents() {
@@ -1341,22 +1679,92 @@ async function loadProgressData() {
 }
 
 // ---- RESOURCES ----
+let _facilitatorResourcesData = null;
+let _facilitatorSubjectFilter = null;
+
 async function loadResources() {
   const tGrid = document.getElementById('textbookGrid');
   const pGrid = document.getElementById('paperGrid');
   const uGrid = document.getElementById('uploadedGrid');
   tGrid.innerHTML = pGrid.innerHTML = uGrid.innerHTML = '<div class="empty-state">Loading…</div>';
+  _facilitatorSubjectFilter = null; // fresh visit to Resources always starts unfiltered
   try {
     const data = await apiGet('/resources/');
-    const textbooks  = data.textbooks   || [];
+    _facilitatorResourcesData = data;
     const papers     = data.past_papers || [];
     const uploaded   = data.uploaded    || [];
-    tGrid.innerHTML = textbooks.length ? textbooks.map(r => resCard(r)).join('') : '<div class="empty-state">No textbooks.</div>';
+    renderFacilitatorTextbooks();
     pGrid.innerHTML = papers.length    ? papers.map(r => resCard(r)).join('')    : '<div class="empty-state">No past papers.</div>';
     uGrid.innerHTML = uploaded.length  ? uploaded.map(r => uploadedResCard(r)).join('') : '<div class="empty-state">No uploaded resources yet.</div>';
   } catch(e) {
     tGrid.innerHTML = '<div class="empty-state">Could not load resources.</div>';
   }
+  loadFacilitatorSubjectCatalog();
+}
+
+function renderFacilitatorTextbooks() {
+  const tGrid = document.getElementById('textbookGrid');
+  const filterBar = document.getElementById('fTextbookFilterBar');
+  let textbooks = (_facilitatorResourcesData?.textbooks) || [];
+  if (_facilitatorSubjectFilter) {
+    textbooks = textbooks.filter(r => r.subject === _facilitatorSubjectFilter);
+    filterBar.classList.remove('hidden');
+    filterBar.innerHTML = `Filtered by <strong>${esc(_facilitatorSubjectFilter)}</strong> &nbsp;
+      <button class="btn-sm btn-outline" onclick="clearFacilitatorSubjectFilter()">✕ Clear</button>`;
+  } else {
+    filterBar.classList.add('hidden');
+    filterBar.innerHTML = '';
+  }
+  tGrid.innerHTML = textbooks.length ? textbooks.map(r => resCard(r)).join('') : '<div class="empty-state">No textbooks.</div>';
+}
+
+function clearFacilitatorSubjectFilter() {
+  _facilitatorSubjectFilter = null;
+  renderFacilitatorTextbooks();
+}
+
+// ── Browse by Subject (same subject-card art as the Student portal) ─────────
+let _facilitatorSubjectCatalog = null;
+
+async function loadFacilitatorSubjectCatalog() {
+  const el = document.getElementById('fSubjGrid');
+  if (_facilitatorSubjectCatalog) { renderFacilitatorSubjectCatalog(); return; }
+  el.innerHTML = '<div class="empty-state">Loading…</div>';
+  try {
+    _facilitatorSubjectCatalog = await apiGet('/resources/subjects') || [];
+    renderFacilitatorSubjectCatalog();
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Could not load subjects.</div>';
+  }
+}
+
+function renderFacilitatorSubjectCatalog() {
+  const el = document.getElementById('fSubjGrid');
+  const search = (document.getElementById('fLibSearch')?.value || '').trim().toLowerCase();
+  const list = (_facilitatorSubjectCatalog || []).filter(s => !search || s.subject.toLowerCase().includes(search));
+  if (!_facilitatorSubjectCatalog || !_facilitatorSubjectCatalog.length) { el.innerHTML = '<div class="empty-state">No subjects available yet.</div>'; return; }
+  if (!list.length) { el.innerHTML = '<div class="empty-state">No subjects match your search.</div>'; return; }
+  el.innerHTML = list.map(s => {
+    const theme = SUBJECT_THEME[s.subject] || DEFAULT_SUBJECT_THEME;
+    const bg = theme.img
+      ? `linear-gradient(180deg,rgba(20,20,30,.15),rgba(10,10,20,.75)),url('${theme.img}')`
+      : 'linear-gradient(135deg,#1a7a4a,#2fb673)';
+    return `
+      <div class="subj-card" style="background-image:${bg}" onclick="browseFacilitatorSubject('${esc(s.subject)}')">
+        <div class="subj-icon">${theme.icon}</div>
+        <h4>${esc(s.subject)}</h4>
+        <div class="subj-levels">${s.levels.map(l => `<span class="subj-level-tag">${esc(l)}</span>`).join('')}</div>
+        <div class="subj-count">${s.count} book${s.count === 1 ? '' : 's'}</div>
+        ${theme.credit ? `<div class="subj-credit">📷 ${esc(theme.credit)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function browseFacilitatorSubject(subject) {
+  _facilitatorSubjectFilter = subject;
+  renderFacilitatorTextbooks();
+  const tabBtn = document.querySelector('#sec-resources .tab[data-tab="res-textbooks"]');
+  if (tabBtn) activateTab(tabBtn);
 }
 
 function resCard(r) {
@@ -1563,7 +1971,11 @@ async function startNewChat(userId, name, initials) {
 function loadInbox() {}
 function loadSent() {}
 function loadMsgPeople() {}
-function openComposeToUser(userId, name) { startNewChat(userId, name, (name||'?')[0]+'?'); }
+function openComposeToUser(userId, name) {
+  const initials = (name || '?').trim().split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase() || '?';
+  goTo('messages');
+  startNewChat(userId, name, initials);
+}
 
 function fmtTimeShort(iso) {
   if (!iso) return '';
@@ -1710,6 +2122,18 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// Blank-line-separated paragraphs are kept as paragraphs; single line breaks inside a
+// paragraph (common when text — especially pasted equations — was hard-wrapped token by
+// token) are collapsed to a space so the content reads as continuous prose.
+function formatRichText(text) {
+  if (!text) return '';
+  return esc(text)
+    .split(/\r?\n[ \t]*\r?\n/)
+    .map(p => p.replace(/\r?\n+/g, ' ').replace(/[ \t]{2,}/g, ' ').trim())
+    .filter(Boolean)
+    .map(p => `<p>${p}</p>`)
+    .join('');
 }
 function fmtDate(d) {
   if (!d) return '';

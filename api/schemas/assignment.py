@@ -132,7 +132,7 @@ class AssignmentOut(BaseModel):
 
 class SubmissionCreate(BaseModel):
     content: Optional[str] = None
-    submission_type: str = "text"     # text | link | pdf
+    submission_type: str = "text"     # text | link | file (legacy submissions may say "pdf")
 
 
 class SubmissionOut(BaseModel):

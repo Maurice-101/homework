@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Facilitator Dashboard – Homework</title>
-<link rel="stylesheet" href="facilitator.css?v=4">
+<title>Facilitator Dashboard – Abahizi</title>
+<link rel="stylesheet" href="facilitator.css?v=8">
 </head>
 <body>
 <div class="layout">
@@ -13,7 +13,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
       <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
-      <span class="sb-logo">Homework</span>
+      <span class="sb-logo">Abahizi</span>
     </div>
     <div class="sb-profile">
       <div class="sb-avatar-wrap">
@@ -184,7 +184,10 @@
         <div class="fpane" id="fpane-materials" style="padding:18px">
           <div style="background:#f8f9fd;border-radius:10px;padding:14px;margin-bottom:16px">
             <h4 style="margin:0 0 10px;font-size:14px">Upload PDF</h4>
-            <input type="file" id="matUploadFiles" multiple accept=".pdf" onchange="renderPickedFiles('matUploadFiles','matPickedFiles')">
+            <div class="file-picker">
+              <input type="file" id="matUploadFiles" class="file-picker-input" multiple accept=".pdf" onchange="renderPickedFiles('matUploadFiles','matPickedFiles')">
+              <label for="matUploadFiles" class="file-picker-btn"><span class="fp-icon">📎</span> Choose Files</label>
+            </div>
             <div id="matPickedFiles" class="picked-files"></div>
             <div style="display:flex;gap:8px;margin-top:10px">
               <button class="btn-sm" onclick="uploadCourseMaterials()">Upload</button>
@@ -253,17 +256,29 @@
             <option value="past_paper" data-i18n="resources.pastPapers">Past Paper</option>
             <option value="uploaded">Other</option>
           </select>
-          <input type="file" id="upFile" accept=".pdf">
+          <div class="file-picker" style="flex:1.5;min-width:220px">
+            <input type="file" id="upFile" class="file-picker-input" accept=".pdf" onchange="updateFileName('upFile','upFileName')">
+            <label for="upFile" class="file-picker-btn"><span class="fp-icon">📎</span> Choose File</label>
+            <span class="file-picker-name" id="upFileName">No file chosen</span>
+          </div>
           <button class="btn-primary" onclick="uploadResource()" data-i18n="facilitator.uploadPdf">Upload PDF</button>
         </div>
         <p class="upload-msg hidden" id="uploadMsg"></p>
       </div>
       <div class="tab-bar" style="margin-top:16px">
-        <button class="tab active" data-tab="res-textbooks" data-i18n="resources.textbooks">Textbooks</button>
+        <button class="tab active" data-tab="res-subjects" data-i18n="resources.browseBySubject">Browse by Subject</button>
+        <button class="tab" data-tab="res-textbooks" data-i18n="resources.textbooks">Textbooks</button>
         <button class="tab" data-tab="res-papers" data-i18n="resources.pastPapers">Past Papers</button>
         <button class="tab" data-tab="res-uploaded" data-i18n="resources.uploaded">Uploaded</button>
       </div>
-      <div class="tab-content active" id="res-textbooks">
+      <div class="tab-content active" id="res-subjects">
+        <div style="margin:12px 0">
+          <input type="text" id="fLibSearch" class="search-input" placeholder="Search by subject…" oninput="renderFacilitatorSubjectCatalog()" style="max-width:320px">
+        </div>
+        <div class="resource-grid" id="fSubjGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
+      </div>
+      <div class="tab-content" id="res-textbooks">
+        <div id="fTextbookFilterBar" class="hidden" style="margin-bottom:10px;font-size:12.5px;color:var(--text-sub)"></div>
         <div class="resource-grid" id="textbookGrid"><div class="empty-state" data-i18n="common.loading">Loading…</div></div>
       </div>
       <div class="tab-content" id="res-papers">
@@ -402,6 +417,7 @@
     <div class="modal-body">
       <div class="form-row"><label>Subject Title</label><input type="text" id="ccTitle" required></div>
       <div class="form-row"><label>Description</label><textarea id="ccDesc" rows="3"></textarea></div>
+      <div class="form-row"><label>Goals <small style="color:#888">(what students should achieve)</small></label><textarea id="ccGoals" rows="3"></textarea></div>
       <div class="form-row"><label>Subject / Category</label><input type="text" id="ccSubject" placeholder="e.g. Biology, Mathematics"></div>
       <div class="form-row"><label>Grade Level</label><input type="text" id="ccGrade" placeholder="e.g. S4, S5, S6"></div>
       <div class="form-row">
@@ -413,7 +429,10 @@
       </div>
       <div class="form-row">
         <label>Course Materials <small style="color:#888">(optional — PDF, select multiple)</small></label>
-        <input type="file" id="ccMaterials" multiple accept=".pdf" onchange="renderPickedFiles('ccMaterials','ccPickedFiles')">
+        <div class="file-picker">
+          <input type="file" id="ccMaterials" class="file-picker-input" multiple accept=".pdf" onchange="renderPickedFiles('ccMaterials','ccPickedFiles')">
+          <label for="ccMaterials" class="file-picker-btn"><span class="fp-icon">📎</span> Choose Files</label>
+        </div>
         <div id="ccPickedFiles" class="picked-files"></div>
       </div>
       <button class="btn-primary" onclick="submitCreateCourse()">Create Subject</button>
@@ -531,7 +550,7 @@
 
 <!-- MODAL: Grade Submission -->
 <div class="modal-overlay hidden" id="modalGrade">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-head">
       <h3>Grade Submission</h3>
       <button class="modal-close" onclick="closeModal('modalGrade')">✕</button>
@@ -573,6 +592,56 @@
       </div>
       <div id="inviteStudentList" style="max-height:300px;overflow-y:auto;margin-top:8px"></div>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: Assignment Detail (read-only) -->
+<div class="modal-overlay hidden" id="modalAssignmentDetail">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3>Assignment Details</h3>
+      <button class="modal-close" onclick="closeModal('modalAssignmentDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="adBody"></div>
+  </div>
+</div>
+
+<!-- MODAL: Module Detail (read-only) -->
+<div class="modal-overlay hidden" id="modalModuleDetail">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Module Details</h3>
+      <button class="modal-close" onclick="closeModal('modalModuleDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="mdBody"></div>
+  </div>
+</div>
+
+<!-- MODAL: Add Group Member -->
+<div class="modal-overlay hidden" id="modalAddGroupMember">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <h3>Manage Group Members</h3>
+      <button class="modal-close" onclick="closeModal('modalAddGroupMember')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Search student</label>
+        <input type="text" id="gmSearch" placeholder="Name or email…" oninput="filterAddMemberList()" autocomplete="off">
+      </div>
+      <div id="gmList" style="max-height:320px;overflow-y:auto;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Student Detail -->
+<div class="modal-overlay hidden" id="modalStudentDetail">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <h3>Student Details</h3>
+      <button class="modal-close" onclick="closeModal('modalStudentDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="sdBody"></div>
   </div>
 </div>
 
@@ -641,6 +710,7 @@
 
 <script src="../js/api.js?v=2"></script>
 <script src="../js/i18n.js?v=2"></script>
-<script src="facilitator.js?v=5"></script>
+<script src="../js/subjectThemes.js?v=2"></script>
+<script src="facilitator.js?v=12"></script>
 </body>
 </html>

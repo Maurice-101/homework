@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from api.database import get_db
 from api.controller import course_content_controller as ctrl
 from api.schemas.course_content import (
-    AnnouncementCreate, DiscussionCreate, ReplyCreate, SyllabusWeekCreate,
+    AnnouncementCreate, AnnouncementCommentCreate, DiscussionCreate, ReplyCreate, SyllabusWeekCreate,
     GroupCreate, GroupMemberAdd,
 )
 from api.utils.auth import get_current_user
@@ -31,6 +31,13 @@ def delete_announcement(course_id: int, ann_id: int,
                          db: Session = Depends(get_db),
                          current_user: User = Depends(get_current_user)):
     return ctrl.delete_announcement(course_id, ann_id, current_user.id, db)
+
+
+@router.post("/courses/{course_id}/announcements/{ann_id}/comments")
+def add_announcement_comment(course_id: int, ann_id: int, data: AnnouncementCommentCreate,
+                              db: Session = Depends(get_db),
+                              current_user: User = Depends(get_current_user)):
+    return ctrl.add_announcement_comment(course_id, ann_id, data, current_user.id, db)
 
 
 # ── Discussions ───────────────────────────────────────────────────────────────

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Dashboard – Homework</title>
-<link rel="stylesheet" href="student.css?v=4">
+<title>Student Dashboard – Abahizi</title>
+<link rel="stylesheet" href="student.css?v=6">
 </head>
 <body>
 <div class="layout">
@@ -13,7 +13,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
       <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
-      <span class="sb-logo">Homework</span>
+      <span class="sb-logo">Abahizi</span>
     </div>
     <div class="sb-profile">
       <img src="../Assets/avatars/student-male avatar.avif" id="sbAvatar" alt="avatar">
@@ -252,7 +252,7 @@
 
       <!-- Assignment Detail Panel -->
       <div class="assignment-detail-panel hidden" id="assignmentDetailPanel">
-        <button class="back-btn" onclick="closeAssignmentDetail()">← <span data-i18n="cd.backToAssignments">Back to Assignments</span></button>
+        <button class="back-btn" onclick="closeAssignmentDetail()" data-i18n="cd.backToAssignments">← Back to Assignments</button>
         <div id="assignmentDetailContent"></div>
         <div id="quizContainer" style="display:none"></div>
         <div class="adetail-grid" id="adetailGrid">
@@ -261,23 +261,30 @@
             <div id="existingSubmission" style="display:none" class="existing-sub"></div>
             <div id="submitForm">
               <div class="sub-type-row">
-                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')" data-i18n="cd.textTab">📝 Text</button>
-                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')" data-i18n="cd.linkDriveTab">🔗 Link / Drive</button>
-                <button class="sub-type-btn" data-type="pdf" onclick="selectSubType(this,'pdf')" data-i18n="cd.uploadPdfTab">📄 Upload PDF</button>
+                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')"><span class="stb-icon">📝</span><span data-i18n="cd.textTab">Text Entry</span></button>
+                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')"><span class="stb-icon">🔗</span><span data-i18n="cd.linkDriveTab">Website URL</span></button>
+                <button class="sub-type-btn" data-type="file" onclick="selectSubType(this,'file')"><span class="stb-icon">📎</span><span data-i18n="cd.uploadPdfTab">File Upload</span></button>
               </div>
-              <div id="sub-text-area">
+              <div id="sub-text-area" class="sub-area">
                 <label data-i18n="cd.yourAnswer">Your Answer</label>
                 <textarea id="submitContent" rows="8" placeholder="Write your answer here…" data-i18n-placeholder="cd.writeAnswerPlaceholder"></textarea>
               </div>
-              <div id="sub-link-area" style="display:none">
+              <div id="sub-link-area" class="sub-area" style="display:none">
                 <label data-i18n="cd.websiteLink">Website / Google Drive Link</label>
                 <input type="url" id="submitLink" placeholder="https://…">
               </div>
-              <div id="sub-pdf-area" style="display:none">
-                <label data-i18n="facilitator.uploadPdf">Upload PDF</label>
-                <input type="file" id="submitFile" accept=".pdf">
+              <div id="sub-pdf-area" class="sub-area" style="display:none">
+                <label><span data-i18n="cd.uploadFileLabel">Upload File</span> <small>(document, image, audio, or video)</small></label>
+                <div class="file-drop">
+                  <input type="file" id="submitFile" class="file-picker-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.rtf,.odt,.jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.mp3,.wav,.m4a,.ogg,.aac,.mp4,.mov,.avi,.webm,.mkv" onchange="updateFileName('submitFile','submitFileName')">
+                  <label for="submitFile" class="file-drop-inner">
+                    <span class="file-drop-icon">📤</span>
+                    <span class="file-drop-text">Click to choose a file</span>
+                    <span class="file-picker-name" id="submitFileName">No file chosen</span>
+                  </label>
+                </div>
               </div>
-              <button class="btn-p" style="margin-top:12px;width:100%" onclick="doSubmit()" data-i18n="cd.submitAssignment">Submit Assignment</button>
+              <button class="btn-p btn-submit-asg" onclick="doSubmit()" data-i18n="cd.submitAssignment">Submit Assignment</button>
             </div>
           </div>
           <div class="adetail-resources">
@@ -555,6 +562,7 @@
 
 <script src="../js/api.js?v=3"></script>
 <script src="../js/i18n.js?v=3"></script>
-<script src="student.js?v=6"></script>
+<script src="../js/subjectThemes.js?v=1"></script>
+<script src="student.js?v=9"></script>
 </body>
 </html>

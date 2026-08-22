@@ -29,13 +29,13 @@ def _send_email(to_email: str, code: str):
         return  # dev mode – code already printed above
 
     body = (
-        f"Your Homework Platform verification code is:\n\n"
+        f"Your Abahizi Platform verification code is:\n\n"
         f"  {code}\n\n"
         f"This code expires in 15 minutes.\n"
         f"If you did not request this, ignore this message."
     )
     msg = MIMEText(body, "plain")
-    msg["Subject"] = "Homework Platform – Verification Code"
+    msg["Subject"] = "Abahizi Platform – Verification Code"
     msg["From"] = smtp_from
     msg["To"] = to_email
     try:

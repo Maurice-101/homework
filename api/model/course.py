@@ -10,6 +10,7 @@ class Course(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
+    goals = Column(Text, nullable=True)
     subject = Column(String(100), nullable=False)
     grade_level = Column(String(20), nullable=True)
     facilitator_id = Column(Integer, ForeignKey("users.id"), nullable=True)

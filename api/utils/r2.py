@@ -10,6 +10,7 @@ own S3 endpoint isn't behind that WAF rule.
 """
 import re
 import uuid
+import mimetypes
 import urllib.parse
 import boto3
 import requests
@@ -68,12 +69,28 @@ def fetch_object(key: str) -> tuple[str, "object"]:
 
 
 def upload_file(file_bytes: bytes, filename: str, prefix: str = "resources") -> str:
-    """Upload *file_bytes* to R2 via the Cloudflare REST API.  Returns the object key."""
+    """Upload *file_bytes* to R2 via the Cloudflare REST API. Returns the object key."""
     safe_name = re.sub(r"[^\w.\-]", "_", filename)
     key = f"{prefix}/{uuid.uuid4().hex}_{safe_name}"
     encoded = urllib.parse.quote(key, safe="")
-    headers = {**_HEADERS, "Content-Type": "application/pdf"}
+    content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    headers = {**_HEADERS, "Content-Type": content_type}
     resp = requests.put(f"{_CF_API}/objects/{encoded}",
                         headers=headers, data=file_bytes, timeout=60)
     resp.raise_for_status()
     return key
+
+
+def delete_object(key: str) -> None:
+    """Delete an object from R2. Uses the S3-compatible endpoint (not the
+    Cloudflare REST API) for the same reason fetch_object does: keys containing
+    ".." trip the REST API's edge WAF."""
+    try:
+        _s3_client.delete_object(Bucket=settings.r2_bucket_name, Key=key)
+    except ClientError:
+        pass  # already gone / never existed — deleting is idempotent from the caller's view
+
+
+def proxy_url(key: str) -> str:
+    """The app-served URL a browser should use to view/download an R2 object."""
+    return f"/api/resources/serve?key={urllib.parse.quote(key, safe='')}"

@@ -473,7 +473,7 @@ function openCdAssignment(asgId) {
 
         <div class="cd-asg-detail-top">
           <h2>${esc(a.title)}</h2>
-          <button class="btn-start-asg" onclick="openAssignmentDetail(${a.id})">Start Assignment</button>
+          <button class="btn-start-asg" onclick="startCdAssignment(${a.id})">Start Assignment</button>
         </div>
 
         <hr class="cd-asg-divider">
@@ -502,10 +502,17 @@ function openCdAssignment(asgId) {
 
         ${a.description ? `
         <div class="cd-asg-prompt-label">Prompt</div>
-        <div class="cd-asg-prompt-body">${esc(a.description).split('\n').map(p=>p?`<p>${p}</p>`:'').join('')}</div>` :
+        <div class="cd-asg-prompt-body">${formatRichText(a.description)}</div>` :
         `<div class="cd-asg-prompt-label">Instructions</div>
          <div class="cd-asg-prompt-body"><p>No additional instructions provided. Click <em>Start Assignment</em> to begin your submission.</p></div>`}
       </div>`;
+}
+
+function startCdAssignment(asgId) {
+    const a = _cdAsgCache.find(x => x.id === asgId);
+    if (!a) return;
+    goTo('assignments');
+    openAssignmentDetail(a);
 }
 
 function closeCdAssignment() {
@@ -969,6 +976,17 @@ async function loadAssignments() {
         document.getElementById(id).innerHTML = '<p class="empty">Failed to load.</p>'); }
 }
 
+// Assignment attachments / submissions / answer files are R2 keys now.
+// r2FileUrl embeds the JWT for plain <a href> use (which can't set an
+// Authorization header); r2ServeUrl is token-free for passing to openPdf(),
+// which already appends the token itself.
+function r2ServeUrl(key) {
+    return `/api/resources/serve?key=${encodeURIComponent(key)}`;
+}
+function r2FileUrl(key) {
+    return `${r2ServeUrl(key)}&token=${encodeURIComponent(getToken())}`;
+}
+
 function fileIcon(filename) {
     const ext = (filename || "").split(".").pop().toLowerCase();
     if (ext === "pdf") return "📄";
@@ -1012,19 +1030,38 @@ function openAssignmentDetail(aOrId) {
     document.querySelector("#sec-assignments .sec-head").classList.add("hidden-for-detail");
     document.getElementById("assignmentDetailPanel").classList.remove("hidden");
 
+    const submittingLabel = a.student_submission_id
+        ? ({text:"a text entry", link:"a website url", pdf:"a file upload", file:"a file upload"}[a.student_submission_type] || "a text entry")
+        : "a text entry, a website url, or a file upload";
+    const dueStr = a.due_date
+        ? new Date(a.due_date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})
+        : "No due date";
+
     document.getElementById("assignmentDetailContent").innerHTML = `
-        <h2>${esc(a.title)}</h2>
-        <div class="adetail-meta">
-          <span class="tbadge">${a.type || a.assignment_type || "assignment"}</span>
-          ${a.course_title ? `<span class="tag">📚 ${esc(a.course_title)}</span>` : ""}
-          ${a.due_date ? `<span class="tag">⏰ ${new Date(a.due_date).toLocaleString()}</span>` : ""}
-          <span class="tag">Max: ${a.max_score || 100}</span>
+        <div class="adetail-title-row">
+          <h2 class="adetail-title">${esc(a.title)}</h2>
+          ${a.student_grade != null
+            ? `<span class="adetail-status-pill graded">✓ Graded ${a.student_grade}/${a.max_score || 100}</span>`
+            : a.student_submission_id
+              ? `<span class="adetail-status-pill submitted">✓ Submitted</span>`
+              : `<span class="adetail-status-pill pending">Not submitted</span>`}
         </div>
-        ${a.description ? `<p style="margin:12px 0;color:#555">${esc(a.description)}</p>` : ""}
+        <div class="adetail-badges">
+          <span class="tbadge">${esc(a.type || a.assignment_type || "assignment")}</span>
+          ${a.course_title ? `<span class="tag">📚 ${esc(a.course_title)}</span>` : ""}
+        </div>
+        <hr class="adetail-divider">
+        <div class="adetail-meta-canvas">
+          <span><strong>Due</strong> ${dueStr}</span>
+          <span><strong>Points</strong> ${a.max_score != null ? a.max_score : "—"}</span>
+          <span><strong>Submitting</strong> ${submittingLabel}</span>
+        </div>
+        <hr class="adetail-divider">
+        ${a.description ? `<div class="adetail-prompt-label">Instructions</div><div class="adetail-desc">${formatRichText(a.description)}</div>` : ""}
         ${a.attachment_url ? `<div style="margin:10px 0"><a href="${esc(a.attachment_url)}" target="_blank" class="btn-s" style="display:inline-block">🔗 Open Attachment / Google Doc</a></div>` : ""}
-        ${a.attachment_path ? `<div style="margin:10px 0"><a href="/uploads/${esc(a.attachment_path)}" target="_blank" class="btn-s" style="display:inline-block">📎 View Assignment PDF</a></div>` : ""}
+        ${a.attachment_path ? `<div style="margin:10px 0"><a href="${r2FileUrl(a.attachment_path)}" target="_blank" class="btn-s" style="display:inline-block">📎 View Assignment PDF</a></div>` : ""}
         ${(a.attachments||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
-          ${a.attachments.map(att => `<a href="/uploads/${esc(att.file_path)}" target="_blank" class="btn-s" style="display:inline-block">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join("")}
+          ${a.attachments.map(att => `<a href="${r2FileUrl(att.file_path)}" target="_blank" class="btn-s" style="display:inline-block">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join("")}
         </div>` : ""}
     `;
 
@@ -1046,20 +1083,24 @@ function openAssignmentDetail(aOrId) {
     if (a.student_submission_id) {
         existEl.style.display = "block";
         formEl.style.display  = "none";
-        let subHtml = `<p style="color:#27ae60;font-weight:600">✓ Already submitted (${a.student_submission_type || 'text'})</p>`;
+        const typeLabel = {text:"Text Entry", link:"Website URL", pdf:"File Upload", file:"File Upload"}[a.student_submission_type] || "Text Entry";
+        let subHtml = `<div class="existing-sub-head"><span class="existing-sub-check">✓</span><div><strong>Submitted</strong><span class="existing-sub-type">${esc(typeLabel)}</span></div></div>`;
+        if (a.student_content && (a.student_submission_type === "text" || !a.student_submission_type)) {
+            subHtml += `<div class="existing-sub-text">${formatRichText(a.student_content)}</div>`;
+        }
+        if (a.student_submission_type === "link" && a.student_content) {
+            subHtml += `<a href="${a.student_content}" target="_blank" class="btn-s" style="display:inline-block;margin-top:4px">🔗 Open Link</a>`;
+        }
+        if ((a.student_submission_type === "pdf" || a.student_submission_type === "file") && a.student_file_path) {
+            subHtml += `<a href="${r2FileUrl(a.student_file_path)}" target="_blank" class="btn-s" style="display:inline-block;margin-top:4px">${fileIcon(a.student_file_path)} View File</a>`;
+        }
         if (a.student_grade != null) {
             subHtml += `<div class="grade-result">
                 <h3>Grade: <span style="color:#2f6df6">${a.student_grade} / ${a.max_score}</span></h3>
                 ${a.student_feedback ? `<p>💬 ${esc(a.student_feedback)}</p>` : ""}
             </div>`;
         } else {
-            subHtml += '<p style="color:#888;font-size:13px">Awaiting grading…</p>';
-        }
-        if (a.student_submission_type === "link" && a.student_content) {
-            subHtml += `<a href="${a.student_content}" target="_blank" class="btn-s" style="display:inline-block;margin-top:8px">🔗 Open Link</a>`;
-        }
-        if (a.student_submission_type === "pdf" && a.student_file_path) {
-            subHtml += `<a href="/uploads/${a.student_file_path}" target="_blank" class="btn-s" style="display:inline-block;margin-top:8px">📄 View PDF</a>`;
+            subHtml += '<p class="awaiting-grade">⏳ Awaiting grading…</p>';
         }
         existEl.innerHTML = subHtml;
     } else {
@@ -1168,7 +1209,7 @@ function _quizInputHtml(q) {
         return `<textarea class="quiz-answer-input" id="qa-${q.id}" rows="5" placeholder="Your answer…"></textarea>`;
     }
     if (q.type === "file_upload") {
-        return `<input type="file" id="qa-${q.id}" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp">`;
+        return `<input type="file" id="qa-${q.id}" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.rtf,.odt,.jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.mp3,.wav,.m4a,.ogg,.aac,.mp4,.mov,.avi,.webm,.mkv">`;
     }
     if (q.type === "dropdown") {
         return `<select class="quiz-answer-input" id="qa-${q.id}">
@@ -1275,7 +1316,7 @@ function renderQuizAnswerReview(ans, idx) {
     }
     let answerHtml = "";
     if (ans.answer_text) answerHtml = `<p style="font-size:13px;color:#555;margin-top:6px">${esc(ans.answer_text)}</p>`;
-    else if (ans.file_path) answerHtml = `<button class="btn-tiny" style="margin-top:6px" onclick="openPdf('/uploads/${esc(ans.file_path)}','Your answer')">📎 View your file</button>`;
+    else if (ans.file_path) answerHtml = `<button class="btn-tiny" style="margin-top:6px" onclick="openPdf('${r2ServeUrl(ans.file_path)}','Your answer')">📎 View your file</button>`;
 
     return `
         <div class="quiz-question">
@@ -1300,7 +1341,7 @@ function selectSubType(btn, type) {
     activeSubmitType = type;
     document.getElementById("sub-text-area").style.display = type === "text" ? "block" : "none";
     document.getElementById("sub-link-area").style.display = type === "link" ? "block" : "none";
-    document.getElementById("sub-pdf-area").style.display  = type === "pdf"  ? "block" : "none";
+    document.getElementById("sub-pdf-area").style.display  = type === "file" ? "block" : "none";
 }
 
 async function loadCourseResources(courseId, courseTitle) {
@@ -1340,9 +1381,9 @@ async function doSubmit() {
     if (!activeAssignData) return;
     const id = activeAssignData.id;
     try {
-        if (activeSubmitType === "pdf") {
+        if (activeSubmitType === "file") {
             const fileInput = document.getElementById("submitFile");
-            if (!fileInput.files[0]) { showToast("Please select a PDF file.", "error"); return; }
+            if (!fileInput.files[0]) { showToast("Please select a file.", "error"); return; }
             const fd = new FormData();
             fd.append("file", fileInput.files[0]);
             await apiFetch(`/assignments/${id}/submit-file`, { method: "POST", body: fd });
@@ -1393,54 +1434,9 @@ async function loadProgress() {
 }
 
 // ── RESOURCES ──
-
-// Subject → { icon, img, credit } used as card art on the "Browse by Subject" catalog.
-// Images are real photos from Wikimedia Commons (public domain / CC-licensed) — credit
-// is shown on each card since several licenses (CC BY, CC BY-SA) require attribution.
-const SUBJECT_THEME = {
-    "Agriculture": { icon: "🌾", img: "../Assets/subjects/agriculture.jpg", credit: "Fredericknoronha / Wikimedia Commons (CC BY-SA 4.0)" },
-    "Auditing": { icon: "📋", img: "../Assets/subjects/auditing.jpg", credit: "HABS / Wikimedia Commons (Public domain)" },
-    "Biology": { icon: "🧬", img: "../Assets/subjects/biology.jpg", credit: "Scott L. Gardner / Wikimedia Commons (CC BY-SA 4.0)" },
-    "Chemistry": { icon: "⚗️", img: "../Assets/subjects/chemistry.jpg", credit: "Belikov Maxim / Wikimedia Commons (CC BY 4.0)" },
-    "Clinical Placement": { icon: "🏥", img: "../Assets/subjects/clinical-placement.jpg", credit: "U.S. Navy / Wikimedia Commons (Public domain)" },
-    "Computer Science": { icon: "💻", img: "../Assets/subjects/computer-science.jpg", credit: "Crew crew / Wikimedia Commons (CC0)" },
-    "Creative Arts Music and Fine Arts": { icon: "🎨", img: "../Assets/subjects/creative-arts-music-and-fine-arts.jpg", credit: "Bartolomeo Bettera / Wikimedia Commons (Public domain)" },
-    "Creative Performance": { icon: "🎭", img: "../Assets/subjects/creative-performance.jpg", credit: "Arquivo histórico de Sarria / Wikimedia Commons (CC BY-SA 3.0)" },
-    "Economics": { icon: "📈", img: "../Assets/subjects/economics.png", credit: "Nikolay Zvezdin / Wikimedia Commons (CC BY-SA 4.0)" },
-    "English": { icon: "📖", img: "../Assets/subjects/english.jpg", credit: "Micheal Kaluba / Wikimedia Commons (CC BY-SA 4.0)" },
-    "Entrepreneurship": { icon: "💡", img: "../Assets/subjects/entrepreneurship.jpg", credit: "Wikimedia Commons (CC0)" },
-    "Ethics": { icon: "⚖️", img: "../Assets/subjects/ethics.jpg", credit: "Domenico Fetti / Wikimedia Commons (Public domain)" },
-    "Financial Accounting": { icon: "💰", img: "../Assets/subjects/financial-accounting.jpg", credit: "Ken Lund / Wikimedia Commons (CC BY-SA 2.0)" },
-    "Foundations of Education": { icon: "🎓", img: "../Assets/subjects/foundations-of-education.jpg", credit: "Harrison Keely / Wikimedia Commons (CC BY 4.0)" },
-    "French": { icon: "🇫🇷", img: "../Assets/subjects/french.jpg", credit: "Getfunky Paris / Wikimedia Commons (CC BY 2.0)" },
-    "Fundamentals of Nursing": { icon: "💉", img: "../Assets/subjects/clinical-placement.jpg", credit: "U.S. Navy / Wikimedia Commons (Public domain)" },
-    "General Studies": { icon: "🧭", img: "../Assets/subjects/general-studies.jpg", credit: "Gary Todd / Wikimedia Commons (CC0)" },
-    "Geography": { icon: "🌍", img: "../Assets/subjects/geography.jpg", credit: "Auguste Henri Dufour / Wikimedia Commons (Public domain)" },
-    "History": { icon: "🏛️", img: "../Assets/subjects/history.jpg", credit: "Gary Todd / Wikimedia Commons (CC0)" },
-    "History & Citizenship": { icon: "🏛️", img: "../Assets/subjects/history-citizenship.jpg", credit: "JJ Harrison / Wikimedia Commons (CC BY-SA 3.0)" },
-    "Home Science": { icon: "🏠", img: "../Assets/subjects/home-science.jpg", credit: "Shixart1985 / Wikimedia Commons (CC BY 2.0)" },
-    "ICT": { icon: "💻", img: "../Assets/subjects/ict.jpg", credit: "Bill Branson / Wikimedia Commons (Public domain)" },
-    "ICT in Accounting": { icon: "🖥️", img: "../Assets/subjects/ict-in-accounting.jpg", credit: "Wikimedia Commons (CC0)" },
-    "Integrated Science": { icon: "🔬", img: "../Assets/subjects/integrated-science.jpg", credit: "U.S. Department of Energy / Wikimedia Commons (Public domain)" },
-    "Kinyarwanda": { icon: "🗣️", img: "../Assets/subjects/kinyarwanda.jpg", credit: "Ericnkurunziza / Wikimedia Commons (CC BY-SA 4.0)" },
-    "Kiswahili": { icon: "🗣️", img: "../Assets/subjects/kiswahili.jpg", credit: "NASA Earth Observatory / Wikimedia Commons (Public domain)" },
-    "Literature in English": { icon: "📚", img: "../Assets/subjects/literature-in-english.jpg", credit: "Wikimedia Commons (CC0)" },
-    "Management Accounting": { icon: "📊", img: "../Assets/subjects/management-accounting.jpg", credit: "Traceries / Wikimedia Commons (Public domain)" },
-    "Mathematics": { icon: "➗", img: "../Assets/subjects/mathematics.jpg", credit: "Manuelzapata04 / Wikimedia Commons (CC BY-SA 4.0)" },
-    "Mathematics for Accounting": { icon: "🧮", img: "../Assets/subjects/mathematics-for-accounting.jpg", credit: "Coyau / Wikimedia Commons (CC BY-SA 3.0)" },
-    "Medical Pathology": { icon: "🩺", img: "../Assets/subjects/medical-pathology.jpg", credit: "CDC / Wikimedia Commons (Public domain)" },
-    "Music": { icon: "🎵", img: "../Assets/subjects/music.jpg", credit: "Maurizio Pesce / Wikimedia Commons (CC BY 2.0)" },
-    "Physical Education": { icon: "⚽", img: "../Assets/subjects/physical-education.jpg", credit: "ThoroughlyReviewed / Wikimedia Commons (CC BY 2.0)" },
-    "Physics": { icon: "⚛️", img: "../Assets/subjects/physics.jpg", credit: "Stanislav Liubauskas / Wikimedia Commons (CC BY 4.0)" },
-    "Religion & Ethics": { icon: "🕊️", img: "../Assets/subjects/religion-ethics.jpg", credit: "Dragfyre / Wikimedia Commons (CC BY-SA 3.0)" },
-    "Religious Studies": { icon: "🕊️", img: "../Assets/subjects/religion-ethics.jpg", credit: "Dragfyre / Wikimedia Commons (CC BY-SA 3.0)" },
-    "Science and Elementary Technology": { icon: "🔧", img: "../Assets/subjects/science-and-elementary-technology.jpg", credit: "Wikimedia Commons (Public domain)" },
-    "Social Studies": { icon: "🏘️", img: "../Assets/subjects/social-studies.jpg", credit: "Bembety / Wikimedia Commons (CC BY-SA 4.0)" },
-    "Social and Religious Studies": { icon: "🏘️", img: "../Assets/subjects/religion-ethics.jpg", credit: "Dragfyre / Wikimedia Commons (CC BY-SA 3.0)" },
-    "Special Education Needs": { icon: "🤝", img: "../Assets/subjects/special-education-needs.jpg", credit: "DFAT / Wikimedia Commons (CC BY 4.0)" },
-    "Taxation": { icon: "🧾", img: "../Assets/subjects/taxation.jpg", credit: "Blogtrepreneur / Wikimedia Commons (CC BY 2.0)" },
-};
-const DEFAULT_SUBJECT_THEME = { icon: "📘", img: "", credit: "" };
+// SUBJECT_THEME / DEFAULT_SUBJECT_THEME now come from the shared
+// ../js/subjectThemes.js (loaded before this file) so the Student and
+// Facilitator portals can't drift apart on subject card art.
 
 let _subjectCatalog = null;
 
@@ -2185,4 +2181,23 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 function esc(s) {
     if (!s) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Blank-line-separated paragraphs are kept as paragraphs; single line breaks inside a
+// paragraph (common when text — especially pasted equations — was hard-wrapped token by
+// token) are collapsed to a space so the content reads as continuous prose instead of a
+// vertical wall of one-word lines.
+function formatRichText(text) {
+    if (!text) return '';
+    return esc(text)
+        .split(/\r?\n[ \t]*\r?\n/)
+        .map(p => p.replace(/\r?\n+/g, ' ').replace(/[ \t]{2,}/g, ' ').trim())
+        .filter(Boolean)
+        .map(p => `<p>${p}</p>`)
+        .join('');
+}
+
+function updateFileName(inputId, nameId) {
+    const files = Array.from(document.getElementById(inputId).files || []);
+    document.getElementById(nameId).textContent = files.length ? files.map(f => f.name).join(', ') : 'No file chosen';
 }

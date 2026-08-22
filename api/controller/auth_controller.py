@@ -26,7 +26,7 @@ def register_user(data: UserRegistration, db: Session) -> TokenResponse:
 
     db.add(Notification(
         user_id=user.id,
-        title="Welcome to Homework Platform!",
+        title="Welcome to Abahizi Platform!",
         message=f"Hi {user.first_name}, your account has been created successfully.",
         type="system",
     ))
