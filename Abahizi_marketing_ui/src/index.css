@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette, sampled from the Abahizi mockup */
+  --color-navy-950: #00152e;
+  --color-navy-900: #002147;
+  --color-navy-800: #0a2d54;
+  --color-navy-700: #163b66;
+  --color-navy-600: #24507f;
+
+  --color-gold-400: #f6e2a7;
+  --color-gold-500: #f0cf7e;
+  --color-gold-600: #e8b94f;
+
+  --color-cream-50: #f9f9f7;
+  --color-cream-100: #f4f2ea;
+
+  --color-slate-ink: #1f2733;
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Inter", "Helvetica Neue", Arial, sans-serif;
+
+  --shadow-soft: 0 20px 45px -20px rgba(0, 33, 71, 0.25);
+  --shadow-card: 0 10px 30px -12px rgba(0, 33, 71, 0.18);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--color-slate-ink);
+    background-color: var(--color-cream-50);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--color-navy-900);
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-600);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .container-page {
+      padding-inline: 2.5rem;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
