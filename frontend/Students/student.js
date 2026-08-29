@@ -6,14 +6,46 @@ document.addEventListener("DOMContentLoaded", () => {
     fillUser(user);
     initNav();
     loadDashboard();
-    // Poll for updates every 30s
+    startStudyTimePing();
+    // Poll for updates every 30s — this is how "Current Average" and the assignments
+    // table pick up a grade the moment a facilitator submits it, short of a full
+    // websocket push (not wired up here), 30s is the freshness ceiling.
     setInterval(() => {
         const sec = document.querySelector(".sec.active");
+        if (sec?.id === "sec-dashboard")    loadDashboard();
         if (sec?.id === "sec-assignments")  loadAssignments();
         if (sec?.id === "sec-progress")     loadProgress();
         if (sec?.id === "sec-messages")     loadContacts();
     }, 30000);
 });
+
+// ── STUDY TIME ──
+// Pings the backend once a minute while the tab is actually visible/focused, so time
+// spent with the app open in a background tab (or the laptop asleep) doesn't count.
+// The server ignores pings that arrive faster than every 50s, so this can't be spoofed
+// into over-counting by firing more often.
+// "Studying" means actually looking at content material — a course's home/modules/
+// syllabus, the resource library, or the virtual notebook — not just having the app
+// open (Dashboard, Messages, Notifications, Settings, or the bare Courses list before
+// picking a course don't count).
+function isStudyingContent() {
+    const sec = document.querySelector(".sec.active");
+    if (!sec) return false;
+    if (sec.id === "sec-courses" && activeCourseDetailId) return true;
+    if (sec.id === "sec-resources") return true;
+    if (sec.id === "sec-canvas") return true;
+    return false;
+}
+
+function startStudyTimePing() {
+    const tick = () => {
+        if (document.visibilityState === "visible" && isStudyingContent()) {
+            apiPost("/study-time/ping", { course_id: _currentStudyCourseId }).catch(() => {});
+        }
+    };
+    tick();
+    setInterval(tick, 60000);
+}
 
 // ── USER ──
 function fillUser(u) {
@@ -47,13 +79,31 @@ function initNav() {
             if (tab.dataset.tab === "people")   loadPeople();
             if (tab.dataset.tab === "subjects") loadSubjectCatalog();
             if (tab.closest("#sec-resources"))  updateResSummary();
+            if (tab.closest("#sec-courses")) {
+                // Filters/search only apply to the server-searchable Browse Catalog tab.
+                const showFilters = tab.dataset.tab === "browse";
+                document.getElementById("mcFilters")?.classList.toggle("hidden", !showFilters);
+                document.getElementById("mcSearchRow")?.classList.toggle("hidden", !showFilters);
+            }
         }));
     document.getElementById("profileForm").addEventListener("submit", saveProfile);
     document.querySelectorAll(".modal").forEach(m =>
         m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); }));
+    document.addEventListener("click", e => {
+        const dd = document.getElementById("profileDropdown");
+        if (dd && dd.classList.contains("open") && !dd.contains(e.target) && !e.target.closest(".profile-trigger")) {
+            dd.classList.remove("open");
+        }
+    });
 }
 
+// Which course (if any) the student is currently viewing — attached to study-time pings
+// so time can be broken down per subject. Reset on every navigation; openCourseDetail()
+// sets it back when the student is actually inside one specific course.
+let _currentStudyCourseId = null;
+
 function goTo(sec) {
+    _currentStudyCourseId = null;
     document.querySelectorAll(".menu li").forEach(li => li.classList.toggle("active", li.dataset.sec === sec));
     document.querySelectorAll(".sec").forEach(s => s.classList.remove("active"));
     document.getElementById(`sec-${sec}`)?.classList.add("active");
@@ -83,6 +133,7 @@ async function loadDashboard() {
         const [asgn, courses, notifs] = await Promise.all([
             apiGet("/assignments/"), apiGet("/courses/my"), apiGet("/notifications")
         ]);
+        loadStudyTimeChart();
         const upcoming  = asgn?.upcoming  || [];
         const submitted = asgn?.submitted || [];
         const enrolled  = Array.isArray(courses) ? courses : [];
@@ -95,15 +146,12 @@ async function loadDashboard() {
         document.getElementById("stNotifs").textContent    = unread;
         if (unread > 0) document.getElementById("notifBadge").textContent = unread;
 
-        setList("dUpcoming", upcoming.slice(0, 4),
-            a => `<span>${a.title}</span><small>${a.due_date ? new Date(a.due_date).toLocaleDateString() : "—"}</small>`,
-            "No upcoming assignments");
+        renderUpcomingTable(upcoming.slice(0, 6));
         setList("dNotifs", ns.slice(0, 4),
             n => `<span>${n.title}</span><small>${new Date(n.created_at).toLocaleDateString()}</small>`,
             "No notifications");
-        setList("dCourses", enrolled.slice(0, 4),
-            item => { const c = item.course || item; return `<span>${c.title}</span><span class="tag">${c.subject}</span>`; },
-            "No courses enrolled");
+        renderContinueLearning(enrolled.slice(0, 4));
+        renderAverageWidget(submitted);
 
         document.getElementById("dResources").innerHTML = [
             ["Mathematics","#2f6df6"],["Biology","#36b37e"],["Physics","#f39c12"],
@@ -118,6 +166,155 @@ function setList(id, items, render, emptyMsg) {
     const el = document.getElementById(id);
     el.innerHTML = items.length === 0 ? `<li class="empty">${emptyMsg}</li>` :
         items.map(i => `<li>${render(i)}</li>`).join("");
+}
+
+let _dashUpcomingCache = [];
+
+function openDashUpcoming(id) {
+    const a = _dashUpcomingCache.find(x => x.id === id);
+    if (!a) return;
+    goTo("assignments");
+    openAssignmentDetail(a);
+}
+
+function renderUpcomingTable(items) {
+    _dashUpcomingCache = items;
+    const el = document.getElementById("dUpcoming");
+    if (!items.length) { el.innerHTML = '<tr><td colspan="4" class="empty">No upcoming assignments.</td></tr>'; return; }
+    const now = new Date();
+    const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const today = startOfDay(now);
+    el.innerHTML = items.map(a => {
+        const due = a.due_date ? new Date(a.due_date) : null;
+        const urgent = due ? (due - now) / 3600000 <= 48 : false;
+        let dueLabel = "No due date";
+        if (due) {
+            const dayDiff = Math.round((startOfDay(due) - today) / 86400000);
+            const time = due.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+            if (dayDiff === 0) dueLabel = `Today, ${time}`;
+            else if (dayDiff === 1) dueLabel = `Tomorrow, ${time}`;
+            else dueLabel = `${due.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
+        }
+        return `<tr onclick="openDashUpcoming(${a.id})" style="cursor:pointer">
+          <td class="task-name">${esc(a.title)}</td>
+          <td>${esc(a.course_title || "—")}</td>
+          <td class="${urgent ? "due-urgent" : ""}">${dueLabel}</td>
+          <td><span class="status-pill ${urgent ? "urgent" : "upcoming"}">${urgent ? "Urgent" : "Upcoming"}</span></td>
+        </tr>`;
+    }).join("");
+}
+
+// Per-course average score (0-100) from graded submitted assignments — shared by the
+// dashboard's "Current Average" widget and the Progress page's per-subject breakdown, so
+// the two numbers can never quietly drift apart into two different definitions of "average".
+function computeCourseAverages(submitted) {
+    const graded = submitted.filter(a => a.student_grade != null && a.max_score);
+    const byCourse = {};
+    graded.forEach(a => {
+        const key = a.course_title || "Other";
+        (byCourse[key] = byCourse[key] || []).push(a.student_grade / a.max_score);
+    });
+    const result = {};
+    Object.entries(byCourse).forEach(([course, scores]) => {
+        result[course] = Math.round((scores.reduce((s, v) => s + v, 0) / scores.length) * 100);
+    });
+    return result;
+}
+
+// "Current Average" — averaged per course first, then across courses, so a subject with
+// many graded assignments doesn't outweigh one with only a couple (a flat pooled average
+// over every assignment would do exactly that).
+function renderAverageWidget(submitted) {
+    const avgEl = document.getElementById("dAvgScore");
+    const subEl = document.getElementById("dAvgSub");
+    const courseAverages = computeCourseAverages(submitted);
+    const values = Object.values(courseAverages);
+    if (!values.length) { avgEl.textContent = "—"; subEl.textContent = "No graded assignments yet"; return; }
+
+    const overall = values.reduce((s, v) => s + v, 0) / values.length;
+    avgEl.textContent = `${Math.round(overall)}%`;
+    subEl.textContent = `Averaged across ${values.length} subject${values.length === 1 ? "" : "s"}`;
+}
+
+async function loadStudyTimeChart() {
+    const chartEl = document.getElementById("dStudyChart");
+    const noteEl  = document.getElementById("dStudyNote");
+    try {
+        const days = await apiGet("/study-time/weekly") || [];
+        const totalMinutes = days.reduce((s, d) => s + d.minutes, 0);
+        const maxMinutes = Math.max(...days.map(d => d.minutes), 1);
+        chartEl.innerHTML = days.map(d => {
+            const h = Math.max(Math.round((d.minutes / maxMinutes) * 100), d.minutes > 0 ? 6 : 3);
+            return `<div class="study-bar" style="--h:${h}%" title="${d.minutes} min"><span>${d.weekday[0]}</span></div>`;
+        }).join("");
+        const hrs = Math.floor(totalMinutes / 60), mins = totalMinutes % 60;
+        noteEl.textContent = totalMinutes > 0
+            ? `${hrs > 0 ? hrs + "h " : ""}${mins}m recorded this week`
+            : "No study time recorded yet this week.";
+    } catch (e) {
+        chartEl.innerHTML = "";
+        noteEl.textContent = "Could not load study time.";
+    }
+}
+
+// ── STUDY TIME DETAIL MODAL (per subject, day/week/month/year/custom) ──
+let _studyPeriod = "day";
+
+function openStudyTimeModal() {
+    document.getElementById("modalStudyTime").classList.remove("hidden");
+    loadStudyBreakdown();
+}
+
+function setStudyPeriod(period) {
+    _studyPeriod = period;
+    document.querySelectorAll(".st-period-btn").forEach(b => b.classList.toggle("active", b.dataset.period === period));
+    document.getElementById("stCustomRow").classList.toggle("hidden", period !== "custom");
+    if (period !== "custom") loadStudyBreakdown();
+}
+
+async function loadStudyBreakdown() {
+    const totalEl = document.getElementById("stTotal");
+    const chartEl = document.getElementById("stChart");
+    const listEl  = document.getElementById("stSubjectList");
+
+    let url = `/study-time/breakdown?period=${_studyPeriod}`;
+    if (_studyPeriod === "custom") {
+        const start = document.getElementById("stCustomStart").value;
+        const end   = document.getElementById("stCustomEnd").value;
+        if (!start || !end) { totalEl.textContent = "Pick a start and end date"; chartEl.innerHTML = ""; listEl.innerHTML = ""; return; }
+        url += `&start=${start}&end=${end}`;
+    }
+
+    totalEl.textContent = "…";
+    chartEl.innerHTML = "";
+    listEl.innerHTML = '<p class="empty">Loading…</p>';
+    try {
+        const data = await apiGet(url);
+        const hrs = Math.floor(data.total_minutes / 60), mins = data.total_minutes % 60;
+        totalEl.textContent = data.total_minutes > 0 ? `${hrs > 0 ? hrs + "h " : ""}${mins}m total` : "No study time recorded";
+
+        const maxMinutes = Math.max(...data.buckets.map(b => b.minutes), 1);
+        chartEl.innerHTML = data.buckets.map(b => {
+            const h = Math.max(Math.round((b.minutes / maxMinutes) * 100), b.minutes > 0 ? 6 : 3);
+            return `<div class="st-bar-col" style="--h:${h}%" title="${esc(b.label)}: ${b.minutes} min"><span>${esc(b.label.split(" ")[0])}</span></div>`;
+        }).join("");
+
+        const subjects = Object.entries(data.by_subject_total).sort((a, b) => b[1] - a[1]);
+        if (!subjects.length) {
+            listEl.innerHTML = '<p class="empty">No study time recorded for this period.</p>';
+        } else {
+            const maxSubj = Math.max(...subjects.map(([, m]) => m), 1);
+            listEl.innerHTML = subjects.map(([name, minutes]) => `
+                <div class="st-subject-row">
+                  <span class="st-subject-name">${esc(name)}</span>
+                  <div class="st-subject-bar-wrap"><div class="st-subject-bar" style="width:${Math.round((minutes / maxSubj) * 100)}%"></div></div>
+                  <span class="st-subject-mins">${minutes}m</span>
+                </div>`).join("");
+        }
+    } catch (e) {
+        totalEl.textContent = "—";
+        listEl.innerHTML = '<p class="empty">Could not load study time.</p>';
+    }
 }
 
 function quickRes(subject) {
@@ -171,6 +368,27 @@ function courseHeaderStyle(theme, fallbackColor) {
     return `background:${fallbackColor || "#2f6df6"}`;
 }
 
+function renderContinueLearning(list) {
+    const el = document.getElementById("dContinue");
+    if (!list.length) { el.innerHTML = '<p class="empty">No courses enrolled yet.</p>'; return; }
+    el.innerHTML = list.map(item => {
+        const c = item.course || item;
+        const prog = item.enrollment?.progress_percent || 0;
+        const theme = courseTheme(c);
+        return `<div class="continue-card" onclick="goTo('courses');setTimeout(()=>openCourseDetail(${c.id},'${esc(c.title)}','${esc(c.subject||'')}','${c.cover_color||'#1f4fa3'}'),80)">
+          <div class="continue-card-img" style="${courseHeaderStyle(theme, c.cover_color)}">
+            ${c.subject ? `<span class="continue-card-tag">${esc(c.subject)}</span>` : ""}
+          </div>
+          <div class="continue-card-bd">
+            <h4>${esc(c.title)}</h4>
+            <p>${c.facilitator_name ? "Prof. " + esc(c.facilitator_name) : (c.grade_level || "")}</p>
+            <div class="continue-progress-row"><span>Progress</span><span>${prog}%</span></div>
+            <div class="continue-progress-bar"><div class="continue-progress-fill" style="width:${prog}%"></div></div>
+          </div>
+        </div>`;
+    }).join("");
+}
+
 async function loadEnrolled() {
     const el = document.getElementById("enrolledGrid");
     try {
@@ -205,9 +423,11 @@ async function loadAllCourses() {
     el.innerHTML = '<p class="empty">Loading…</p>';
     const subject = document.getElementById("csubject").value;
     const grade   = document.getElementById("cgrade").value;
+    const q       = document.getElementById("csearch")?.value.trim() || "";
     let url = "/courses/?";
     if (subject) url += `subject=${encodeURIComponent(subject)}&`;
-    if (grade)   url += `grade=${encodeURIComponent(grade)}`;
+    if (grade)   url += `grade=${encodeURIComponent(grade)}&`;
+    if (q)       url += `q=${encodeURIComponent(q)}`;
     try {
         const allCourses = await apiGet(url);
         const enrolled   = await apiGet("/courses/my").catch(() => []);
@@ -216,6 +436,35 @@ async function loadAllCourses() {
         if (!list.length) { el.innerHTML = '<p class="empty">No courses available.</p>'; return; }
         el.innerHTML = list.map(c => courseCard(c, enrolledIds.has(c.id))).join("");
     } catch (e) { el.innerHTML = '<p class="empty">Failed to load.</p>'; }
+}
+
+function resetCourseFilters() {
+    document.getElementById("csubject").value = "";
+    document.getElementById("cgrade").value = "";
+    document.getElementById("csearch").value = "";
+    loadAllCourses();
+}
+
+async function joinByCode() {
+    const input = document.getElementById("joinCode");
+    const code = input.value.trim();
+    if (!code) { showToast("Enter an invite code.", "error"); return; }
+    try {
+        const res = await apiPost("/courses/join", { code });
+        input.value = "";
+        showToast(`Joined "${res.course_title}"!`);
+        loadEnrolled();
+        loadAllCourses();
+    } catch (e) {
+        showToast(e.message || "Could not join with that code.", "error");
+    }
+}
+
+function resetResourceFilters() {
+    document.getElementById("rsubject").value = "";
+    document.getElementById("rgrade").value = "";
+    document.getElementById("rsearch").value = "";
+    loadResources();
 }
 
 async function loadPublic() {
@@ -276,8 +525,9 @@ let _cdDetail = null;   // full course detail from API
 async function openCourseDetail(courseId, title, subject, coverColor) {
     activeCourseDetailId = courseId;
     activeDetailSubject  = subject;
-    document.querySelectorAll("#sec-courses .tab-body").forEach(b => b.classList.add("hidden-for-detail"));
-    document.querySelector("#sec-courses .sec-head").classList.add("hidden-for-detail");
+    _currentStudyCourseId = courseId;
+    document.querySelector("#sec-courses .mc-page-head")?.classList.add("hidden-for-detail");
+    document.querySelector("#sec-courses .mc-layout")?.classList.add("hidden-for-detail");
 
     const sideTitle = document.getElementById("cdSideTitle");
     if (sideTitle) sideTitle.textContent = `${subject || "Course"}`;
@@ -303,12 +553,37 @@ async function openCourseDetail(courseId, title, subject, coverColor) {
     }
     _cdDetail = null;
     loadCdTab("home");
+    loadCdSidebarBadges(courseId);
+}
+
+async function loadCdSidebarBadges(courseId) {
+    ["cdBadgeGrades", "cdBadgeDiscussions", "cdBadgeAnnouncements", "cdBadgeChats"].forEach(id => setCdBadge(id, ""));
+    try {
+        const [asgnData, discussions, anns, chats] = await Promise.all([
+            apiGet("/assignments/").catch(() => null),
+            apiGet(`/courses/${courseId}/discussions`).catch(() => []),
+            apiGet(`/courses/${courseId}/announcements`).catch(() => []),
+            apiGet(`/messages/course/${courseId}`).catch(() => []),
+        ]);
+        const courseAsg = [...(asgnData?.upcoming || []), ...(asgnData?.submitted || [])].filter(a => a.course_id == courseId);
+        const graded = courseAsg.filter(a => a.student_grade != null).length;
+        setCdBadge("cdBadgeGrades", courseAsg.length ? `${graded}/${courseAsg.length}` : "");
+        setCdBadge("cdBadgeDiscussions", Array.isArray(discussions) && discussions.length ? discussions.length : "");
+        setCdBadge("cdBadgeAnnouncements", Array.isArray(anns) && anns.length ? anns.length : "");
+        setCdBadge("cdBadgeChats", Array.isArray(chats) && chats.length ? chats.length : "");
+    } catch (e) {}
+}
+
+function setCdBadge(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
 }
 
 function closeCourseDetail() {
     document.getElementById("courseDetailPanel").classList.add("hidden");
     document.querySelectorAll("#sec-courses .hidden-for-detail").forEach(el => el.classList.remove("hidden-for-detail"));
     activeCourseDetailId = null;
+    _currentStudyCourseId = null;
     _cdDetail = null;
 }
 
@@ -352,7 +627,7 @@ async function loadCdTab(tab) {
     }
 }
 
-function renderCdHome(c) {
+async function renderCdHome(c) {
     const me   = getUser()?.id;
     const enr  = (c.enrollments||[]).find(e => e.student_id == me) || {};
     const prog = enr.progress_percent || 0;
@@ -360,6 +635,22 @@ function renderCdHome(c) {
     const passLabel = pass==="passed" ? t("cd.passed") : pass==="retake" ? t("cd.retake") : t("cd.inProgress");
     const passCol   = pass==="passed" ? "#1a8a5a" : pass==="retake" ? "#c0392b" : "#c47f00";
     const progCol   = prog>=55 ? "#2f6df6" : "#f39c12";
+
+    const modules = c.modules || [];
+    const modulesDone = modules.filter(m => m.completed).length;
+
+    let asgLine = `${(modules.length ? "…" : "0")} ${t("cd.assignmentsCount")}`;
+    let syllabusLine = "";
+    try {
+        const [asgData, sylWeeks] = await Promise.all([
+            apiGet("/assignments/"),
+            apiGet(`/courses/${c.id}/syllabus`).catch(() => []),
+        ]);
+        const courseAsg = [...(asgData?.upcoming||[]), ...(asgData?.submitted||[])].filter(a => a.course_id == c.id);
+        const asgDone = courseAsg.filter(a => a.student_submission_id).length;
+        asgLine = `${asgDone}/${courseAsg.length} ${t("cd.assignmentsCount")}`;
+        if (Array.isArray(sylWeeks) && sylWeeks.length) syllabusLine = `<span style="color:#bbb">·</span><span>${sylWeeks.length} week${sylWeeks.length===1?"":"s"} in syllabus</span>`;
+    } catch (e) {}
 
     document.getElementById("cdHomeContent").innerHTML = `
       <div class="cd-home-hero">
@@ -376,9 +667,10 @@ function renderCdHome(c) {
         <div class="cd-prog-meta">
           <span>${prog}% ${t("cd.percentComplete")}</span>
           <span style="color:#bbb">·</span>
-          <span>${(c.modules||[]).length} ${t("cd.modulesCount")}</span>
+          <span>${modulesDone}/${modules.length} modules complete</span>
           <span style="color:#bbb">·</span>
-          <span>${(c.assignments||[]).length} ${t("cd.assignmentsCount")}</span>
+          <span>${asgLine}</span>
+          ${syllabusLine}
         </div>
       </div>
 
@@ -873,12 +1165,14 @@ function renderCdModules(c) {
     const el = document.getElementById("studentModuleList");
     el.innerHTML = modules.length
         ? modules.map(m => `
-            <li class="module-item" id="mi-${m.id}">
+            <li class="module-item ${m.completed ? "module-done" : ""}" id="mi-${m.id}">
               <div class="mi-text">
                 <strong>${esc(m.title)}</strong>
                 ${m.content ? `<p>${esc(m.content)}</p>` : ""}
               </div>
-              <button class="btn-complete" onclick="completeModule(${activeCourseDetailId},${m.id},this)">✓ Complete</button>
+              ${m.completed
+                ? `<span class="btn-complete done">✓ Done</span>`
+                : `<button class="btn-complete" onclick="completeModule(${activeCourseDetailId},${m.id},this)">✓ Complete</button>`}
             </li>`).join("")
         : '<li style="color:#aaa;font-style:italic">No modules yet.</li>';
 }
@@ -999,22 +1293,33 @@ function fileIcon(filename) {
 
 function renderAsgn(id, list, type) {
     const el = document.getElementById(id);
-    if (!list.length) { el.innerHTML = `<p class="empty">No ${type} assignments.</p>`; return; }
+    if (!list.length) { el.innerHTML = `<tr><td colspan="5" class="empty">No ${type} assignments.</td></tr>`; return; }
     list.forEach(a => { assignmentMap[a.id] = a; });
-    el.innerHTML = list.map(a => `
-        <div class="acard ${a.student_submission_id ? 'submitted' : ''}" onclick="openAssignmentDetail(${a.id})">
-          <div class="info">
-            <h4>${esc(a.title)}<span class="tbadge">${a.type || a.assignment_type || ''}</span></h4>
-            <p>${esc(a.course_title || "General")}${a.description ? " — " + esc(a.description.slice(0,80)) : ""}</p>
-            ${a.due_date ? `<p class="due">⏰ Due: ${new Date(a.due_date).toLocaleString()}</p>` : ""}
-            ${a.student_grade != null ? `<span class="gbadge">Grade: ${a.student_grade}/${a.max_score}</span>` : ""}
-            ${a.student_feedback ? `<p class="feedback-preview">💬 ${esc(a.student_feedback.slice(0,100))}</p>` : ""}
-            ${a.attachment_url ? `<span class="tag" style="background:#e8f0fe;color:#2f6df6;font-size:11px">🔗 Has Link</span>` : ""}
-            ${a.attachment_path ? `<span class="tag" style="background:#f3e8ff;color:#6c00c9;font-size:11px">📎 Has PDF</span>` : ""}
-            ${(a.attachments||[]).length ? `<span class="tag" style="background:#f3e8ff;color:#6c00c9;font-size:11px">📎 ${a.attachments.length} file${a.attachments.length===1?'':'s'}</span>` : ""}
-          </div>
-          <span style="font-size:20px;color:#aaa">›</span>
-        </div>`).join("");
+    const now = new Date();
+    const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const today = startOfDay(now);
+    el.innerHTML = list.map(a => {
+        const due = a.due_date ? new Date(a.due_date) : null;
+        let dueLabel = "No due date";
+        if (due) {
+            const dayDiff = Math.round((startOfDay(due) - today) / 86400000);
+            const time = due.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+            if (dayDiff === 0) dueLabel = `Today, ${time}`;
+            else if (dayDiff === 1) dueLabel = `Tomorrow, ${time}`;
+            else dueLabel = `${due.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
+        }
+        let pillClass = "upcoming", pillLabel = "Upcoming";
+        if (a.student_grade != null) { pillClass = "graded"; pillLabel = `Graded ${a.student_grade}/${a.max_score}`; }
+        else if (a.student_submission_id) { pillClass = "submitted"; pillLabel = "Submitted"; }
+        else if (due && (due - now) / 3600000 <= 48) { pillClass = "urgent"; pillLabel = "Urgent"; }
+        return `<tr onclick="openAssignmentDetail(${a.id})" style="cursor:pointer">
+          <td>${esc(a.course_title || "General")}</td>
+          <td class="task-name">${esc(a.title)}</td>
+          <td>${esc(dueLabel)}</td>
+          <td><span class="status-pill ${pillClass}">${esc(pillLabel)}</span></td>
+          <td style="color:#aaa;text-align:right">›</td>
+        </tr>`;
+    }).join("");
 }
 
 function openAssignmentDetail(aOrId) {
@@ -1026,8 +1331,8 @@ function openAssignmentDetail(aOrId) {
     activeSubmitType  = "text";
 
     // Hide assignment list, show detail panel
-    document.querySelectorAll("#sec-assignments .tab-body").forEach(b => b.classList.add("hidden-for-detail"));
-    document.querySelector("#sec-assignments .sec-head").classList.add("hidden-for-detail");
+    document.querySelector("#sec-assignments .mc-page-head")?.classList.add("hidden-for-detail");
+    document.querySelector("#sec-assignments .panel-wide")?.classList.add("hidden-for-detail");
     document.getElementById("assignmentDetailPanel").classList.remove("hidden");
 
     const submittingLabel = a.student_submission_id
@@ -1406,8 +1711,9 @@ async function doSubmit() {
 async function loadProgress() {
     const el = document.getElementById("progressGrid");
     try {
-        const data = await apiGet("/courses/my");
+        const [data, asgn] = await Promise.all([apiGet("/courses/my"), apiGet("/assignments/")]);
         const list = Array.isArray(data) ? data : [];
+        const courseAverages = computeCourseAverages(asgn?.submitted || []);
         if (!list.length) { el.innerHTML = '<p class="empty">No courses found.</p>'; return; }
         el.innerHTML = list.map(item => {
             const c      = item.course || item;
@@ -1419,18 +1725,135 @@ async function loadProgress() {
                 : status === "retake"
                 ? `<span class="status-badge retake">↩ Retake Required</span>`
                 : `<span class="status-badge inprog">In Progress</span>`;
-            return `<div class="pcard">
-              <h4>${esc(c.title)}</h4>
+            const grade = courseAverages[c.title];
+            return `<div class="pcard pcard-clickable" onclick="openProgressDetail(${c.id},'${esc(c.title)}')">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <h4>${esc(c.title)}</h4>
+                ${grade != null ? `<span class="pcard-grade">${grade}%</span>` : ""}
+              </div>
               <div class="pbar-wrap"><div class="pbar" style="width:${prog}%"></div></div>
-              <p style="font-size:12px;color:#666;margin:4px 0">${prog}% assignments graded</p>
+              <p style="font-size:12px;color:#666;margin:4px 0">${prog}% assignments graded${grade != null ? ` · ${grade}% average grade` : ""}</p>
               ${badge}
               <div class="pmeta" style="margin-top:8px">
                 <span>📚 ${esc(c.subject)}</span>
                 ${c.grade_level ? `<span>🎓 ${esc(c.grade_level)}</span>` : ""}
               </div>
+              <p class="pcard-cta">See what's done &amp; what's left →</p>
             </div>`;
         }).join("");
     } catch (e) { el.innerHTML = '<p class="empty">Failed to load.</p>'; }
+}
+
+// ── PROGRESS DETAIL MODAL: everything done/left for one subject, acted on right here —
+// completing a module or opening an assignment to submit happens from this modal itself,
+// no detour through the full course browser just to confirm something.
+let _pdCourseId = null;
+let _pdModules = [];
+let _pdAssignments = [];   // flat list, all types — looked up by id when a row is clicked
+let _pdSyllabus = [];
+
+const ASGN_TYPE_LABELS = { homework: "📄 Homework", test: "📝 Tests", quiz: "❓ Quizzes", project: "🎨 Projects", assignment: "📄 Assignments" };
+
+async function openProgressDetail(courseId, title) {
+    _pdCourseId = courseId;
+    document.getElementById("pdTitle").textContent = title;
+    document.getElementById("pdBody").innerHTML = '<p class="empty">Loading…</p>';
+    document.getElementById("modalProgressDetail").classList.remove("hidden");
+
+    try {
+        const [course, asgnData, sylWeeks] = await Promise.all([
+            apiGet(`/courses/${courseId}`),
+            apiGet("/assignments/"),
+            apiGet(`/courses/${courseId}/syllabus`).catch(() => []),
+        ]);
+        _pdModules    = course.modules || [];
+        _pdAssignments = [...(asgnData?.upcoming || []), ...(asgnData?.submitted || [])].filter(a => a.course_id == courseId);
+        _pdSyllabus   = Array.isArray(sylWeeks) ? sylWeeks : [];
+        renderProgressDetail();
+    } catch (e) {
+        document.getElementById("pdBody").innerHTML = '<p class="empty">Could not load progress details.</p>';
+    }
+}
+
+function renderProgressDetail() {
+    const modules = _pdModules;
+    const modulesDone = modules.filter(m => m.completed).length;
+
+    const byType = {};
+    _pdAssignments.forEach(a => {
+        const type = a.assignment_type || a.type || "assignment";
+        (byType[type] = byType[type] || []).push(a);
+    });
+
+    let html = `<div class="pd-section">
+      <div class="pd-section-head"><h4>📘 Modules</h4><span class="pd-count">${modulesDone}/${modules.length} complete</span></div>
+      ${modules.length
+        ? `<div class="pd-list">${modules.map(m => `
+            <div class="pd-item">
+              <span class="pd-item-title">${esc(m.title)}</span>
+              ${m.completed
+                ? `<button class="pd-complete-btn done" disabled>✓ Complete</button>`
+                : `<button class="pd-complete-btn" onclick="pdCompleteModule(${m.id})">Complete</button>`}
+            </div>`).join("")}</div>`
+        : '<p class="pd-empty">No modules yet.</p>'}
+    </div>`;
+
+    if (_pdAssignments.length) {
+        Object.entries(byType).forEach(([type, items]) => {
+            const done = items.filter(a => a.student_submission_id).length;
+            html += `<div class="pd-section">
+              <div class="pd-section-head"><h4>${ASGN_TYPE_LABELS[type] || "📄 " + esc(type)}</h4><span class="pd-count">${done}/${items.length} done</span></div>
+              <div class="pd-list">${items.map(a => {
+                let btn;
+                if (a.student_grade != null && a.max_score) {
+                    const passed = (a.student_grade / a.max_score) >= 0.5;
+                    btn = `<button class="pd-grade-btn ${passed ? "pass" : "fail"}" onclick="pdOpenAssignment(${a.id})">${a.student_grade}/${a.max_score}</button>`;
+                } else if (a.student_submission_id) {
+                    btn = `<button class="pd-grade-btn pending" onclick="pdOpenAssignment(${a.id})">Submitted</button>`;
+                } else {
+                    btn = `<button class="pd-grade-btn todo" onclick="pdOpenAssignment(${a.id})">Submit</button>`;
+                }
+                const dueSub = !a.student_submission_id && a.due_date
+                    ? `<div class="pd-item-sub">Due ${new Date(a.due_date).toLocaleDateString()}</div>` : "";
+                return `<div class="pd-item">
+                  <div><span class="pd-item-title">${esc(a.title)}</span>${dueSub}</div>
+                  ${btn}
+                </div>`;
+              }).join("")}</div>
+            </div>`;
+        });
+    } else {
+        html += `<div class="pd-section"><div class="pd-section-head"><h4>📄 Assignments &amp; Tests</h4></div><p class="pd-empty">No assignments yet.</p></div>`;
+    }
+
+    if (_pdSyllabus.length) {
+        html += `<div class="pd-section">
+          <div class="pd-section-head"><h4>📅 Syllabus</h4><span class="pd-count">${_pdSyllabus.length} week${_pdSyllabus.length === 1 ? "" : "s"}</span></div>
+          <div class="pd-list">${_pdSyllabus.map(w => `<div class="pd-item"><span class="pd-item-title">Week ${w.week_num}: ${esc(w.title)}</span></div>`).join("")}</div>
+        </div>`;
+    }
+
+    document.getElementById("pdBody").innerHTML = html;
+}
+
+async function pdCompleteModule(moduleId) {
+    try {
+        const res = await apiPost(`/courses/${_pdCourseId}/modules/${moduleId}/complete`, {});
+        const m = _pdModules.find(x => x.id === moduleId);
+        if (m) m.completed = true;
+        renderProgressDetail();
+        showToast(`Module completed! Progress: ${res.progress_percent}%`);
+    } catch (e) {
+        showToast(e.message || "Could not mark complete.", "error");
+    }
+}
+
+function pdOpenAssignment(assignmentId) {
+    const a = _pdAssignments.find(x => x.id === assignmentId);
+    if (!a) return;
+    closeModal("modalProgressDetail");
+    goTo("assignments");
+    openAssignmentDetail(a);
 }
 
 // ── RESOURCES ──

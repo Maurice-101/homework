@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 from api.database import get_db
-from api.schemas.course import CourseCreate, ModuleCreate, InviteCreate
+from api.schemas.course import CourseCreate, ModuleCreate, InviteCreate, JoinCourseIn
 from api.controller import course_controller
 from api.utils.auth import get_current_user, require_role
 from api.model.user import User
@@ -12,8 +12,9 @@ router = APIRouter(prefix="/courses", tags=["Courses"])
 
 @router.get("/")
 def list_courses(subject: Optional[str] = Query(None), grade: Optional[str] = Query(None),
+                 q: Optional[str] = Query(None),
                  db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return course_controller.get_all_courses(db, subject, grade)
+    return course_controller.get_all_courses(db, subject, grade, q)
 
 
 @router.get("/my")
@@ -30,9 +31,15 @@ def get_invitations(db: Session = Depends(get_db),
     return course_controller.get_pending_invitations(current_user.id, db)
 
 
+@router.post("/join")
+def join_course(data: JoinCourseIn, db: Session = Depends(get_db),
+                current_user: User = Depends(require_role("student"))):
+    return course_controller.join_by_code(data.code, current_user.id, db)
+
+
 @router.get("/{course_id}")
 def course_detail(course_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return course_controller.get_course_detail(course_id, db)
+    return course_controller.get_course_detail(course_id, db, viewer_id=current_user.id)
 
 
 @router.post("/")

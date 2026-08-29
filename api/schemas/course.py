@@ -24,12 +24,17 @@ class CourseOut(BaseModel):
     is_public: bool
     is_approved: bool
     cover_color: Optional[str] = None
+    invite_code: Optional[str] = None
     created_at: datetime
     facilitator_name: Optional[str] = None
     student_count: Optional[int] = 0
 
     class Config:
         from_attributes = True
+
+
+class JoinCourseIn(BaseModel):
+    code: str
 
 
 class ModuleCreate(BaseModel):

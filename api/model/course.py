@@ -17,6 +17,7 @@ class Course(Base):
     is_public = Column(Boolean, default=False)
     is_approved = Column(Boolean, default=True)
     cover_color = Column(String(20), default="#2f6df6")
+    invite_code = Column(String(12), unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     facilitator   = relationship("User", back_populates="taught_courses", foreign_keys=[facilitator_id])

@@ -4,23 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard – Abahizi</title>
-<link rel="stylesheet" href="student.css?v=6">
+<link rel="stylesheet" href="student.css?v=19">
 </head>
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
+  <!-- TOP NAVIGATION -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
       <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
       <span class="sb-logo">Abahizi</span>
-    </div>
-    <div class="sb-profile">
-      <img src="../Assets/avatars/student-male avatar.avif" id="sbAvatar" alt="avatar">
-      <div class="sb-info">
-        <strong id="sbName">Loading…</strong>
-        <span id="sbSub">—</span>
-      </div>
     </div>
     <ul class="menu">
       <li class="active" data-sec="dashboard">  <span class="ico">🏠</span><span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
@@ -30,16 +23,32 @@
       <li data-sec="resources">   <span class="ico">📖</span><span class="lbl" data-i18n="nav.resources">Resources</span></li>
       <li data-sec="messages">    <span class="ico">✉️</span><span class="lbl" data-i18n="nav.messages">Messages</span></li>
       <li data-sec="notifications"><span class="ico">🔔</span><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
-      <li data-sec="canvas">      <span class="ico">✏️</span><span class="lbl" data-i18n="nav.canvas">Canvas</span></li>
+      <li data-sec="canvas">      <span class="ico">✏️</span><span class="lbl" data-i18n="nav.canvas">Virtual Notebook</span></li>
       <li data-sec="settings">    <span class="ico">⚙️</span><span class="lbl" data-i18n="nav.settings">Settings</span></li>
     </ul>
-    <div class="sb-foot">
-      <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
-        <option value="en">🌐 English</option>
-        <option value="fr">🌐 French</option>
-        <option value="rw">🌐 Kinyarwanda</option>
-      </select>
-      <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
+    <div class="nav-right">
+      <div class="nav-search"><span>🔍</span><input type="text" placeholder="Search…" disabled></div>
+      <div class="profile-trigger" onclick="document.getElementById('profileDropdown').classList.toggle('open')">
+        <img src="../Assets/avatars/student-male avatar.avif" id="tbAvatar" class="tb-avatar" alt="">
+        <span id="tbName" class="tb-name">—</span>
+      </div>
+      <div class="profile-dropdown" id="profileDropdown">
+        <div class="sb-profile">
+          <img src="../Assets/avatars/student-male avatar.avif" id="sbAvatar" alt="avatar">
+          <div class="sb-info">
+            <strong id="sbName">Loading…</strong>
+            <span id="sbSub">—</span>
+          </div>
+        </div>
+        <div class="sb-foot">
+          <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
+            <option value="en">🌐 English</option>
+            <option value="fr">🌐 French</option>
+            <option value="rw">🌐 Kinyarwanda</option>
+          </select>
+          <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -47,12 +56,6 @@
   <main class="main-area">
     <header class="topbar">
       <h2 id="pageTitle" data-i18n="title.dashboard">Dashboard</h2>
-      <div class="tb-right">
-        <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
-        <span class="tb-icon" onclick="goTo('messages')">✉️</span>
-        <img src="../Assets/avatars/student-male avatar.avif" id="tbAvatar" class="tb-avatar" alt="">
-        <span id="tbName" class="tb-name">—</span>
-      </div>
     </header>
 
     <!-- DASHBOARD -->
@@ -62,41 +65,100 @@
         <p id="welcomeSub" data-i18n="dashboard.welcomeSub">Here's your academic overview for today.</p>
       </div>
       <div class="stat-cards">
-        <div class="stat blue"><h3 id="stCourses">0</h3><p data-i18n="dashboard.activeCourses">Active Courses</p></div>
-        <div class="stat green"><h3 id="stPending">0</h3><p data-i18n="dashboard.upcomingAssignments">Upcoming Assignments</p></div>
-        <div class="stat orange"><h3 id="stSubmitted">0</h3><p data-i18n="dashboard.submitted">Submitted</p></div>
-        <div class="stat purple"><h3 id="stNotifs">0</h3><p data-i18n="dashboard.notifications">Notifications</p></div>
+        <div class="stat blue" data-icon="📚"><div><h3 id="stCourses">0</h3><p data-i18n="dashboard.activeCourses">Active Courses</p></div></div>
+        <div class="stat green" data-icon="📄"><div><h3 id="stPending">0</h3><p data-i18n="dashboard.upcomingAssignments">Upcoming Assignments</p></div></div>
+        <div class="stat orange" data-icon="✅"><div><h3 id="stSubmitted">0</h3><p data-i18n="dashboard.submitted">Submitted</p></div></div>
+        <div class="stat purple" data-icon="🔔"><div><h3 id="stNotifs">0</h3><p data-i18n="dashboard.notifications">Notifications</p></div></div>
       </div>
-      <div class="dash-grid">
-        <div class="panel"><h3>📄 Upcoming Assignments</h3><ul class="plist" id="dUpcoming"><li class="empty">Loading…</li></ul></div>
-        <div class="panel"><h3>🔔 Notifications</h3><ul class="plist" id="dNotifs"><li class="empty">Loading…</li></ul></div>
-        <div class="panel"><h3>📚 My Courses</h3><ul class="plist" id="dCourses"><li class="empty">Loading…</li></ul></div>
-        <div class="panel"><h3>📖 Quick Resources</h3><div class="qr-grid" id="dResources"></div></div>
+
+      <div class="dash-section-head">
+        <h2>Continue Learning</h2>
+        <a class="dash-view-all" onclick="goTo('courses')">View all courses</a>
+      </div>
+      <div class="continue-grid" id="dContinue"><p class="empty">Loading…</p></div>
+
+      <div class="dash-grid dash-grid-main">
+        <div class="panel panel-wide">
+          <div class="panel-head-row panel-clickable" onclick="goTo('assignments')">
+            <h3>Upcoming Assignments &amp; Tests</h3><span class="panel-arrow">→</span>
+          </div>
+          <div class="dash-table-wrap">
+            <table class="dash-table">
+              <thead><tr><th>Task Name</th><th>Course</th><th>Due Date</th><th>Status</th></tr></thead>
+              <tbody id="dUpcoming"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="dash-side">
+          <div class="panel gpa-panel panel-clickable" onclick="goTo('progress')">
+            <div class="gpa-panel-head"><span>Current Average</span><span class="gpa-icon">🎓</span></div>
+            <div class="gpa-num" id="dAvgScore">—</div>
+            <p class="gpa-sub" id="dAvgSub">Average across your subjects</p>
+          </div>
+          <div class="panel panel-clickable" onclick="openStudyTimeModal()">
+            <div class="panel-head-row" style="padding:0 0 4px"><h3>Study Time (This Week)</h3><span class="panel-arrow">→</span></div>
+            <div class="study-chart" id="dStudyChart"></div>
+            <p class="study-note" id="dStudyNote">Loading…</p>
+          </div>
+          <div class="panel panel-clickable" onclick="goTo('notifications')">
+            <div class="panel-head-row" style="padding:0 0 4px"><h3>🔔 Notifications</h3><span class="panel-arrow">→</span></div>
+            <ul class="plist" id="dNotifs"><li class="empty">Loading…</li></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <h3>📖 Quick Resources</h3>
+        <div class="qr-grid" id="dResources"></div>
       </div>
     </section>
 
     <!-- COURSES -->
     <section class="sec" id="sec-courses">
-      <div class="sec-head"><h2 data-i18n="courses.title">Courses</h2>
-        <div class="tabs">
-          <button class="tab active" data-tab="enrolled" data-i18n="courses.enrolled">Enrolled</button>
-          <button class="tab" data-tab="browse" data-i18n="courses.browse">Browse</button>
-          <button class="tab" data-tab="public" data-i18n="courses.public">Public</button>
-          <button class="tab" data-tab="invitations"><span data-i18n="courses.invitations">Invitations</span> <span class="badge" id="inviteBadge" style="display:none"></span></button>
+      <div class="mc-page-head">
+        <h2 data-i18n="courses.title">My Courses</h2>
+        <p class="mc-page-sub" data-i18n="courses.subtitle">Manage your enrolled classes and discover new subjects.</p>
+      </div>
+      <div class="mc-layout">
+        <aside class="mc-sidebar">
+          <div class="mc-nav-label">Navigation</div>
+          <div class="tabs mc-nav">
+            <button class="tab active" data-tab="enrolled"><span class="mc-nav-ico">🎓</span> <span data-i18n="courses.enrolled">Enrolled Courses</span></button>
+            <button class="tab" data-tab="browse"><span class="mc-nav-ico">🧭</span> <span data-i18n="courses.browse">Browse Catalog</span></button>
+            <button class="tab" data-tab="public"><span class="mc-nav-ico">🌐</span> <span data-i18n="courses.public">Public Courses</span></button>
+            <button class="tab" data-tab="invitations"><span class="mc-nav-ico">✉️</span> <span data-i18n="courses.invitations">Invitations</span> <span class="badge" id="inviteBadge" style="display:none"></span></button>
+          </div>
+          <div class="mc-filters hidden" id="mcFilters">
+            <div class="mc-filters-head"><span>Filters</span><a onclick="resetCourseFilters()">Reset</a></div>
+            <label class="mc-filter-label">Subject</label>
+            <select id="csubject" onchange="loadAllCourses()"><option value="" data-i18n="common.allSubjects">All Subjects</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option></select>
+            <label class="mc-filter-label">Grade</label>
+            <select id="cgrade" onchange="loadAllCourses()"><option value="" data-i18n="common.allGrades">All Grades</option><option>S4</option><option>S5</option><option>S6</option></select>
+          </div>
+        </aside>
+        <div class="mc-main">
+          <div class="mc-search-row hidden" id="mcSearchRow">
+            <input type="text" id="csearch" placeholder="Search for courses, subjects, or keywords…" data-i18n-placeholder="common.searchCourses" onkeydown="if(event.key==='Enter')loadAllCourses()">
+            <button onclick="loadAllCourses()" data-i18n="common.search">Search</button>
+          </div>
+          <div class="tab-body active" id="tab-enrolled"><div class="cgrid" id="enrolledGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+          <div class="tab-body" id="tab-browse">
+            <div class="cgrid" id="browseGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div>
+            <div class="join-code-banner">
+              <div>
+                <h4>🔑 <span data-i18n="courses.joinPrivate">Join a Private Course</span></h4>
+                <p data-i18n="courses.joinPrivateSub">Have an invite code? Enter it here to gain access.</p>
+              </div>
+              <div class="join-code-row">
+                <input type="text" id="joinCode" placeholder="Invite Code" maxlength="12" onkeydown="if(event.key==='Enter')joinByCode()">
+                <button onclick="joinByCode()" data-i18n="common.join">Join</button>
+              </div>
+            </div>
+          </div>
+          <div class="tab-body" id="tab-public"><div class="cgrid" id="publicGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+          <div class="tab-body" id="tab-invitations"><div class="cgrid" id="invitationsGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
         </div>
       </div>
-      <div class="tab-body active" id="tab-enrolled"><div class="cgrid" id="enrolledGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
-      <div class="tab-body" id="tab-browse">
-        <div class="search-row">
-          <input type="text" id="csearch" placeholder="Search courses…" data-i18n-placeholder="common.searchCourses">
-          <select id="csubject"><option value="" data-i18n="common.allSubjects">All Subjects</option><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option></select>
-          <select id="cgrade"><option value="" data-i18n="common.allGrades">All Grades</option><option>S4</option><option>S5</option><option>S6</option></select>
-          <button onclick="loadAllCourses()" data-i18n="common.search">Search</button>
-        </div>
-        <div class="cgrid" id="browseGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div>
-      </div>
-      <div class="tab-body" id="tab-public"><div class="cgrid" id="publicGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
-      <div class="tab-body" id="tab-invitations"><div class="cgrid" id="invitationsGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
 
       <!-- Course Detail Panel -->
       <div class="course-detail-panel hidden" id="courseDetailPanel">
@@ -118,11 +180,11 @@
               <button class="cdtab"        data-tab="syllabus"      data-color="syllabus">    <span class="cdtab-icon">📅</span><span class="cdtab-lbl" data-i18n="cd.syllabus">Syllabus</span></button>
               <button class="cdtab"        data-tab="modules"       data-color="modules">     <span class="cdtab-icon">📘</span><span class="cdtab-lbl" data-i18n="cd.modules">Modules</span></button>
               <button class="cdtab"        data-tab="assignments"   data-color="assignments"> <span class="cdtab-icon">📝</span><span class="cdtab-lbl" data-i18n="cd.assignments">Assignments</span></button>
-              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-icon">📊</span><span class="cdtab-lbl" data-i18n="cd.grades">Grades</span></button>
+              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-icon">📊</span><span class="cdtab-lbl" data-i18n="cd.grades">Grades</span><span class="cdtab-badge" id="cdBadgeGrades"></span></button>
               <button class="cdtab"        data-tab="people"        data-color="people">      <span class="cdtab-icon">👥</span><span class="cdtab-lbl" data-i18n="cd.people">People</span></button>
-              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-icon">💬</span><span class="cdtab-lbl" data-i18n="cd.discussions">Discussions</span></button>
-              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-icon">📢</span><span class="cdtab-lbl" data-i18n="cd.announcements">Announcements</span></button>
-              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-icon">✉️</span><span class="cdtab-lbl" data-i18n="cd.courseChat">Course Chat</span></button>
+              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-icon">💬</span><span class="cdtab-lbl" data-i18n="cd.discussions">Discussions</span><span class="cdtab-badge" id="cdBadgeDiscussions"></span></button>
+              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-icon">📢</span><span class="cdtab-lbl" data-i18n="cd.announcements">Announcements</span><span class="cdtab-badge" id="cdBadgeAnnouncements"></span></button>
+              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-icon">✉️</span><span class="cdtab-lbl" data-i18n="cd.courseChat">Course Chat</span><span class="cdtab-badge" id="cdBadgeChats"></span></button>
             </div>
           </nav>
 
@@ -241,14 +303,32 @@
 
     <!-- ASSIGNMENTS -->
     <section class="sec" id="sec-assignments">
-      <div class="sec-head"><h2 data-i18n="title.assignments">Assignments &amp; Tests</h2>
-        <div class="tabs">
-          <button class="tab active" data-tab="upcoming-a">Upcoming</button>
-          <button class="tab" data-tab="submitted-a" data-i18n="dashboard.submitted">Submitted</button>
+      <div class="mc-page-head">
+        <h2 data-i18n="title.assignments">Assignments &amp; Tests</h2>
+        <p class="mc-page-sub" data-i18n="assignments.subtitle">Manage, track, and submit your work across all subjects.</p>
+      </div>
+      <div class="panel panel-wide">
+        <div class="panel-head-row">
+          <div class="tabs">
+            <button class="tab active" data-tab="upcoming-a" data-i18n="assignments.upcoming">Upcoming</button>
+            <button class="tab" data-tab="submitted-a" data-i18n="dashboard.submitted">Submitted</button>
+          </div>
+        </div>
+        <div class="dash-table-wrap">
+          <div class="tab-body active" id="tab-upcoming-a">
+            <table class="dash-table">
+              <thead><tr><th data-i18n="common.subject">Subject</th><th data-i18n="common.title">Title</th><th data-i18n="common.dueDate">Due Date</th><th data-i18n="common.status">Status</th><th></th></tr></thead>
+              <tbody id="upcomingList"><tr><td colspan="5" class="empty" data-i18n="common.loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="tab-body" id="tab-submitted-a">
+            <table class="dash-table">
+              <thead><tr><th data-i18n="common.subject">Subject</th><th data-i18n="common.title">Title</th><th data-i18n="common.dueDate">Due Date</th><th data-i18n="common.status">Status</th><th></th></tr></thead>
+              <tbody id="submittedList"><tr><td colspan="5" class="empty" data-i18n="common.loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <div class="tab-body active" id="tab-upcoming-a"><div class="alist" id="upcomingList"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
-      <div class="tab-body" id="tab-submitted-a"><div class="alist" id="submittedList"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
 
       <!-- Assignment Detail Panel -->
       <div class="assignment-detail-panel hidden" id="assignmentDetailPanel">
@@ -303,31 +383,45 @@
 
     <!-- RESOURCES -->
     <section class="sec" id="sec-resources">
-      <div class="sec-head"><h2 data-i18n="resources.title">Resources &amp; Library</h2>
-        <div class="tabs">
-          <button class="tab active" data-tab="subjects" data-i18n="resources.browseBySubject">Browse by Subject</button>
-          <button class="tab" data-tab="textbooks" data-i18n="resources.textbooks">Textbooks</button>
-          <button class="tab" data-tab="pastpapers" data-i18n="resources.pastPapers">Past Papers</button>
-          <button class="tab" data-tab="uploaded" data-i18n="resources.uploaded">Uploaded</button>
+      <div class="mc-page-head">
+        <h2 data-i18n="resources.title">Resources &amp; Library</h2>
+        <p class="mc-page-sub" data-i18n="resources.subtitle">Discover, save, and access academic materials.</p>
+      </div>
+      <div class="mc-layout">
+        <aside class="mc-sidebar">
+          <div class="mc-nav-label" data-i18n="resources.browse">Browse</div>
+          <div class="tabs mc-nav">
+            <button class="tab active" data-tab="subjects"><span class="mc-nav-ico">🧭</span> <span data-i18n="resources.browseBySubject">Browse by Subject</span></button>
+            <button class="tab" data-tab="textbooks"><span class="mc-nav-ico">📘</span> <span data-i18n="resources.textbooks">Textbooks</span></button>
+            <button class="tab" data-tab="pastpapers"><span class="mc-nav-ico">📝</span> <span data-i18n="resources.pastPapers">Past Papers</span></button>
+            <button class="tab" data-tab="uploaded"><span class="mc-nav-ico">📤</span> <span data-i18n="resources.uploaded">Uploaded</span></button>
+          </div>
+          <div class="mc-filters" id="resFilters">
+            <div class="mc-filters-head"><span data-i18n="common.filters">Filters</span><a onclick="resetResourceFilters()" data-i18n="common.reset">Reset</a></div>
+            <label class="mc-filter-label">Subject</label>
+            <select id="rsubject" onchange="loadResources()">
+              <option value="" data-i18n="common.allSubjects">All Subjects</option>
+              <option>Biology</option><option>Chemistry</option><option>Physics</option>
+              <option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option>
+            </select>
+            <label class="mc-filter-label">Grade</label>
+            <select id="rgrade" onchange="loadResources()">
+              <option value="" data-i18n="common.allGrades">All Grades</option>
+              <option>S4</option><option>S5</option><option>S6</option>
+            </select>
+          </div>
+        </aside>
+        <div class="mc-main">
+          <div class="mc-search-row">
+            <input type="text" id="rsearch" placeholder="Search for resources…" data-i18n-placeholder="common.searchByTitle" oninput="loadResources()">
+          </div>
+          <div class="res-summary" id="resSummary"></div>
+          <div class="tab-body active" id="tab-subjects"><div class="rgrid" id="subjGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+          <div class="tab-body" id="tab-textbooks"><div class="rgrid" id="tbGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+          <div class="tab-body" id="tab-pastpapers"><div class="rgrid" id="ppGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
+          <div class="tab-body" id="tab-uploaded"><div class="rgrid" id="uploadedGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
         </div>
       </div>
-      <div class="search-row">
-        <input type="text" id="rsearch" placeholder="Search by title…" data-i18n-placeholder="common.searchByTitle" oninput="loadResources()">
-        <select id="rsubject" onchange="loadResources()">
-          <option value="" data-i18n="common.allSubjects">All Subjects</option>
-          <option>Biology</option><option>Chemistry</option><option>Physics</option>
-          <option>Mathematics</option><option>Computer Science</option><option>Entrepreneurship</option>
-        </select>
-        <select id="rgrade" onchange="loadResources()">
-          <option value="" data-i18n="common.allGrades">All Grades</option>
-          <option>S4</option><option>S5</option><option>S6</option>
-        </select>
-      </div>
-      <div class="res-summary" id="resSummary"></div>
-      <div class="tab-body active" id="tab-subjects"><div class="rgrid" id="subjGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
-      <div class="tab-body" id="tab-textbooks"><div class="rgrid" id="tbGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
-      <div class="tab-body" id="tab-pastpapers"><div class="rgrid" id="ppGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
-      <div class="tab-body" id="tab-uploaded"><div class="rgrid" id="uploadedGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div></div>
     </section>
 
     <!-- MESSAGES (WhatsApp-style) -->
@@ -393,7 +487,7 @@
     <!-- CANVAS -->
     <section class="sec" id="sec-canvas">
       <div class="canvas-head">
-        <h2>✏️ <span data-i18n="title.canvas">Canvas – Virtual Notebook</span></h2>
+        <h2>✏️ <span data-i18n="title.canvas">Virtual Notebook</span></h2>
         <div class="canvas-btns">
           <button class="btn-p" onclick="createBook()">+ New Book</button>
           <button class="btn-s" onclick="saveNote()">💾 <span data-i18n="common.save">Save</span></button>
@@ -560,9 +654,47 @@
   </div>
 </div>
 
+<!-- STUDY TIME MODAL -->
+<div class="modal-overlay hidden" id="modalStudyTime">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head">
+      <h3>Study Time</h3>
+      <button class="modal-close" onclick="closeModal('modalStudyTime')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="st-period-row">
+        <button class="st-period-btn active" data-period="day" onclick="setStudyPeriod('day')">Day</button>
+        <button class="st-period-btn" data-period="week" onclick="setStudyPeriod('week')">Week</button>
+        <button class="st-period-btn" data-period="month" onclick="setStudyPeriod('month')">Month</button>
+        <button class="st-period-btn" data-period="year" onclick="setStudyPeriod('year')">Year</button>
+        <button class="st-period-btn" data-period="custom" onclick="setStudyPeriod('custom')">Custom</button>
+      </div>
+      <div class="st-custom-row hidden" id="stCustomRow">
+        <input type="date" id="stCustomStart"> <span>to</span> <input type="date" id="stCustomEnd">
+        <button class="btn-sm" onclick="loadStudyBreakdown()">Apply</button>
+      </div>
+      <div class="st-total" id="stTotal">—</div>
+      <div class="st-chart" id="stChart"></div>
+      <div class="st-subject-label">By Subject</div>
+      <div class="st-subject-list" id="stSubjectList"><p class="empty">Loading…</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS DETAIL MODAL: what's done, what's left, for one subject -->
+<div class="modal-overlay hidden" id="modalProgressDetail">
+  <div class="modal pd-modal-box" style="width:560px">
+    <div class="modal-head">
+      <h3 id="pdTitle">Subject</h3>
+      <button class="modal-close" onclick="closeModal('modalProgressDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="pdBody"><p class="empty">Loading…</p></div>
+  </div>
+</div>
+
 <script src="../js/api.js?v=3"></script>
-<script src="../js/i18n.js?v=3"></script>
+<script src="../js/i18n.js?v=5"></script>
 <script src="../js/subjectThemes.js?v=1"></script>
-<script src="student.js?v=9"></script>
+<script src="student.js?v=23"></script>
 </body>
 </html>

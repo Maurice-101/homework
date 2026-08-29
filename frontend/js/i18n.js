@@ -19,7 +19,9 @@ const I18N_DICT = {
 
     "title.dashboard": "Dashboard", "title.courses": "Courses", "title.assignments": "Assignments & Tests",
     "title.progress": "Progress", "title.resources": "Resources & Library", "title.messages": "Messages",
-    "title.notifications": "Notifications", "title.canvas": "Canvas – Virtual Notebook", "title.settings": "Settings",
+    "assignments.subtitle": "Manage, track, and submit your work across all subjects.", "assignments.upcoming": "Upcoming",
+    "common.subject": "Subject", "common.title": "Title", "common.dueDate": "Due Date", "common.status": "Status",
+    "title.notifications": "Notifications", "title.canvas": "Virtual Notebook", "title.settings": "Settings",
 
     "common.loading": "Loading…", "common.search": "Search", "common.searchEllipsis": "Search…",
     "common.save": "Save", "common.saveChanges": "Save Changes", "common.cancel": "Cancel",
@@ -44,8 +46,11 @@ const I18N_DICT = {
     "auth.invalidCredentials": "Invalid email or password.", "auth.passwordMin8": "Password must be at least 8 characters.",
     "auth.passwordsNoMatch": "Passwords do not match.", "auth.registrationFailed": "Registration failed. Try again.",
 
-    "courses.enrolled": "Enrolled", "courses.browse": "Browse", "courses.public": "Public",
-    "courses.invitations": "Invitations", "courses.title": "Courses",
+    "courses.enrolled": "Enrolled Courses", "courses.browse": "Browse Catalog", "courses.public": "Public Courses",
+    "courses.invitations": "Invitations", "courses.title": "My Courses",
+    "courses.subtitle": "Manage your enrolled classes and discover new subjects.",
+    "courses.joinPrivate": "Join a Private Course", "courses.joinPrivateSub": "Have an invite code? Enter it here to gain access.",
+    "common.join": "Join",
     "courses.privateInviteOnly": "Private — invitation only", "courses.progress": "Progress",
     "courses.enrolledClickToView": "✓ Enrolled — Click to view", "courses.enrolling": "Enrolling…",
     "courses.enrolledToast": "Successfully enrolled!", "courses.enrollFailedToast": "Could not enroll.",
@@ -53,6 +58,8 @@ const I18N_DICT = {
     "resources.browseBySubject": "Browse by Subject", "resources.textbooks": "Textbooks",
     "resources.pastPapers": "Past Papers", "resources.uploaded": "Uploaded",
     "resources.title": "Resources & Library",
+    "resources.subtitle": "Discover, save, and access academic materials.", "resources.browse": "Browse",
+    "common.filters": "Filters", "common.reset": "Reset",
 
     "settings.profile": "Profile", "settings.changePassword": "Change Password",
     "settings.language": "Language", "settings.displayLanguage": "Display Language",
@@ -120,7 +127,9 @@ const I18N_DICT = {
 
     "title.dashboard": "Tableau de bord", "title.courses": "Cours", "title.assignments": "Devoirs et tests",
     "title.progress": "Progression", "title.resources": "Ressources & Bibliothèque", "title.messages": "Messages",
-    "title.notifications": "Notifications", "title.canvas": "Canvas – Cahier virtuel", "title.settings": "Paramètres",
+    "assignments.subtitle": "Gérez, suivez et soumettez vos travaux dans toutes les matières.", "assignments.upcoming": "À venir",
+    "common.subject": "Matière", "common.title": "Titre", "common.dueDate": "Date limite", "common.status": "Statut",
+    "title.notifications": "Notifications", "title.canvas": "Cahier virtuel", "title.settings": "Paramètres",
 
     "common.loading": "Chargement…", "common.search": "Rechercher", "common.searchEllipsis": "Rechercher…",
     "common.save": "Enregistrer", "common.saveChanges": "Enregistrer les modifications", "common.cancel": "Annuler",
@@ -145,8 +154,11 @@ const I18N_DICT = {
     "auth.invalidCredentials": "E-mail ou mot de passe invalide.", "auth.passwordMin8": "Le mot de passe doit contenir au moins 8 caractères.",
     "auth.passwordsNoMatch": "Les mots de passe ne correspondent pas.", "auth.registrationFailed": "Échec de l'inscription. Réessayez.",
 
-    "courses.enrolled": "Inscrit(e)", "courses.browse": "Parcourir", "courses.public": "Public",
-    "courses.invitations": "Invitations", "courses.title": "Cours",
+    "courses.enrolled": "Cours inscrits", "courses.browse": "Parcourir le catalogue", "courses.public": "Cours publics",
+    "courses.invitations": "Invitations", "courses.title": "Mes cours",
+    "courses.subtitle": "Gérez vos cours inscrits et découvrez de nouvelles matières.",
+    "courses.joinPrivate": "Rejoindre un cours privé", "courses.joinPrivateSub": "Vous avez un code d'invitation ? Entrez-le ici pour accéder.",
+    "common.join": "Rejoindre",
     "courses.privateInviteOnly": "Privé — sur invitation uniquement", "courses.progress": "Progression",
     "courses.enrolledClickToView": "✓ Inscrit(e) — Cliquez pour voir", "courses.enrolling": "Inscription…",
     "courses.enrolledToast": "Inscription réussie !", "courses.enrollFailedToast": "Impossible de s'inscrire.",
@@ -154,6 +166,8 @@ const I18N_DICT = {
     "resources.browseBySubject": "Parcourir par matière", "resources.textbooks": "Manuels",
     "resources.pastPapers": "Anciens examens", "resources.uploaded": "Envoyés",
     "resources.title": "Ressources & Bibliothèque",
+    "resources.subtitle": "Découvrez, enregistrez et accédez aux ressources pédagogiques.", "resources.browse": "Parcourir",
+    "common.filters": "Filtres", "common.reset": "Réinitialiser",
 
     "settings.profile": "Profil", "settings.changePassword": "Changer le mot de passe",
     "settings.language": "Langue", "settings.displayLanguage": "Langue d'affichage",
@@ -221,7 +235,9 @@ const I18N_DICT = {
 
     "title.dashboard": "Imbonerahamwe", "title.courses": "Amasomo", "title.assignments": "Imyitozo n'Ibizamini",
     "title.progress": "Iterambere", "title.resources": "Ibikoresho & Isomero", "title.messages": "Ubutumwa",
-    "title.notifications": "Amatangazo", "title.canvas": "Canvas – Ikayi Rusanya", "title.settings": "Igenamiterere",
+    "assignments.subtitle": "Gucunga, gukurikirana no kohereza imirimo yawe muri buri isomo.", "assignments.upcoming": "Biri Kuza",
+    "common.subject": "Isomo", "common.title": "Umutwe", "common.dueDate": "Itariki ntarengwa", "common.status": "Uko Bihagaze",
+    "title.notifications": "Amatangazo", "title.canvas": "Ikayi Rusanya", "title.settings": "Igenamiterere",
 
     "common.loading": "Birimo gupakira…", "common.search": "Shakisha", "common.searchEllipsis": "Shakisha…",
     "common.save": "Bika", "common.saveChanges": "Bika Impinduka", "common.cancel": "Hagarika",
@@ -246,8 +262,11 @@ const I18N_DICT = {
     "auth.invalidCredentials": "Imeyili cyangwa ijambobanga sibyo.", "auth.passwordMin8": "Ijambobanga rigomba kuba rifite byibura inyuguti 8.",
     "auth.passwordsNoMatch": "Amagambobanga ntabwo ahuye.", "auth.registrationFailed": "Kwiyandikisha byanze. Ongera ugerageze.",
 
-    "courses.enrolled": "Wiyandikishije", "courses.browse": "Shakisha", "courses.public": "Rusange",
-    "courses.invitations": "Ubutumire", "courses.title": "Amasomo",
+    "courses.enrolled": "Amasomo Wiyandikishijeho", "courses.browse": "Reba Amasomo Yose", "courses.public": "Amasomo Rusange",
+    "courses.invitations": "Ubutumire", "courses.title": "Amasomo Yanjye",
+    "courses.subtitle": "Gucunga amasomo wiyandikishijeho no kuvumbura izindi nyigisho.",
+    "courses.joinPrivate": "Injira mu Isomo Ryihariye", "courses.joinPrivateSub": "Ufite kode y'ubutumire? Yinjize hano kugira ngo winjire.",
+    "common.join": "Injira",
     "courses.privateInviteOnly": "Byihariye — Gutumirwa gusa", "courses.progress": "Iterambere",
     "courses.enrolledClickToView": "✓ Wiyandikishije — Kanda urebe", "courses.enrolling": "Kwiyandikisha…",
     "courses.enrolledToast": "Wiyandikishije neza!", "courses.enrollFailedToast": "Ntibyashobotse kwiyandikisha.",
@@ -255,6 +274,8 @@ const I18N_DICT = {
     "resources.browseBySubject": "Shakisha ukurikije Isomo", "resources.textbooks": "Ibitabo",
     "resources.pastPapers": "Ibizamini Byahise", "resources.uploaded": "Byoherejwe",
     "resources.title": "Ibikoresho & Isomero",
+    "resources.subtitle": "Shakisha, bika, kandi ubone ibikoresho by'amasomo.", "resources.browse": "Shakisha",
+    "common.filters": "Muyunguruzi", "common.reset": "Subiza",
 
     "settings.profile": "Umwirondoro", "settings.changePassword": "Hindura Ijambobanga",
     "settings.language": "Ururimi", "settings.displayLanguage": "Ururimi rwo Kwerekana",

@@ -174,7 +174,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .course-card h3 { font-size: 15px; color: var(--primary); }
 .cc-badge { background: var(--accent); color: var(--primary); font-size: 11px; padding: 2px 8px; border-radius: 10px; }
 .course-card p { font-size: 13px; color: var(--text-sub); margin: 6px 0; }
-.cc-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-sub); margin-top: 8px; }
+.cc-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-sub); margin-top: 8px; flex-wrap: wrap; }
+.cc-invite-code { background: var(--accent); color: var(--primary-d); padding: 1px 8px; border-radius: 10px; font-weight: 600; cursor: pointer; letter-spacing: .3px; }
+.cc-invite-code:hover { background: var(--primary); color: #fff; }
 
 /* ---- COURSE DETAIL ---- */
 .detail-panel { padding-bottom: 40px; padding: 0; }

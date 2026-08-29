@@ -23,7 +23,7 @@ def get_db():
 
 def init_db():
     from api.model import user, course, assignment, resource, message, notification, canvas  # noqa
-    from api.model import course_content  # noqa
+    from api.model import course_content, study  # noqa
     Base.metadata.create_all(bind=engine)
     _migrate()
 
@@ -47,8 +47,10 @@ def _migrate():
             "UPDATE assignments SET status = CASE WHEN is_published THEN 'published' ELSE 'draft' END WHERE status IS NULL",
             "ALTER TABLE submissions ADD COLUMN attempt_number INTEGER DEFAULT 1",
             "ALTER TABLE courses ADD COLUMN goals TEXT",
+            "ALTER TABLE courses ADD COLUMN invite_code VARCHAR(12)",
             "CREATE TABLE IF NOT EXISTS announcement_reads (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER NOT NULL REFERENCES announcements(id), student_id INTEGER NOT NULL REFERENCES users(id), read_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "CREATE TABLE IF NOT EXISTS announcement_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER NOT NULL REFERENCES announcements(id), author_id INTEGER NOT NULL REFERENCES users(id), content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "CREATE TABLE IF NOT EXISTS study_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id INTEGER NOT NULL REFERENCES users(id), course_id INTEGER REFERENCES courses(id), date DATE NOT NULL, minutes INTEGER DEFAULT 0, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(student_id, date, course_id))",
         ]
     else:
         # PostgreSQL syntax
@@ -86,6 +88,7 @@ def _migrate():
             "UPDATE assignments SET status = CASE WHEN is_published THEN 'published' ELSE 'draft' END WHERE status IS NULL",
             "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS attempt_number INTEGER DEFAULT 1",
             "ALTER TABLE courses ADD COLUMN IF NOT EXISTS goals TEXT",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS invite_code VARCHAR(12)",
             """CREATE TABLE IF NOT EXISTS announcement_reads (
                 id SERIAL PRIMARY KEY,
                 announcement_id INTEGER NOT NULL REFERENCES announcements(id),
@@ -99,6 +102,15 @@ def _migrate():
                 content TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )""",
+            """CREATE TABLE IF NOT EXISTS study_sessions (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id),
+                course_id INTEGER REFERENCES courses(id),
+                date DATE NOT NULL,
+                minutes INTEGER DEFAULT 0,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(student_id, date, course_id)
+            )""",
         ]
 
     with engine.connect() as conn:
@@ -108,3 +120,51 @@ def _migrate():
                 conn.commit()
             except Exception:
                 pass  # column/table already exists
+
+    _migrate_study_sessions_course_id()
+
+
+def _migrate_study_sessions_course_id():
+    """Adds course_id to study_sessions and widens its uniqueness to (student_id, date,
+    course_id) so a student can accrue minutes per subject per day, not just per day.
+    SQLite can't ALTER a UNIQUE constraint in place, so on SQLite this rebuilds the table
+    — existing rows are preserved with course_id = NULL (time not tied to a subject)."""
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        if _is_sqlite:
+            cols = [r[1] for r in conn.execute(text("PRAGMA table_info(study_sessions)")).fetchall()]
+            if "course_id" in cols:
+                return
+            conn.execute(text("ALTER TABLE study_sessions RENAME TO study_sessions_old"))
+            conn.execute(text("""CREATE TABLE study_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER NOT NULL REFERENCES users(id),
+                course_id INTEGER REFERENCES courses(id),
+                date DATE NOT NULL,
+                minutes INTEGER DEFAULT 0,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(student_id, date, course_id)
+            )"""))
+            conn.execute(text("""INSERT INTO study_sessions (id, student_id, course_id, date, minutes, updated_at)
+                SELECT id, student_id, NULL, date, minutes, updated_at FROM study_sessions_old"""))
+            conn.execute(text("DROP TABLE study_sessions_old"))
+            conn.commit()
+        else:
+            cols = [r[0] for r in conn.execute(text(
+                "SELECT column_name FROM information_schema.columns WHERE table_name='study_sessions'"
+            )).fetchall()]
+            if "course_id" not in cols:
+                conn.execute(text("ALTER TABLE study_sessions ADD COLUMN course_id INTEGER REFERENCES courses(id)"))
+            conn.execute(text("""
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'study_sessions_student_id_date_key') THEN
+                        ALTER TABLE study_sessions DROP CONSTRAINT study_sessions_student_id_date_key;
+                    END IF;
+                END $$;
+            """))
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_study_session_student_date_course "
+                "ON study_sessions(student_id, date, course_id)"
+            ))
+            conn.commit()

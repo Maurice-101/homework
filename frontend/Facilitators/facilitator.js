@@ -183,12 +183,19 @@ async function loadCourses() {
           <span>👥 ${c.student_count || c.enrollment_count || 0} students</span>
           <span>${c.grade_level || ''}</span>
           <span>${c.is_public ? '🌐 Public' : '🔒 Private'}</span>
+          ${c.invite_code ? `<span class="cc-invite-code" title="Click to copy invite code" onclick="event.stopPropagation();copyInviteCode('${c.invite_code}')">🔑 ${esc(c.invite_code)}</span>` : ''}
         </div>
       </div>
     `).join('');
   } catch(e) {
     grid.innerHTML = '<div class="empty-state">Could not load subjects.</div>';
   }
+}
+
+function copyInviteCode(code) {
+  navigator.clipboard?.writeText(code)
+    .then(() => showToast(`Invite code ${code} copied!`))
+    .catch(() => showToast(`Invite code: ${code}`, 'info'));
 }
 
 async function openCourseDetail(id) {
