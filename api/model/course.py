@@ -18,6 +18,12 @@ class Course(Base):
     is_approved = Column(Boolean, default=True)
     cover_color = Column(String(20), default="#2f6df6")
     invite_code = Column(String(12), unique=True, nullable=True)
+    level = Column(String(20), default="Beginner")  # Beginner / Intermediate / Advanced
+    duration_hours = Column(Integer, nullable=True)
+    course_code = Column(String(20), nullable=True)
+    thumbnail_path = Column(String(500), nullable=True)
+    status = Column(String(20), default="active")  # active / draft / archived
+    target_grade_percent = Column(Integer, default=80)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     facilitator   = relationship("User", back_populates="taught_courses", foreign_keys=[facilitator_id])
@@ -32,6 +38,8 @@ class Course(Base):
                                   order_by="Discussion.created_at.desc()")
     syllabus_weeks = relationship("SyllabusWeek", back_populates="course",
                                    order_by="SyllabusWeek.week_num")
+    team_members  = relationship("CourseTeamMember", back_populates="course")
+    meetings      = relationship("CourseMeeting", back_populates="course")
 
 
 class Enrollment(Base):
@@ -88,3 +96,34 @@ class ModuleCompletion(Base):
 
     module  = relationship("Module", back_populates="completions")
     student = relationship("User")
+
+
+class CourseTeamMember(Base):
+    __tablename__ = "course_team_members"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    role = Column(String(20), default="ta")  # co_facilitator / ta
+    added_at = Column(DateTime, default=datetime.utcnow)
+
+    course = relationship("Course", back_populates="team_members")
+    user = relationship("User", foreign_keys=[user_id])
+
+
+class CourseMeeting(Base):
+    __tablename__ = "course_meetings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    facilitator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    scheduled_at = Column(DateTime, nullable=False)
+    duration_minutes = Column(Integer, default=30)
+    status = Column(String(20), default="scheduled")  # scheduled / completed / cancelled
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    course = relationship("Course", back_populates="meetings")
+    facilitator = relationship("User", foreign_keys=[facilitator_id])
+    student = relationship("User", foreign_keys=[student_id])

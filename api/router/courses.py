@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 from api.database import get_db
-from api.schemas.course import CourseCreate, ModuleCreate, InviteCreate, JoinCourseIn
+from api.schemas.course import (
+    CourseCreate, CourseUpdate, ModuleCreate, InviteCreate, JoinCourseIn,
+    TeamMemberIn, MeetingCreate,
+)
 from api.controller import course_controller
 from api.utils.auth import get_current_user, require_role
+from api.utils import r2
 from api.model.user import User
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
@@ -35,6 +39,18 @@ def get_invitations(db: Session = Depends(get_db),
 def join_course(data: JoinCourseIn, db: Session = Depends(get_db),
                 current_user: User = Depends(require_role("student"))):
     return course_controller.join_by_code(data.code, current_user.id, db)
+
+
+@router.get("/students-overview")
+def students_overview(db: Session = Depends(get_db),
+                      current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.get_students_overview(current_user.id, db)
+
+
+@router.get("/progress-analytics")
+def progress_analytics(db: Session = Depends(get_db),
+                       current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.get_progress_analytics(current_user.id, db)
 
 
 @router.get("/{course_id}")
@@ -82,3 +98,62 @@ def invite_student(course_id: int, data: InviteCreate, db: Session = Depends(get
 def accept_invite(course_id: int, db: Session = Depends(get_db),
                   current_user: User = Depends(require_role("student"))):
     return course_controller.accept_invitation(course_id, current_user.id, db)
+
+
+@router.put("/{course_id}")
+def update_course(course_id: int, data: CourseUpdate, db: Session = Depends(get_db),
+                  current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.update_course(course_id, data, current_user.id, db)
+
+
+@router.post("/{course_id}/thumbnail")
+async def upload_thumbnail(course_id: int, file: UploadFile = File(...),
+                           db: Session = Depends(get_db),
+                           current_user: User = Depends(require_role("facilitator", "admin"))):
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files accepted")
+    file_bytes = await file.read()
+    key = r2.upload_file(file_bytes, file.filename, prefix="course-thumbnails")
+    return course_controller.set_course_thumbnail(course_id, r2.proxy_url(key), current_user.id, db)
+
+
+@router.post("/{course_id}/invite/regenerate")
+def regenerate_invite(course_id: int, db: Session = Depends(get_db),
+                      current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.regenerate_invite_code(course_id, current_user.id, db)
+
+
+@router.get("/{course_id}/team")
+def get_team(course_id: int, db: Session = Depends(get_db),
+            current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.list_team_members(course_id, current_user.id, db)
+
+
+@router.post("/{course_id}/team")
+def add_team(course_id: int, data: TeamMemberIn, db: Session = Depends(get_db),
+            current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.add_team_member(course_id, data, current_user.id, db)
+
+
+@router.delete("/{course_id}/team/{member_id}")
+def remove_team(course_id: int, member_id: int, db: Session = Depends(get_db),
+                current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.remove_team_member(course_id, member_id, current_user.id, db)
+
+
+@router.get("/{course_id}/meetings")
+def get_meetings(course_id: int, db: Session = Depends(get_db),
+                 current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.list_meetings(course_id, current_user.id, db)
+
+
+@router.post("/{course_id}/meetings")
+def add_meeting(course_id: int, data: MeetingCreate, db: Session = Depends(get_db),
+                current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.create_meeting(course_id, data, current_user.id, db)
+
+
+@router.delete("/{course_id}/meetings/{meeting_id}")
+def remove_meeting(course_id: int, meeting_id: int, db: Session = Depends(get_db),
+                   current_user: User = Depends(require_role("facilitator", "admin"))):
+    return course_controller.cancel_meeting(course_id, meeting_id, current_user.id, db)

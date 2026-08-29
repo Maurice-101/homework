@@ -14,6 +14,7 @@ class Resource(Base):
     grade_level = Column(String(20), nullable=True)
     type = Column(String(30), default="textbook")
     file_path = Column(String(500), nullable=False)
+    file_size_bytes = Column(Integer, nullable=True)
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

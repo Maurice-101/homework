@@ -51,6 +51,18 @@ def _migrate():
             "CREATE TABLE IF NOT EXISTS announcement_reads (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER NOT NULL REFERENCES announcements(id), student_id INTEGER NOT NULL REFERENCES users(id), read_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "CREATE TABLE IF NOT EXISTS announcement_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER NOT NULL REFERENCES announcements(id), author_id INTEGER NOT NULL REFERENCES users(id), content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "CREATE TABLE IF NOT EXISTS study_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id INTEGER NOT NULL REFERENCES users(id), course_id INTEGER REFERENCES courses(id), date DATE NOT NULL, minutes INTEGER DEFAULT 0, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(student_id, date, course_id))",
+            "ALTER TABLE courses ADD COLUMN level VARCHAR(20) DEFAULT 'Beginner'",
+            "ALTER TABLE courses ADD COLUMN duration_hours INTEGER",
+            "ALTER TABLE courses ADD COLUMN course_code VARCHAR(20)",
+            "ALTER TABLE courses ADD COLUMN thumbnail_path VARCHAR(500)",
+            "ALTER TABLE courses ADD COLUMN status VARCHAR(20) DEFAULT 'active'",
+            "ALTER TABLE courses ADD COLUMN target_grade_percent INTEGER DEFAULT 80",
+            "UPDATE courses SET status = 'active' WHERE status IS NULL",
+            "UPDATE courses SET level = 'Beginner' WHERE level IS NULL",
+            "UPDATE courses SET target_grade_percent = 80 WHERE target_grade_percent IS NULL",
+            "ALTER TABLE resources ADD COLUMN file_size_bytes INTEGER",
+            "CREATE TABLE IF NOT EXISTS course_team_members (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER NOT NULL REFERENCES courses(id), user_id INTEGER NOT NULL REFERENCES users(id), role VARCHAR(20) DEFAULT 'ta', added_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "CREATE TABLE IF NOT EXISTS course_meetings (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER NOT NULL REFERENCES courses(id), facilitator_id INTEGER NOT NULL REFERENCES users(id), student_id INTEGER REFERENCES users(id), scheduled_at DATETIME NOT NULL, duration_minutes INTEGER DEFAULT 30, status VARCHAR(20) DEFAULT 'scheduled', notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         ]
     else:
         # PostgreSQL syntax
@@ -111,6 +123,34 @@ def _migrate():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(student_id, date, course_id)
             )""",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS level VARCHAR(20) DEFAULT 'Beginner'",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS duration_hours INTEGER",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS course_code VARCHAR(20)",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS thumbnail_path VARCHAR(500)",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active'",
+            "ALTER TABLE courses ADD COLUMN IF NOT EXISTS target_grade_percent INTEGER DEFAULT 80",
+            "UPDATE courses SET status = 'active' WHERE status IS NULL",
+            "UPDATE courses SET level = 'Beginner' WHERE level IS NULL",
+            "UPDATE courses SET target_grade_percent = 80 WHERE target_grade_percent IS NULL",
+            "ALTER TABLE resources ADD COLUMN IF NOT EXISTS file_size_bytes INTEGER",
+            """CREATE TABLE IF NOT EXISTS course_team_members (
+                id SERIAL PRIMARY KEY,
+                course_id INTEGER NOT NULL REFERENCES courses(id),
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                role VARCHAR(20) DEFAULT 'ta',
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""",
+            """CREATE TABLE IF NOT EXISTS course_meetings (
+                id SERIAL PRIMARY KEY,
+                course_id INTEGER NOT NULL REFERENCES courses(id),
+                facilitator_id INTEGER NOT NULL REFERENCES users(id),
+                student_id INTEGER REFERENCES users(id),
+                scheduled_at TIMESTAMP NOT NULL,
+                duration_minutes INTEGER DEFAULT 30,
+                status VARCHAR(20) DEFAULT 'scheduled',
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""",
         ]
 
     with engine.connect() as conn:
@@ -122,6 +162,60 @@ def _migrate():
                 pass  # column/table already exists
 
     _migrate_study_sessions_course_id()
+    _backfill_course_and_resource_fields()
+
+
+def _backfill_course_and_resource_fields():
+    """One-shot pass filling course_code/duration_hours on existing courses and
+    file_size_bytes on existing R2-backed resources, computed from real related
+    data — never invented. Idempotent: only touches rows where the field is
+    still NULL."""
+    import urllib.parse
+    from sqlalchemy.orm import sessionmaker
+    from api.model.course import Course
+
+    Session = sessionmaker(bind=engine)
+    db = Session()
+    try:
+        courses = db.query(Course).filter(
+            (Course.course_code.is_(None)) | (Course.duration_hours.is_(None))
+        ).all()
+        for c in courses:
+            if not c.course_code:
+                subj = "".join(ch for ch in (c.subject or "GEN").upper() if ch.isalnum())[:4] or "GEN"
+                c.course_code = f"{subj}-{c.id}"
+            if c.duration_hours is None:
+                weeks = len(c.syllabus_weeks or [])
+                mods = len(c.modules or [])
+                if weeks:
+                    c.duration_hours = weeks * 3
+                elif mods:
+                    c.duration_hours = mods * 2
+        if courses:
+            db.commit()
+
+        from api.model.resource import Resource
+        from api.utils import r2
+        resources = db.query(Resource).filter(Resource.file_size_bytes.is_(None)).all()
+        changed = False
+        for r in resources:
+            file_path = r.file_path or ""
+            key = None
+            if "resources/serve?key=" in file_path:
+                key = urllib.parse.unquote(file_path.split("key=", 1)[-1])
+            if not key:
+                continue
+            try:
+                size = r2.head_object(key)
+            except Exception:
+                size = None
+            if size is not None:
+                r.file_size_bytes = size
+                changed = True
+        if changed:
+            db.commit()
+    finally:
+        db.close()
 
 
 def _migrate_study_sessions_course_id():

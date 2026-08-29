@@ -61,6 +61,7 @@ def list_users(
             "email": u.email,
             "role": u.role,
             "school": u.school,
+            "grade": u.grade,
         }
         for u in users
     ]

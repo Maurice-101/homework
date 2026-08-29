@@ -81,6 +81,15 @@ def upload_file(file_bytes: bytes, filename: str, prefix: str = "resources") -> 
     return key
 
 
+def head_object(key: str) -> "int | None":
+    """Return an object's byte size via a HEAD request, or None if it can't be found."""
+    try:
+        resp = _s3_client.head_object(Bucket=settings.r2_bucket_name, Key=key)
+        return resp.get("ContentLength")
+    except ClientError:
+        return None
+
+
 def delete_object(key: str) -> None:
     """Delete an object from R2. Uses the S3-compatible endpoint (not the
     Cloudflare REST API) for the same reason fetch_object does: keys containing

@@ -306,6 +306,8 @@ def get_all_resources(
                 "source":      "uploaded",
                 "description": res.description,
                 "course_id":   res.course_id,
+                "file_size_bytes": res.file_size_bytes,
+                "created_at":  res.created_at.isoformat() if res.created_at else None,
             })
 
     if subject_filter:
@@ -333,6 +335,7 @@ def upload_resource(
         title=title, description=description, subject=subject,
         grade_level=grade_level, type=res_type,
         file_path=url,          # store full URL so legacy code still works
+        file_size_bytes=len(file_bytes),
         uploaded_by=uploaded_by,
         course_id=course_id,
     )
@@ -350,6 +353,7 @@ def upload_resource(
         "category":    "uploaded",
         "source":      "uploaded",
         "course_id":   res.course_id,
+        "file_size_bytes": res.file_size_bytes,
     }
 
 
@@ -364,6 +368,7 @@ def attach_library_material(key: str, course_id: int, uploaded_by: int, db: Sess
     res = Resource(
         title=book["title"], subject=book.get("subject"), grade_level=book.get("grade_level"),
         type=book.get("type", "textbook"), file_path=book["url"],
+        file_size_bytes=r2.head_object(key),
         uploaded_by=uploaded_by, course_id=course_id,
     )
     db.add(res)
@@ -380,6 +385,7 @@ def attach_library_material(key: str, course_id: int, uploaded_by: int, db: Sess
         "category":    "uploaded",
         "source":      "uploaded",
         "course_id":   res.course_id,
+        "file_size_bytes": res.file_size_bytes,
     }
 
 
