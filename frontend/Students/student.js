@@ -134,6 +134,7 @@ function goTo(sec) {
     if (sec === "settings")      prefillPwEmail();
     if (sec === "notifications") loadNotifications();
     if (sec === "canvas")        loadCanvas();
+    if (sec === "ai-chat")       loadAiSessions();
 }
 
 function activateTab(tab) {
@@ -2542,6 +2543,191 @@ function setSymCat(cat) {
 
 function ins(sym) {
     execFormat("insertText", sym);
+}
+
+// ── AI LEARNING ASSISTANT ─────────────────────────────────────────────────────
+let _aiSessions = [];
+let _curAiSessionId = null;
+let _aiSending = false;
+
+async function loadAiSessions() {
+    const ul = document.getElementById("aiSessionsList");
+    ul.innerHTML = '<li class="empty-state">Loading…</li>';
+    try {
+        _aiSessions = await apiGet("/ai/sessions") || [];
+        renderAiSessionsList();
+        if (!_curAiSessionId) showAiEmptyState();
+    } catch(e) {
+        ul.innerHTML = '<li class="empty-state">Could not load chats.</li>';
+    }
+}
+
+function renderAiSessionsList() {
+    const ul = document.getElementById("aiSessionsList");
+    if (!_aiSessions.length) {
+        ul.innerHTML = '<li class="empty-state" style="padding:20px 12px;text-align:center">No conversations yet.<br>Ask a question to get started.</li>';
+        return;
+    }
+    ul.innerHTML = _aiSessions.map(s => `
+        <li class="contact-item ${s.session_id === _curAiSessionId ? 'active' : ''}" onclick="openAiSession('${s.session_id}')">
+            <div class="chat-avatar-sm ai-avatar"><svg class="icon-sm"><use href="#ic-spark"></use></svg></div>
+            <div class="contact-info">
+                <div class="contact-name">${esc(s.last_question || 'New conversation')}</div>
+                <div class="contact-last">${s.turn_count} message${s.turn_count === 1 ? '' : 's'}</div>
+            </div>
+            <button class="nb-icon-btn" onclick="event.stopPropagation();deleteAiSession('${s.session_id}')" title="Delete"><svg class="icon-sm"><use href="#ic-close"></use></svg></button>
+        </li>`).join("");
+}
+
+function showAiEmptyState() {
+    document.getElementById("aiMessages").innerHTML = `
+        <div class="chat-empty-state" id="aiChatEmpty">
+            <svg class="icon-lg ai-empty-icon"><use href="#ic-spark"></use></svg>
+            <p>Ask me anything about your coursework — I'll search your study materials to help.</p>
+        </div>`;
+}
+
+function startNewAiChat() {
+    _curAiSessionId = null;
+    document.getElementById("aiChatInput").value = "";
+    showAiEmptyState();
+    renderAiSessionsList();
+    document.getElementById("aiChatInput").focus();
+}
+
+async function openAiSession(sessionId) {
+    _curAiSessionId = sessionId;
+    renderAiSessionsList();
+    const messagesEl = document.getElementById("aiMessages");
+    messagesEl.innerHTML = '<p class="empty-state">Loading…</p>';
+    try {
+        const history = await apiGet(`/ai/sessions/${sessionId}`);
+        if (!history.messages.length) { showAiEmptyState(); return; }
+        messagesEl.innerHTML = "";
+        history.messages.forEach(m => appendAiTurn(m.question, m.ai_response, m.sources, m.external_sources, m.created_at, false));
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    } catch(e) {
+        messagesEl.innerHTML = '<p class="empty-state">Could not load this conversation.</p>';
+    }
+}
+
+async function deleteAiSession(sessionId) {
+    if (!confirm("Delete this conversation?")) return;
+    try {
+        await apiDelete(`/ai/sessions/${sessionId}`);
+        if (_curAiSessionId === sessionId) startNewAiChat();
+        await loadAiSessions();
+        showToast("Conversation deleted.");
+    } catch(e) { showToast("Failed to delete.", "error"); }
+}
+
+function aiChatKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAiMessage(); }
+}
+
+async function sendAiMessage() {
+    if (_aiSending) return;
+    const input = document.getElementById("aiChatInput");
+    const question = input.value.trim();
+    if (!question) return;
+
+    const messagesEl = document.getElementById("aiMessages");
+    if (document.getElementById("aiChatEmpty")) messagesEl.innerHTML = "";
+
+    input.value = "";
+    _aiSending = true;
+    document.getElementById("aiSendBtn").disabled = true;
+
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble-wrap mine";
+    userBubble.innerHTML = `<div class="chat-bubble">${esc(question)}</div>`;
+    messagesEl.appendChild(userBubble);
+
+    const thinking = document.createElement("div");
+    thinking.className = "chat-bubble-wrap theirs";
+    thinking.innerHTML = `<div class="chat-bubble ai-bubble ai-thinking"><span></span><span></span><span></span></div>`;
+    messagesEl.appendChild(thinking);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+        const res = await apiPost("/ai/chat", { session_id: _curAiSessionId, question });
+        _curAiSessionId = res.session_id;
+        thinking.remove();
+        appendAiTurn(null, res.ai_response, res.sources, res.external_sources, new Date().toISOString(), true);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        await loadAiSessions();
+    } catch(e) {
+        thinking.remove();
+        const errBubble = document.createElement("div");
+        errBubble.className = "chat-bubble-wrap theirs";
+        errBubble.innerHTML = `<div class="chat-bubble ai-bubble">Sorry, I couldn't process that right now. ${esc(e.message || "")}</div>`;
+        messagesEl.appendChild(errBubble);
+    } finally {
+        _aiSending = false;
+        document.getElementById("aiSendBtn").disabled = false;
+        input.focus();
+    }
+}
+
+// answerOnly=true when the question bubble was already appended by the caller (fresh send)
+function appendAiTurn(question, answer, sources, external, createdAt, answerOnly) {
+    const messagesEl = document.getElementById("aiMessages");
+    if (!answerOnly && question) {
+        const qBubble = document.createElement("div");
+        qBubble.className = "chat-bubble-wrap mine";
+        qBubble.innerHTML = `<div class="chat-bubble">${esc(question)}</div>`;
+        messagesEl.appendChild(qBubble);
+    }
+    const aBubble = document.createElement("div");
+    aBubble.className = "chat-bubble-wrap theirs";
+    aBubble.innerHTML = `
+        <div class="chat-bubble ai-bubble">${formatAiMarkdown(answer)}</div>
+        ${renderAiSources(sources)}
+        ${renderAiExternal(external)}
+        <div class="chat-bubble-time">${fmtTimeShort(createdAt)}</div>
+    `;
+    messagesEl.appendChild(aBubble);
+}
+
+function renderAiSources(sources) {
+    if (!sources || !sources.length) return "";
+    return `
+        <details class="ai-sources">
+            <summary>Sources (${sources.length})</summary>
+            ${sources.map(s => `
+                <div class="ai-source-chip">
+                    <svg class="icon-sm"><use href="#ic-file"></use></svg>
+                    <span>${esc(s.book_name || "Unknown source")}${s.page_number && s.page_number.length ? ` — p.${s.page_number.join(", ")}` : ""}</span>
+                </div>`).join("")}
+        </details>`;
+}
+
+function renderAiExternal(external) {
+    if (!external || !external.sources || !external.sources.length) return "";
+    return `
+        <div class="ai-external">
+            <span class="ai-external-label">From the web</span>
+            ${external.sources.map(s => `<a class="ai-external-link" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`).join("")}
+        </div>`;
+}
+
+function formatAiMarkdown(text) {
+    let html = esc(text || "");
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    const lines = html.split("\n");
+    let out = [], inList = false;
+    for (const line of lines) {
+        const m = line.match(/^\s*[*\-]\s+(.*)$/);
+        if (m) {
+            if (!inList) { out.push("<ul>"); inList = true; }
+            out.push(`<li>${m[1]}</li>`);
+        } else {
+            if (inList) { out.push("</ul>"); inList = false; }
+            if (line.trim()) out.push(`<p>${line}</p>`);
+        }
+    }
+    if (inList) out.push("</ul>");
+    return out.join("");
 }
 
 // ── SETTINGS ──

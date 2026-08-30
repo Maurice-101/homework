@@ -17,7 +17,7 @@ class NoCacheStaticFiles(StaticFiles):
         return response
 
 from api.database import init_db
-from api.router import auth, courses, assignments, resources, messages, admin, course_content, study
+from api.router import auth, courses, assignments, resources, messages, admin, course_content, study, ai_chat
 from api.settings import settings
 
 app = FastAPI(
@@ -42,6 +42,7 @@ app.include_router(messages.router,        prefix="/api")
 app.include_router(admin.router,           prefix="/api")
 app.include_router(course_content.router,  prefix="/api")
 app.include_router(study.router,           prefix="/api")
+app.include_router(ai_chat.router,         prefix="/api")
 
 
 @app.get("/health")

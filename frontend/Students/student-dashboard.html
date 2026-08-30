@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard – Abahizi</title>
-<link rel="stylesheet" href="student.css?v=23">
+<link rel="stylesheet" href="student.css?v=24">
 </head>
 <body>
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
@@ -31,6 +31,7 @@
   <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
   <symbol id="ic-warning" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M12 10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></symbol>
   <symbol id="ic-folder" viewBox="0 0 24 24"><path d="M3 7a1 1 0 011-1h5l2 2h9a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/><path d="M19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" fill="none"/></symbol>
 </svg>
 
 <div class="layout">
@@ -50,6 +51,7 @@
       <li data-sec="messages">    <span class="lbl" data-i18n="nav.messages">Messages</span></li>
       <li data-sec="notifications"><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
       <li data-sec="canvas">      <span class="lbl" data-i18n="nav.canvas">Virtual Notebook</span></li>
+      <li data-sec="ai-chat">     <span class="lbl" data-i18n="nav.aiChat">AI Assistant</span></li>
     </ul>
     <div class="nav-right">
       <div class="nav-search"><svg class="icon"><use href="#ic-search"></use></svg><input type="text" placeholder="Search…" disabled></div>
@@ -617,6 +619,41 @@
       </div>
     </section>
 
+    <!-- AI LEARNING ASSISTANT -->
+    <section class="sec" id="sec-ai-chat">
+      <div class="chat-layout">
+        <!-- Left: session list -->
+        <div class="chat-sidebar">
+          <div class="chat-sidebar-head">
+            <h3 data-i18n="nav.aiChat">AI Assistant</h3>
+            <button class="nb-icon-btn" onclick="startNewAiChat()" title="New chat"><svg class="icon-sm"><use href="#ic-plus"></use></svg></button>
+          </div>
+          <ul class="contacts-list" id="aiSessionsList"><li class="empty-state">Loading…</li></ul>
+        </div>
+        <!-- Right: chat thread (always visible so the input bar is always reachable) -->
+        <div class="chat-main">
+          <div class="chat-thread" id="aiChatThread">
+            <div class="chat-thread-head">
+              <div class="chat-partner-info">
+                <div class="chat-avatar-sm ai-avatar"><svg class="icon-sm"><use href="#ic-spark"></use></svg></div>
+                <span>AI Learning Assistant</span>
+              </div>
+            </div>
+            <div class="chat-messages" id="aiMessages">
+              <div class="chat-empty-state" id="aiChatEmpty">
+                <svg class="icon-lg ai-empty-icon"><use href="#ic-spark"></use></svg>
+                <p>Ask me anything about your coursework — I'll search your study materials to help.</p>
+              </div>
+            </div>
+            <div class="chat-input-bar">
+              <textarea id="aiChatInput" rows="1" placeholder="Ask a question about your coursework…" onkeydown="aiChatKeyDown(event)"></textarea>
+              <button class="chat-send-btn" id="aiSendBtn" onclick="sendAiMessage()"><svg class="icon"><use href="#ic-send"></use></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- SETTINGS -->
     <section class="sec" id="sec-settings">
       <h2 data-i18n="settings.title">Settings &amp; Profile</h2>
@@ -752,9 +789,9 @@
 </div>
 
 <script src="../js/api.js?v=3"></script>
-<script src="../js/i18n.js?v=5"></script>
+<script src="../js/i18n.js?v=6"></script>
 <script src="../js/subjectThemes.js?v=2"></script>
 <script src="../js/multiPicker.js?v=1"></script>
-<script src="student.js?v=27"></script>
+<script src="student.js?v=29"></script>
 </body>
 </html>

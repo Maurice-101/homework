@@ -50,6 +50,28 @@ class Settings(BaseSettings):
     r2_public_url: str = ""
     r2_books_prefix: str = ""        # key prefix inside the bucket, e.g. "PCB-books/"
 
+    # ── AI Learning Assistant (RAG) ──────────────────────────────────────
+    deep_infra_key: str = ""
+    model_embedder: str = "BAAI/bge-m3"
+    dimension: int = 1024
+    top_k: int = 5
+    qdrant_url: str = ""
+    qdrant_api_key: str = ""
+    qdrant_collection_name: str = "FoundationX"
+    qdrant_timeout: int = 60
+    llm_model: str = "openrouter/google/gemini-2.5-flash"
+    llm_model_fallback: str = "gemini/gemini-2.5-flash"
+    llm_model_free: str = ""
+    llm_enabled: bool = True
+    llm_max_retries: int = 2
+    llm_retry_delay: float = 1.0
+    open_router_key: str = ""
+    google_api_key: str = ""
+    google_api_key_fallback: str = ""
+    google_api_key_free: str = ""
+    tavily_api_key: str = ""
+    search_depth: str = "basic"
+
     @property
     def smtp_from_or_user(self) -> str:
         return self.smtp_from or self.smtp_user

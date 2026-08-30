@@ -13,7 +13,7 @@ const I18N_DICT = {
   en: {
     "nav.dashboard": "Dashboard", "nav.courses": "Courses", "nav.subjects": "My Subjects",
     "nav.assignments": "Assignments", "nav.progress": "Progress", "nav.resources": "Resources",
-    "nav.messages": "Messages", "nav.notifications": "Notifications", "nav.canvas": "Canvas",
+    "nav.messages": "Messages", "nav.notifications": "Notifications", "nav.canvas": "Canvas", "nav.aiChat": "AI Assistant",
     "nav.settings": "Settings", "nav.logout": "Logout", "nav.students": "Students",
     "nav.approvals": "Approvals", "nav.users": "Users", "nav.reports": "Reports",
 
@@ -21,7 +21,7 @@ const I18N_DICT = {
     "title.progress": "Progress", "title.resources": "Resources & Library", "title.messages": "Messages",
     "assignments.subtitle": "Manage, track, and submit your work across all subjects.", "assignments.upcoming": "Upcoming",
     "common.subject": "Subject", "common.title": "Title", "common.dueDate": "Due Date", "common.status": "Status",
-    "title.notifications": "Notifications", "title.canvas": "Virtual Notebook", "title.settings": "Settings",
+    "title.notifications": "Notifications", "title.canvas": "Virtual Notebook", "title.settings": "Settings", "title.ai-chat": "AI Assistant",
 
     "common.loading": "Loading…", "common.search": "Search", "common.searchEllipsis": "Search…",
     "common.save": "Save", "common.saveChanges": "Save Changes", "common.cancel": "Cancel",
@@ -121,7 +121,7 @@ const I18N_DICT = {
   fr: {
     "nav.dashboard": "Tableau de bord", "nav.courses": "Cours", "nav.subjects": "Mes matières",
     "nav.assignments": "Devoirs", "nav.progress": "Progression", "nav.resources": "Ressources",
-    "nav.messages": "Messages", "nav.notifications": "Notifications", "nav.canvas": "Canvas",
+    "nav.messages": "Messages", "nav.notifications": "Notifications", "nav.canvas": "Canvas", "nav.aiChat": "Assistant IA",
     "nav.settings": "Paramètres", "nav.logout": "Déconnexion", "nav.students": "Étudiants",
     "nav.approvals": "Approbations", "nav.users": "Utilisateurs", "nav.reports": "Rapports",
 
@@ -129,7 +129,7 @@ const I18N_DICT = {
     "title.progress": "Progression", "title.resources": "Ressources & Bibliothèque", "title.messages": "Messages",
     "assignments.subtitle": "Gérez, suivez et soumettez vos travaux dans toutes les matières.", "assignments.upcoming": "À venir",
     "common.subject": "Matière", "common.title": "Titre", "common.dueDate": "Date limite", "common.status": "Statut",
-    "title.notifications": "Notifications", "title.canvas": "Cahier virtuel", "title.settings": "Paramètres",
+    "title.notifications": "Notifications", "title.canvas": "Cahier virtuel", "title.settings": "Paramètres", "title.ai-chat": "Assistant IA",
 
     "common.loading": "Chargement…", "common.search": "Rechercher", "common.searchEllipsis": "Rechercher…",
     "common.save": "Enregistrer", "common.saveChanges": "Enregistrer les modifications", "common.cancel": "Annuler",
@@ -229,7 +229,7 @@ const I18N_DICT = {
   rw: {
     "nav.dashboard": "Imbonerahamwe", "nav.courses": "Amasomo", "nav.subjects": "Amasomo Yanjye",
     "nav.assignments": "Imyitozo", "nav.progress": "Iterambere", "nav.resources": "Ibikoresho",
-    "nav.messages": "Ubutumwa", "nav.notifications": "Amatangazo", "nav.canvas": "Canvas",
+    "nav.messages": "Ubutumwa", "nav.notifications": "Amatangazo", "nav.canvas": "Canvas", "nav.aiChat": "Umufasha wa AI",
     "nav.settings": "Igenamiterere", "nav.logout": "Gusohoka", "nav.students": "Abanyeshuri",
     "nav.approvals": "Kwemeza", "nav.users": "Abakoresha", "nav.reports": "Raporo",
 
@@ -237,7 +237,7 @@ const I18N_DICT = {
     "title.progress": "Iterambere", "title.resources": "Ibikoresho & Isomero", "title.messages": "Ubutumwa",
     "assignments.subtitle": "Gucunga, gukurikirana no kohereza imirimo yawe muri buri isomo.", "assignments.upcoming": "Biri Kuza",
     "common.subject": "Isomo", "common.title": "Umutwe", "common.dueDate": "Itariki ntarengwa", "common.status": "Uko Bihagaze",
-    "title.notifications": "Amatangazo", "title.canvas": "Ikayi Rusanya", "title.settings": "Igenamiterere",
+    "title.notifications": "Amatangazo", "title.canvas": "Ikayi Rusanya", "title.settings": "Igenamiterere", "title.ai-chat": "Umufasha wa AI",
 
     "common.loading": "Birimo gupakira…", "common.search": "Shakisha", "common.searchEllipsis": "Shakisha…",
     "common.save": "Bika", "common.saveChanges": "Bika Impinduka", "common.cancel": "Hagarika",

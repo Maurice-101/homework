@@ -23,7 +23,7 @@ def get_db():
 
 def init_db():
     from api.model import user, course, assignment, resource, message, notification, canvas  # noqa
-    from api.model import course_content, study  # noqa
+    from api.model import course_content, study, ai_chat  # noqa
     Base.metadata.create_all(bind=engine)
     _migrate()
 
