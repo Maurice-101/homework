@@ -48,18 +48,36 @@ function startStudyTimePing() {
 }
 
 // ── USER ──
+const COMMON_COUNTRIES = [
+    "Rwanda", "Kenya", "Uganda", "Tanzania", "Burundi", "DR Congo", "Nigeria", "Ghana",
+    "South Africa", "Ethiopia", "Egypt", "Morocco", "Senegal", "Zambia", "Zimbabwe",
+    "Cameroon", "Ivory Coast", "United States", "United Kingdom", "France", "Canada",
+    "Germany", "India", "China", "Belgium", "Netherlands", "Other",
+];
+const STUDENT_GOALS = [
+    "Improve grades", "Prepare for university/college", "Pass national exams",
+    "Get help with homework", "Explore career options", "Build better study habits",
+];
+const LANGUAGES_PRESET = ["English", "French", "Kinyarwanda", "Kiswahili", "Portuguese", "Spanish", "Arabic"];
+
 function fillUser(u) {
     if (!u) return;
     const name = `${u.first_name} ${u.last_name}`;
     document.getElementById("sbName").textContent    = name;
     document.getElementById("sbSub").textContent     = `${u.grade || "—"} | ${u.school || "—"}`;
     document.getElementById("tbName").textContent    = name;
-    document.getElementById("welcomeMsg").textContent = `Welcome back, ${u.first_name}! 👋`;
+    document.getElementById("welcomeMsg").textContent = `Welcome back, ${u.first_name}!`;
     document.getElementById("sFirst").value  = u.first_name || "";
     document.getElementById("sLast").value   = u.last_name  || "";
     document.getElementById("sSchool").value = u.school     || "";
     document.getElementById("sGrade").value  = u.grade      || "";
+    document.getElementById("sCountry").value = u.country || "";
+    document.getElementById("sCity").value = u.city || "";
+    document.getElementById("sNationality").value = u.nationality || "";
     document.getElementById("sBio").value    = u.bio        || "";
+    document.getElementById("sCountryList").innerHTML = COMMON_COUNTRIES.map(c => `<option value="${c}">`).join("");
+    initMultiPicker("sLanguages", LANGUAGES_PRESET, u.languages_spoken || []);
+    initMultiPicker("sGoals", STUDENT_GOALS, u.goals || []);
 }
 
 // ── NAVIGATION ──
@@ -400,14 +418,14 @@ async function loadEnrolled() {
             const prog = item.enrollment?.progress_percent || 0;
             const theme = courseTheme(c);
             return `<div class="ccard" onclick="openCourseDetail(${c.id},'${esc(c.title)}','${esc(c.subject||'')}','${c.cover_color||'#1f4fa3'}')">
-              <div class="ccard-hd" style="${courseHeaderStyle(theme, c.cover_color)}">${theme ? theme.icon : "📚"}</div>
+              <div class="ccard-hd" style="${courseHeaderStyle(theme, c.cover_color)}">${theme ? theme.icon : ""}</div>
               <div class="ccard-bd">
                 <h4>${c.title}</h4>
                 <p>${c.description || "No description."}</p>
                 <div class="meta">
                   ${c.subject ? `<span class="tag">${c.subject}</span>` : ""}
                   ${c.grade_level ? `<span class="tag">${c.grade_level}</span>` : ""}
-                  ${c.facilitator_name ? `<span class="tag">👤 ${c.facilitator_name}</span>` : ""}
+                  ${c.facilitator_name ? `<span class="tag">${c.facilitator_name}</span>` : ""}
                 </div>
                 <div style="margin-top:8px;font-size:11px;color:#666">${t("courses.progress")}: ${prog}%</div>
                 <div class="pbar-wrap"><div class="pbar" style="width:${prog}%"></div></div>
@@ -483,21 +501,21 @@ async function loadPublic() {
 function courseCard(c, alreadyEnrolled = false) {
     const theme = courseTheme(c);
     return `<div class="ccard">
-      <div class="ccard-hd" style="${courseHeaderStyle(theme, c.cover_color)}">${theme ? theme.icon : "📚"}</div>
+      <div class="ccard-hd" style="${courseHeaderStyle(theme, c.cover_color)}">${theme ? theme.icon : ""}</div>
       <div class="ccard-bd">
         <h4>${c.title}</h4>
         <p>${c.description || "No description."}</p>
         <div class="meta">
           ${c.subject ? `<span class="tag">${c.subject}</span>` : ""}
           ${c.grade_level ? `<span class="tag">${c.grade_level}</span>` : ""}
-          ${c.facilitator_name ? `<span class="tag">👤 ${c.facilitator_name}</span>` : ""}
+          ${c.facilitator_name ? `<span class="tag">${c.facilitator_name}</span>` : ""}
           ${c.is_public ? `<span class="tag" style="background:#e8f5ee;color:#1a5c3a">${t("common.public")}</span>` : ""}
         </div>
         ${alreadyEnrolled
           ? `<span class="tag" style="background:#e8f0fe;color:#1a56bd;margin-top:8px;display:inline-block">${t("common.enrolled")}</span>`
           : c.is_public
             ? `<button class="btn-enroll" onclick="enroll(${c.id}, this)">${t("common.enroll")}</button>`
-            : `<span class="tag" style="background:#f4f4f4;color:#888;margin-top:8px;display:inline-block">🔒 ${t("courses.privateInviteOnly")}</span>`}
+            : `<span class="tag" style="background:#f4f4f4;color:#888;margin-top:8px;display:inline-block">${t("courses.privateInviteOnly")}</span>`}
       </div>
     </div>`;
 }
@@ -656,7 +674,7 @@ async function renderCdHome(c) {
       <div class="cd-home-hero">
         <h2>${esc(c.title)}</h2>
         <p>${esc(c.description || t("cd.noDescription"))}</p>
-        ${c.facilitator_name ? `<div class="cd-home-instructor">👤 ${t("cd.taughtBy")} <strong>${esc(c.facilitator_name)}</strong> &nbsp;·&nbsp; ${esc(c.subject||"")} &nbsp;·&nbsp; ${esc(c.grade_level||"")}</div>` : ""}
+        ${c.facilitator_name ? `<div class="cd-home-instructor">${t("cd.taughtBy")} <strong>${esc(c.facilitator_name)}</strong> &nbsp;·&nbsp; ${esc(c.subject||"")} &nbsp;·&nbsp; ${esc(c.grade_level||"")}</div>` : ""}
       </div>
 
       <div class="cd-progress-section">
@@ -675,11 +693,11 @@ async function renderCdHome(c) {
       </div>
 
       <div class="cd-quick-nav">
-        <button class="cd-quick-btn" onclick="switchCdTab('syllabus')">📅 ${t("cd.syllabus")}</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('assignments')">📝 ${t("cd.assignments")}</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('grades')">📊 ${t("cd.grades")}</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('modules')">📘 ${t("cd.modules")}</button>
-        <button class="cd-quick-btn" onclick="switchCdTab('discussions')">💬 ${t("cd.discussions")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('syllabus')">${t("cd.syllabus")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('assignments')">${t("cd.assignments")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('grades')">${t("cd.grades")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('modules')">${t("cd.modules")}</button>
+        <button class="cd-quick-btn" onclick="switchCdTab('discussions')">${t("cd.discussions")}</button>
       </div>`;
 }
 
@@ -721,12 +739,11 @@ async function renderCdAssignments(c) {
         const rowHtml = (a) => {
             const due  = a.due_date ? new Date(a.due_date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "No due date";
             let statusHtml = "";
-            if (a.student_grade != null) statusHtml = `<span class="cd-asg-status graded">✓ Graded ${a.student_grade}/${a.max_score}</span>`;
-            else if (a.student_submission_id) statusHtml = `<span class="cd-asg-status submitted">✓ Submitted</span>`;
+            if (a.student_grade != null) statusHtml = `<span class="cd-asg-status graded">Graded ${a.student_grade}/${a.max_score}</span>`;
+            else if (a.student_submission_id) statusHtml = `<span class="cd-asg-status submitted">Submitted</span>`;
             else statusHtml = `<span class="cd-asg-status pending">Not submitted</span>`;
             return `<div class="cd-asg-row" onclick="openCdAssignment(${a.id})">
-              <span class="cd-asg-icon">📝</span>
-              <div class="cd-asg-main">
+                            <div class="cd-asg-main">
                 <div class="cd-asg-title">${esc(a.title)} ${statusHtml}</div>
                 <div class="cd-asg-meta">
                   <span>Due: ${due}</span>
@@ -897,7 +914,7 @@ function renderCdGrades(c) {
         const r     = 36; const circ = 2*Math.PI*r;
         const dash  = (pct/100)*circ;
         const statusClass = pct>=55 ? 'pass' : pct>0 ? 'prog' : 'fail';
-        const statusText  = pct>=55 ? '✓ Passing' : pct>0 ? '⏳ In Progress' : 'Not graded yet';
+        const statusText  = pct>=55 ? 'Passing' : pct>0 ? '⏳ In Progress' : 'Not graded yet';
 
         el.innerHTML = `
           <div class="grade-overview">
@@ -1068,24 +1085,23 @@ function renderSylList() {
 
     // ── Weeks section ──
     if (_sylWeeks.length) {
-        html += `<div class="syl-section-label">📅 Weekly Schedule</div>`;
+        html += `<div class="syl-section-label">Weekly Schedule</div>`;
         html += _sylWeeks.map((w, i) => `
           <button class="syl-week-btn ${i===_sylIdx ? 'active' : ''}" onclick="selectSylWeek(${i})">
             <span class="syl-wk-num">Wk ${w.week_num}</span>
             <span class="syl-wk-title">${esc(w.title)}</span>
           </button>`).join("");
     } else {
-        html += `<div class="syl-section-label">📅 Weekly Schedule</div>
+        html += `<div class="syl-section-label">Weekly Schedule</div>
                  <div class="syl-empty-note">No syllabus posted yet.</div>`;
     }
 
     // ── Books section ──
-    html += `<div class="syl-section-label" style="margin-top:14px">📚 Course Books</div>`;
+    html += `<div class="syl-section-label" style="margin-top:14px">Course Books</div>`;
     if (_sylBooks.length) {
         html += _sylBooks.map((b, i) => `
           <button class="syl-book-btn" onclick="openSylBook(${i})" title="${esc(b.title)}">
-            <span class="syl-book-icon">📖</span>
-            <div class="syl-book-info">
+                        <div class="syl-book-info">
               <div class="syl-book-title">${esc(b.title)}</div>
               ${b.grade_level ? `<div class="syl-book-meta">${esc(b.grade_level)}</div>` : ""}
             </div>
@@ -1144,8 +1160,7 @@ function openSylBook(idx) {
       <div class="syl-book-viewer">
         <div class="syl-book-viewer-header">
           <div class="syl-book-viewer-title">
-            <span class="syl-bv-icon">📖</span>
-            <div>
+                        <div>
               <div class="syl-bv-name">${esc(book.title)}</div>
               ${book.subject ? `<div class="syl-bv-sub">${esc(book.subject)}${book.grade_level ? ' · ' + esc(book.grade_level) : ''}</div>` : ''}
             </div>
@@ -1171,8 +1186,8 @@ function renderCdModules(c) {
                 ${m.content ? `<p>${esc(m.content)}</p>` : ""}
               </div>
               ${m.completed
-                ? `<span class="btn-complete done">✓ Done</span>`
-                : `<button class="btn-complete" onclick="completeModule(${activeCourseDetailId},${m.id},this)">✓ Complete</button>`}
+                ? `<span class="btn-complete done">Done</span>`
+                : `<button class="btn-complete" onclick="completeModule(${activeCourseDetailId},${m.id},this)">Complete</button>`}
             </li>`).join("")
         : '<li style="color:#aaa;font-style:italic">No modules yet.</li>';
 }
@@ -1244,14 +1259,14 @@ async function completeModule(courseId, moduleId, btn) {
     btn.disabled = true; btn.textContent = "Saving…";
     try {
         const res = await apiPost(`/courses/${courseId}/modules/${moduleId}/complete`, {});
-        btn.textContent = "✓ Done";
+        btn.textContent = "Done";
         btn.style.background = "#27ae60";
         btn.style.color = "#fff";
         const li = document.getElementById(`mi-${moduleId}`);
         if (li) li.style.background = "#f0fff4";
         showToast(`Module completed! Progress: ${res.progress_percent}%`);
     } catch (e) {
-        btn.disabled = false; btn.textContent = "✓ Complete";
+        btn.disabled = false; btn.textContent = "Complete";
         showToast(e.message || "Could not mark complete.", "error");
     }
 }
@@ -1283,12 +1298,12 @@ function r2FileUrl(key) {
 
 function fileIcon(filename) {
     const ext = (filename || "").split(".").pop().toLowerCase();
-    if (ext === "pdf") return "📄";
-    if (["jpg","jpeg","png","gif","webp"].includes(ext)) return "🖼️";
-    if (["doc","docx"].includes(ext)) return "📝";
-    if (["ppt","pptx"].includes(ext)) return "📽️";
-    if (["xls","xlsx"].includes(ext)) return "📊";
-    return "📎";
+    if (ext === "pdf") return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+    if (["jpg","jpeg","png","gif","webp"].includes(ext)) return '<svg class="icon-sm"><use href="#ic-image"></use></svg>';
+    if (["doc","docx"].includes(ext)) return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+    if (["ppt","pptx"].includes(ext)) return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+    if (["xls","xlsx"].includes(ext)) return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+    return '<svg class="icon-sm"><use href="#ic-link"></use></svg>';
 }
 
 function renderAsgn(id, list, type) {
@@ -1346,14 +1361,14 @@ function openAssignmentDetail(aOrId) {
         <div class="adetail-title-row">
           <h2 class="adetail-title">${esc(a.title)}</h2>
           ${a.student_grade != null
-            ? `<span class="adetail-status-pill graded">✓ Graded ${a.student_grade}/${a.max_score || 100}</span>`
+            ? `<span class="adetail-status-pill graded">Graded ${a.student_grade}/${a.max_score || 100}</span>`
             : a.student_submission_id
-              ? `<span class="adetail-status-pill submitted">✓ Submitted</span>`
+              ? `<span class="adetail-status-pill submitted">Submitted</span>`
               : `<span class="adetail-status-pill pending">Not submitted</span>`}
         </div>
         <div class="adetail-badges">
           <span class="tbadge">${esc(a.type || a.assignment_type || "assignment")}</span>
-          ${a.course_title ? `<span class="tag">📚 ${esc(a.course_title)}</span>` : ""}
+          ${a.course_title ? `<span class="tag">${esc(a.course_title)}</span>` : ""}
         </div>
         <hr class="adetail-divider">
         <div class="adetail-meta-canvas">
@@ -1363,8 +1378,8 @@ function openAssignmentDetail(aOrId) {
         </div>
         <hr class="adetail-divider">
         ${a.description ? `<div class="adetail-prompt-label">Instructions</div><div class="adetail-desc">${formatRichText(a.description)}</div>` : ""}
-        ${a.attachment_url ? `<div style="margin:10px 0"><a href="${esc(a.attachment_url)}" target="_blank" class="btn-s" style="display:inline-block">🔗 Open Attachment / Google Doc</a></div>` : ""}
-        ${a.attachment_path ? `<div style="margin:10px 0"><a href="${r2FileUrl(a.attachment_path)}" target="_blank" class="btn-s" style="display:inline-block">📎 View Assignment PDF</a></div>` : ""}
+        ${a.attachment_url ? `<div style="margin:10px 0"><a href="${esc(a.attachment_url)}" target="_blank" class="btn-s" style="display:inline-block">Open Attachment / Google Doc</a></div>` : ""}
+        ${a.attachment_path ? `<div style="margin:10px 0"><a href="${r2FileUrl(a.attachment_path)}" target="_blank" class="btn-s" style="display:inline-block">View Assignment PDF</a></div>` : ""}
         ${(a.attachments||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
           ${a.attachments.map(att => `<a href="${r2FileUrl(att.file_path)}" target="_blank" class="btn-s" style="display:inline-block">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join("")}
         </div>` : ""}
@@ -1389,12 +1404,12 @@ function openAssignmentDetail(aOrId) {
         existEl.style.display = "block";
         formEl.style.display  = "none";
         const typeLabel = {text:"Text Entry", link:"Website URL", pdf:"File Upload", file:"File Upload"}[a.student_submission_type] || "Text Entry";
-        let subHtml = `<div class="existing-sub-head"><span class="existing-sub-check">✓</span><div><strong>Submitted</strong><span class="existing-sub-type">${esc(typeLabel)}</span></div></div>`;
+        let subHtml = `<div class="existing-sub-head"><span class="existing-sub-check"><svg class="icon-sm"><use href="#ic-check"></use></svg></span><div><strong>Submitted</strong><span class="existing-sub-type">${esc(typeLabel)}</span></div></div>`;
         if (a.student_content && (a.student_submission_type === "text" || !a.student_submission_type)) {
             subHtml += `<div class="existing-sub-text">${formatRichText(a.student_content)}</div>`;
         }
         if (a.student_submission_type === "link" && a.student_content) {
-            subHtml += `<a href="${a.student_content}" target="_blank" class="btn-s" style="display:inline-block;margin-top:4px">🔗 Open Link</a>`;
+            subHtml += `<a href="${a.student_content}" target="_blank" class="btn-s" style="display:inline-block;margin-top:4px">Open Link</a>`;
         }
         if ((a.student_submission_type === "pdf" || a.student_submission_type === "file") && a.student_file_path) {
             subHtml += `<a href="${r2FileUrl(a.student_file_path)}" target="_blank" class="btn-s" style="display:inline-block;margin-top:4px">${fileIcon(a.student_file_path)} View File</a>`;
@@ -1402,7 +1417,7 @@ function openAssignmentDetail(aOrId) {
         if (a.student_grade != null) {
             subHtml += `<div class="grade-result">
                 <h3>Grade: <span style="color:#2f6df6">${a.student_grade} / ${a.max_score}</span></h3>
-                ${a.student_feedback ? `<p>💬 ${esc(a.student_feedback)}</p>` : ""}
+                ${a.student_feedback ? `<p>${esc(a.student_feedback)}</p>` : ""}
             </div>`;
         } else {
             subHtml += '<p class="awaiting-grade">⏳ Awaiting grading…</p>';
@@ -1464,8 +1479,8 @@ function renderQuizTakingForm(a) {
     el.innerHTML = `
         <div class="quiz-meta-bar">
           ${d.time_limit_minutes ? `<span>⏱ <strong id="quizTimer">${d.time_limit_minutes}:00</strong></span>` : ""}
-          <span>📝 ${d.questions.length} question${d.questions.length === 1 ? "" : "s"}</span>
-          <span>🔁 Attempt ${d.attempts_used + 1} of ${d.max_attempts}</span>
+          <span>${d.questions.length} question${d.questions.length === 1 ? "" : "s"}</span>
+          <span>Attempt ${d.attempts_used + 1} of ${d.max_attempts}</span>
         </div>
         <div id="quizQuestions">${d.questions.map((q, i) => renderQuizQuestion(q, i)).join("")}</div>
         <button class="btn-p" style="width:100%;margin-top:8px" onclick="submitQuizAnswers()">Submit Quiz</button>
@@ -1600,7 +1615,7 @@ function renderQuizResults(a, sub) {
         <div class="quiz-summary-card">
           ${graded
             ? `<h2>${sub.grade} / ${a.max_score}</h2><p>Your score</p>`
-            : `<h2>✓ Submitted</h2><p>Awaiting grading for some questions</p>`}
+            : `<h2>Submitted</h2><p>Awaiting grading for some questions</p>`}
         </div>
         ${(sub.answers || []).map((ans, i) => renderQuizAnswerReview(ans, i)).join("")}
         ${_quizData && _quizData.attempts_remaining > 0
@@ -1614,14 +1629,14 @@ function renderQuizAnswerReview(ans, idx) {
     let badge = '<span class="quiz-result-badge pending">Pending review</span>';
     if (objective) {
         badge = ans.is_correct
-            ? `<span class="quiz-result-badge correct">✓ Correct — ${ans.points_awarded}/${ans.question_points}</span>`
-            : `<span class="quiz-result-badge incorrect">✗ Incorrect — ${ans.points_awarded ?? 0}/${ans.question_points}</span>`;
+            ? `<span class="quiz-result-badge correct">Correct — ${ans.points_awarded}/${ans.question_points}</span>`
+            : `<span class="quiz-result-badge incorrect">Incorrect — ${ans.points_awarded ?? 0}/${ans.question_points}</span>`;
     } else if (ans.points_awarded !== null && ans.points_awarded !== undefined) {
         badge = `<span class="quiz-result-badge correct">${ans.points_awarded}/${ans.question_points}</span>`;
     }
     let answerHtml = "";
     if (ans.answer_text) answerHtml = `<p style="font-size:13px;color:#555;margin-top:6px">${esc(ans.answer_text)}</p>`;
-    else if (ans.file_path) answerHtml = `<button class="btn-tiny" style="margin-top:6px" onclick="openPdf('${r2ServeUrl(ans.file_path)}','Your answer')">📎 View your file</button>`;
+    else if (ans.file_path) answerHtml = `<button class="btn-tiny" style="margin-top:6px" onclick="openPdf('${r2ServeUrl(ans.file_path)}','Your answer')">View your file</button>`;
 
     return `
         <div class="quiz-question">
@@ -1672,8 +1687,7 @@ async function loadCourseResources(courseId, courseTitle) {
         if (!all.length) { el.innerHTML = '<p class="empty">No resources for this subject.</p>'; return; }
         el.innerHTML = all.slice(0,6).map(r => `
             <div class="mini-res-card">
-              <span class="res-icon-sm">📄</span>
-              <div>
+                            <div>
                 <strong>${esc(r.title)}</strong>
                 <p>${r.subject || ""} ${r.grade_level ? "· " + r.grade_level : ""}</p>
               </div>
@@ -1721,7 +1735,7 @@ async function loadProgress() {
             const prog   = enroll.progress_percent || 0;
             const status = enroll.pass_status || "in_progress";
             const badge  = status === "passed"
-                ? `<span class="status-badge pass">✓ Passed</span>`
+                ? `<span class="status-badge pass">Passed</span>`
                 : status === "retake"
                 ? `<span class="status-badge retake">↩ Retake Required</span>`
                 : `<span class="status-badge inprog">In Progress</span>`;
@@ -1735,8 +1749,8 @@ async function loadProgress() {
               <p style="font-size:12px;color:#666;margin:4px 0">${prog}% assignments graded${grade != null ? ` · ${grade}% average grade` : ""}</p>
               ${badge}
               <div class="pmeta" style="margin-top:8px">
-                <span>📚 ${esc(c.subject)}</span>
-                ${c.grade_level ? `<span>🎓 ${esc(c.grade_level)}</span>` : ""}
+                <span>${esc(c.subject)}</span>
+                ${c.grade_level ? `<span>${esc(c.grade_level)}</span>` : ""}
               </div>
               <p class="pcard-cta">See what's done &amp; what's left →</p>
             </div>`;
@@ -1752,7 +1766,7 @@ let _pdModules = [];
 let _pdAssignments = [];   // flat list, all types — looked up by id when a row is clicked
 let _pdSyllabus = [];
 
-const ASGN_TYPE_LABELS = { homework: "📄 Homework", test: "📝 Tests", quiz: "❓ Quizzes", project: "🎨 Projects", assignment: "📄 Assignments" };
+const ASGN_TYPE_LABELS = { homework: "Homework", test: "Tests", quiz: "Quizzes", project: "Projects", assignment: "Assignments" };
 
 async function openProgressDetail(courseId, title) {
     _pdCourseId = courseId;
@@ -1786,13 +1800,13 @@ function renderProgressDetail() {
     });
 
     let html = `<div class="pd-section">
-      <div class="pd-section-head"><h4>📘 Modules</h4><span class="pd-count">${modulesDone}/${modules.length} complete</span></div>
+      <div class="pd-section-head"><h4>Modules</h4><span class="pd-count">${modulesDone}/${modules.length} complete</span></div>
       ${modules.length
         ? `<div class="pd-list">${modules.map(m => `
             <div class="pd-item">
               <span class="pd-item-title">${esc(m.title)}</span>
               ${m.completed
-                ? `<button class="pd-complete-btn done" disabled>✓ Complete</button>`
+                ? `<button class="pd-complete-btn done" disabled>Complete</button>`
                 : `<button class="pd-complete-btn" onclick="pdCompleteModule(${m.id})">Complete</button>`}
             </div>`).join("")}</div>`
         : '<p class="pd-empty">No modules yet.</p>'}
@@ -1802,7 +1816,7 @@ function renderProgressDetail() {
         Object.entries(byType).forEach(([type, items]) => {
             const done = items.filter(a => a.student_submission_id).length;
             html += `<div class="pd-section">
-              <div class="pd-section-head"><h4>${ASGN_TYPE_LABELS[type] || "📄 " + esc(type)}</h4><span class="pd-count">${done}/${items.length} done</span></div>
+              <div class="pd-section-head"><h4>${ASGN_TYPE_LABELS[type] || esc(type)}</h4><span class="pd-count">${done}/${items.length} done</span></div>
               <div class="pd-list">${items.map(a => {
                 let btn;
                 if (a.student_grade != null && a.max_score) {
@@ -1823,12 +1837,12 @@ function renderProgressDetail() {
             </div>`;
         });
     } else {
-        html += `<div class="pd-section"><div class="pd-section-head"><h4>📄 Assignments &amp; Tests</h4></div><p class="pd-empty">No assignments yet.</p></div>`;
+        html += `<div class="pd-section"><div class="pd-section-head"><h4>Assignments &amp; Tests</h4></div><p class="pd-empty">No assignments yet.</p></div>`;
     }
 
     if (_pdSyllabus.length) {
         html += `<div class="pd-section">
-          <div class="pd-section-head"><h4>📅 Syllabus</h4><span class="pd-count">${_pdSyllabus.length} week${_pdSyllabus.length === 1 ? "" : "s"}</span></div>
+          <div class="pd-section-head"><h4>Syllabus</h4><span class="pd-count">${_pdSyllabus.length} week${_pdSyllabus.length === 1 ? "" : "s"}</span></div>
           <div class="pd-list">${_pdSyllabus.map(w => `<div class="pd-item"><span class="pd-item-title">Week ${w.week_num}: ${esc(w.title)}</span></div>`).join("")}</div>
         </div>`;
     }
@@ -1936,7 +1950,7 @@ function renderSubjectCatalog(catalog) {
           <h4>${esc(s.subject)}</h4>
           <div class="subj-levels">${s.levels.map(l => `<span class="subj-level-tag">${esc(l)}</span>`).join("")}</div>
           <div class="subj-count">${s.count} book${s.count === 1 ? "" : "s"}</div>
-          ${theme.credit ? `<div class="subj-credit">📷 ${esc(theme.credit)}</div>` : ""}
+          ${theme.credit ? `<div class="subj-credit">${esc(theme.credit)}</div>` : ""}
         </div>`;
     }).join("");
 }
@@ -2024,8 +2038,7 @@ function renderRes(el, items, type) {
         const url = r.url || (r.file_path ? (r.file_path.startsWith("http") ? r.file_path : `/uploads/${r.file_path}`) : "");
         return `
         <div class="rcard">
-          <div class="rcard-icon">📄</div>
-          <h4>${esc(r.title)}</h4>
+                    <h4>${esc(r.title)}</h4>
           <div class="meta" style="margin:6px 0">
             <span class="tag">${esc(r.subject)}</span>
             ${r.grade_level ? `<span class="tag">${esc(r.grade_level)}</span>` : ""}
@@ -2033,8 +2046,8 @@ function renderRes(el, items, type) {
             <span class="tag" style="background:#f3e8ff;color:#3d0070">${esc((r.type||'').replace("_"," "))}</span>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            ${url ? `<button class="btn-sm" onclick="openPdf('${esc(url)}','${esc(r.title)}')">📖 ${t("common.view")}</button>` : ''}
-            ${url ? `<a class="btn-sm btn-outline" href="${esc(url)}" target="_blank" download style="text-decoration:none">⬇ ${t("common.download")}</a>` : ''}
+            ${url ? `<button class="btn-sm" onclick="openPdf('${esc(url)}','${esc(r.title)}')">${t("common.view")}</button>` : ''}
+            ${url ? `<a class="btn-sm btn-outline" href="${esc(url)}" target="_blank" download style="text-decoration:none">${t("common.download")}</a>` : ''}
           </div>
         </div>`;
     }).join("");
@@ -2225,7 +2238,7 @@ function renderPeople(list) {
               <span class="tag">${u.role}</span>${u.school ? `<span class="tag">${u.school}</span>` : ""}
             </div>
           </div>
-          <button class="btn-p" onclick="openComposeTo(${u.id}, '${esc(u.first_name+' '+u.last_name)}')">✉ Message</button>
+          <button class="btn-p" onclick="openComposeTo(${u.id}, '${esc(u.first_name+' '+u.last_name)}')">Message</button>
         </div>`).join("");
 }
 
@@ -2300,7 +2313,7 @@ async function openNotif(id) {
                     <div style="border:1px solid #e5e8ef;border-radius:8px;padding:12px;margin-bottom:8px">
                       <strong>${esc(inv.course_title)}</strong>
                       <p style="font-size:12px;color:#666;margin:4px 0">Invited by ${esc(inv.inviter)}</p>
-                      <button class="btn-sm" onclick="acceptInvite(${inv.course_id},this)">✓ Accept Invitation</button>
+                      <button class="btn-sm" onclick="acceptInvite(${inv.course_id},this)">Accept Invitation</button>
                     </div>`).join("");
             }
         } catch(e) {}
@@ -2317,13 +2330,13 @@ async function acceptInvite(courseId, btn) {
     btn.disabled = true; btn.textContent = "Accepting…";
     try {
         await apiPost(`/courses/${courseId}/invite/accept`, {});
-        btn.textContent = "✓ Accepted!";
+        btn.textContent = "Accepted!";
         btn.style.background = "#27ae60";
         loadEnrolled();
         loadInvitations();
         showToast("You've joined the course!");
     } catch(e) {
-        btn.disabled = false; btn.textContent = "✓ Accept Invitation";
+        btn.disabled = false; btn.textContent = "Accept Invitation";
         showToast(e.message || "Could not accept.", "error");
     }
 }
@@ -2350,18 +2363,18 @@ async function loadInvitations() {
         if (!invs.length) { el.innerHTML = '<p class="empty">No pending invitations.</p>'; return; }
         el.innerHTML = invs.map(inv => `
             <div class="ccard">
-              <div class="ccard-hd" style="background:#6c00c9">📩</div>
+              <div class="ccard-hd" style="background:#6c00c9"></div>
               <div class="ccard-bd">
                 <h4>${esc(inv.course_title)}</h4>
                 <p style="font-size:13px;color:#666">Invited by ${esc(inv.inviter)}</p>
                 <p style="font-size:12px;color:#aaa">${new Date(inv.created_at).toLocaleDateString()}</p>
-                <button class="btn-sm" style="margin-top:10px" onclick="acceptInvite(${inv.course_id},this)">✓ Accept Invitation</button>
+                <button class="btn-sm" style="margin-top:10px" onclick="acceptInvite(${inv.course_id},this)">Accept Invitation</button>
               </div>
             </div>`).join("");
     } catch(e) { el.innerHTML = '<p class="empty">Failed to load.</p>'; }
 }
 
-// ── CANVAS ──────────────────────────────────────────────────────────────────
+// ── CANVAS / VIRTUAL NOTEBOOK ────────────────────────────────────────────────
 let _books = [], _curBookId = null, _curPages = [], _curPageIdx = 0;
 
 async function loadCanvas() {
@@ -2369,105 +2382,98 @@ async function loadCanvas() {
         _books = await apiGet("/canvas/books") || [];
         renderBookList();
         if (_books.length) await openBook(_books[0].id);
-        else document.getElementById("pageNav").style.display = "none";
     } catch(e) { console.error(e); }
 }
 
 function renderBookList() {
     const ul = document.getElementById("booksList");
-    ul.innerHTML = _books.map(b => `
-        <li class="${b.id == _curBookId ? 'active' : ''}" onclick="openBook(${b.id})">
-          📓 ${esc(b.title)}
-          <span class="book-pages">${b.page_count || 0}p</span>
-          <button class="book-del" onclick="event.stopPropagation();deleteBook(${b.id})" title="Delete book">✕</button>
-        </li>`).join("") || '<li style="color:#aaa;font-size:12px;padding:8px">No books yet</li>';
+    if (!_books.length) { ul.innerHTML = '<li class="nb-empty">No notebooks yet.</li>'; return; }
+    ul.innerHTML = _books.map(b => {
+        const expanded = b.id == _curBookId;
+        return `
+        <li class="nb-book ${expanded ? 'expanded' : ''}">
+          <div class="nb-book-row" onclick="openBook(${b.id})">
+            <svg class="icon-sm nb-folder-icon"><use href="#ic-folder"></use></svg>
+            <span class="nb-book-title">${esc(b.title)}</span>
+            <button class="nb-icon-btn nb-book-del" onclick="event.stopPropagation();deleteBook(${b.id})" title="Delete notebook"><svg class="icon-sm"><use href="#ic-close"></use></svg></button>
+          </div>
+          ${expanded ? `<ul class="nb-pages">
+            ${_curPages.map((p, i) => `
+              <li class="nb-page ${i === _curPageIdx ? 'active' : ''}" onclick="openPageAtIdx(${i})">
+                <svg class="icon-sm"><use href="#ic-file"></use></svg><span>${esc(p.title)}</span>
+              </li>`).join("")}
+            <li class="nb-add-page" onclick="addPageToBook()">
+              <svg class="icon-sm"><use href="#ic-plus"></use></svg><span>Add page</span>
+            </li>
+          </ul>` : ''}
+        </li>`;
+    }).join("");
 }
 
 async function openBook(bookId) {
     _curBookId = bookId;
+    _curPageIdx = 0;
     document.getElementById("currentBookId").value = bookId;
     try {
         _curPages = await apiGet(`/canvas/books/${bookId}/pages`) || [];
-        if (!_curPages.length) _curPageIdx = 0;
-        else _curPageIdx = Math.min(_curPageIdx, _curPages.length - 1);
         renderBookList();
-        renderPageNav();
-        openPageAtIdx(_curPageIdx);
-    } catch(e) { showToast("Failed to load book.", "error"); }
-}
-
-function renderPageNav() {
-    const nav = document.getElementById("pageNav");
-    nav.style.display = _curBookId ? "flex" : "none";
-    const total = _curPages.length;
-    document.getElementById("pageIndicator").textContent =
-        total ? `${_curPageIdx + 1} / ${total}` : "— / —";
-    document.getElementById("btnPrevPage").disabled = _curPageIdx <= 0;
-    document.getElementById("btnNextPage").disabled = _curPageIdx >= total - 1;
-    document.getElementById("btnDeletePage").disabled = total <= 1;
-    document.getElementById("btnAddPage").disabled = total >= 100;
-    document.getElementById("btnAddPage").textContent =
-        total >= 100 ? "100 pages max" : "+ Add page";
+        openPageAtIdx(0);
+    } catch(e) { showToast("Failed to load notebook.", "error"); }
 }
 
 function openPageAtIdx(idx) {
     if (!_curPages.length) {
         document.getElementById("noteTitle").value = "";
-        document.getElementById("noteContent").value = "";
+        document.getElementById("noteContent").innerHTML = "";
         document.getElementById("currentNoteId").value = "";
-        renderPageNav();
+        document.getElementById("btnDeletePage").disabled = true;
         return;
     }
     _curPageIdx = Math.max(0, Math.min(idx, _curPages.length - 1));
     const p = _curPages[_curPageIdx];
-    document.getElementById("noteTitle").value   = p.title;
-    document.getElementById("noteContent").value = p.content;
-    document.getElementById("currentNoteId").value = p.id;
-    renderPageNav();
+    document.getElementById("noteTitle").value      = p.title;
+    document.getElementById("noteContent").innerHTML = p.content || "";
+    document.getElementById("currentNoteId").value  = p.id;
+    document.getElementById("btnDeletePage").disabled = _curPages.length <= 1;
+    renderBookList();
 }
 
-function prevPage() { if (_curPageIdx > 0) openPageAtIdx(_curPageIdx - 1); }
-function nextPage() { if (_curPageIdx < _curPages.length - 1) openPageAtIdx(_curPageIdx + 1); }
-
 async function createBook() {
-    const title = prompt("Book title:", "My Notebook");
+    const title = prompt("Notebook name:", "My Notebook");
     if (!title) return;
     try {
         const b = await apiPost("/canvas/books", { title });
         _books.push(b);
         await openBook(b.id);
-        showToast(`Book "${title}" created!`);
-    } catch(e) { showToast(e.message || "Failed to create book.", "error"); }
+        showToast(`Notebook "${title}" created!`);
+    } catch(e) { showToast(e.message || "Failed to create notebook.", "error"); }
 }
 
 async function deleteBook(bookId) {
-    if (!confirm("Delete this book and all its pages?")) return;
+    if (!confirm("Delete this notebook and all its pages?")) return;
     try {
         await apiDelete(`/canvas/books/${bookId}`);
         _books = _books.filter(b => b.id !== bookId);
         if (_curBookId === bookId) {
             _curBookId = null; _curPages = []; _curPageIdx = 0;
             document.getElementById("noteTitle").value = "";
-            document.getElementById("noteContent").value = "";
+            document.getElementById("noteContent").innerHTML = "";
             document.getElementById("currentNoteId").value = "";
-            document.getElementById("pageNav").style.display = "none";
         }
         renderBookList();
         if (!_curBookId && _books.length) await openBook(_books[0].id);
-        showToast("Book deleted.");
+        showToast("Notebook deleted.");
     } catch(e) { showToast(e.message || "Failed.", "error"); }
 }
 
 async function addPageToBook() {
     if (!_curBookId) return;
-    if (_curPages.length >= 100) { showToast("Maximum 100 pages per book.", "error"); return; }
+    if (_curPages.length >= 100) { showToast("Maximum 100 pages per notebook.", "error"); return; }
     try {
         const p = await apiPost(`/canvas/books/${_curBookId}/pages`, {});
         _curPages.push(p);
-        // update page_count in books list
         const b = _books.find(x => x.id == _curBookId);
         if (b) b.page_count = _curPages.length;
-        renderBookList();
         openPageAtIdx(_curPages.length - 1);
         showToast("Page added.");
     } catch(e) { showToast(e.message || "Failed.", "error"); }
@@ -2484,7 +2490,6 @@ async function deletePage() {
         _curPages = _curPages.filter(p => p.id !== pageId);
         const b = _books.find(x => x.id == _curBookId);
         if (b) b.page_count = _curPages.length;
-        renderBookList();
         openPageAtIdx(Math.min(_curPageIdx, _curPages.length - 1));
         showToast("Page deleted.");
     } catch(e) { showToast(e.message || "Failed.", "error"); }
@@ -2493,7 +2498,7 @@ async function deletePage() {
 async function saveNote() {
     const id      = parseInt(document.getElementById("currentNoteId").value);
     const title   = document.getElementById("noteTitle").value.trim() || "Untitled";
-    const content = document.getElementById("noteContent").value;
+    const content = document.getElementById("noteContent").innerHTML;
     if (!id) { showToast("No page selected.", "error"); return; }
     try {
         const updated = await apiPut(`/canvas/${id}`, { title, content, page: _curPageIdx + 1 });
@@ -2501,19 +2506,42 @@ async function saveNote() {
             _curPages[_curPageIdx].title   = updated.title;
             _curPages[_curPageIdx].content = updated.content;
         }
+        renderBookList();
         const ind = document.getElementById("saveIndicator");
-        ind.textContent = "✓ Saved"; ind.style.opacity = "1";
+        ind.textContent = "Saved"; ind.style.opacity = "1";
         clearTimeout(ind._t);
         ind._t = setTimeout(() => { ind.style.opacity = "0"; }, 2000);
     } catch(e) { showToast("Failed to save.", "error"); }
 }
 
+// Rich-text toolbar — contenteditable + execCommand (no bundler/build step in
+// this app, so a hand-rolled toolbar is used rather than pulling in a WYSIWYG
+// library dependency).
+function execFormat(cmd, value) {
+    document.getElementById("noteContent").focus();
+    document.execCommand(cmd, false, value || null);
+}
+
+function insertNoteImage() {
+    const url = prompt("Image URL:");
+    if (!url) return;
+    execFormat("insertImage", url);
+}
+
+function insertNoteLink() {
+    const url = prompt("Link URL:");
+    if (!url) return;
+    execFormat("createLink", url);
+}
+
+function setSymCat(cat) {
+    document.querySelectorAll(".nb-sym-tab").forEach(b => b.classList.toggle("active", b.dataset.symcat === cat));
+    document.querySelectorAll(".nb-sym-grid").forEach(g => g.classList.add("hidden"));
+    document.getElementById("sym" + cat.charAt(0).toUpperCase() + cat.slice(1)).classList.remove("hidden");
+}
+
 function ins(sym) {
-    const ta = document.getElementById("noteContent");
-    const s  = ta.selectionStart, e = ta.selectionEnd;
-    ta.value = ta.value.slice(0, s) + sym + ta.value.slice(e);
-    ta.selectionStart = ta.selectionEnd = s + sym.length;
-    ta.focus();
+    execFormat("insertText", sym);
 }
 
 // ── SETTINGS ──
@@ -2557,7 +2585,7 @@ async function verifyOTP() {
     msg.textContent = "Verifying…"; msg.className = "form-msg";
     try {
         await apiPost("/auth/verify-otp", { email, code, new_password: newPw });
-        msg.textContent = "✓ Password updated successfully!";
+        msg.textContent = "Password updated successfully!";
         msg.className = "form-msg";
         showToast("Password updated successfully!");
         setTimeout(resetPwSteps, 3000);
@@ -2586,6 +2614,11 @@ async function saveProfile(ev) {
             last_name:  document.getElementById("sLast").value,
             school:     document.getElementById("sSchool").value,
             grade:      document.getElementById("sGrade").value,
+            country:    document.getElementById("sCountry").value,
+            city:       document.getElementById("sCity").value,
+            nationality: document.getElementById("sNationality").value,
+            languages_spoken: getMultiPickerValues("sLanguages"),
+            goals:            getMultiPickerValues("sGoals"),
             bio:        document.getElementById("sBio").value,
         });
         localStorage.setItem("hw_user", JSON.stringify(updated));

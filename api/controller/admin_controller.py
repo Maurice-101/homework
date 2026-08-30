@@ -1,3 +1,4 @@
+import json
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from typing import List, Optional
@@ -6,6 +7,8 @@ from api.model.course import Course, Enrollment
 from api.model.assignment import Assignment, Submission
 from api.model.notification import Notification
 from api.schemas.user import UserOut, UserUpdate
+
+_JSON_LIST_FIELDS = ("languages_spoken", "goals")
 
 
 def platform_stats(db: Session) -> dict:
@@ -32,6 +35,8 @@ def update_user(user_id: int, data: UserUpdate, db: Session) -> UserOut:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     for k, v in data.model_dump(exclude_none=True).items():
+        if k in _JSON_LIST_FIELDS:
+            v = json.dumps(v)
         setattr(user, k, v)
     db.commit()
     db.refresh(user)

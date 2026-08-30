@@ -56,9 +56,25 @@ button[type="submit"]:disabled{background:#8ab0f8;cursor:not-allowed}
 
 .err{color:#e74c3c;font-size:13px;margin-top:8px;min-height:18px}
 
+/* Multi-picker (Languages Spoken / Goals) */
+.mp-checks{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:6px}
+.mp-check{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:normal;color:#333;cursor:pointer}
+.mp-add-row{display:flex;gap:8px;margin-top:10px}
+.mp-add-row .mp-add-input{flex:1;margin:0}
+.mp-add-btn{padding:9px 16px;border:1px solid #2c62f6;border-radius:8px;background:white;color:#2c62f6;font-size:13px;font-weight:bold;cursor:pointer}
+.mp-add-btn:hover{background:#eef1fb}
+.mp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mp-chip{display:inline-flex;align-items:center;gap:6px;background:#eef1fb;color:#2c62f6;border-radius:20px;padding:4px 6px 4px 12px;font-size:12.5px}
+.mp-chip button{background:none;border:none;color:#2c62f6;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px}
+.mp-chip button:hover{color:#1c4cd6}
+
 @media(max-width:768px){
   .login-container{flex-direction:column}
   .login-left{padding:40px 28px}
   .login-right{padding:40px 28px}
   .name-row{flex-direction:column;gap:0}
 }
+
+/* Inline SVG icon system (replaces emoji on functional icon-only controls) */
+.icon{width:16px;height:16px;display:inline-block;vertical-align:middle;fill:none}
+.icon-sm{width:14px;height:14px}

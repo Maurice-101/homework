@@ -15,6 +15,11 @@ class User(Base):
     role = Column(String(20), nullable=False)  # student | facilitator | admin
     school = Column(String(200), nullable=True)
     grade = Column(String(20), nullable=True)
+    country = Column(String(100), nullable=True)
+    city = Column(String(100), nullable=True)
+    nationality = Column(String(100), nullable=True)
+    languages_spoken = Column(Text, nullable=True)  # JSON-array string
+    goals = Column(Text, nullable=True)             # JSON-array string
     bio = Column(Text, nullable=True)
     avatar = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)

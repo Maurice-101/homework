@@ -1,3 +1,4 @@
+import json
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from api.model.user import User
@@ -19,6 +20,11 @@ def register_user(data: UserRegistration, db: Session) -> TokenResponse:
         role=data.role.value,
         school=data.school,
         grade=data.grade,
+        country=data.country,
+        city=data.city,
+        nationality=data.nationality,
+        languages_spoken=json.dumps(data.languages_spoken) if data.languages_spoken else None,
+        goals=json.dumps(data.goals) if data.goals else None,
     )
     db.add(user)
     db.commit()

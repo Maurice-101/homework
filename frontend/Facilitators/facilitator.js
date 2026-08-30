@@ -7,6 +7,19 @@ if (_u && _u.role !== 'facilitator') {
   else if (_u.role === 'admin') location.href = '../Admins/admin-dashboard.html';
 }
 
+const COMMON_COUNTRIES = [
+  "Rwanda", "Kenya", "Uganda", "Tanzania", "Burundi", "DR Congo", "Nigeria", "Ghana",
+  "South Africa", "Ethiopia", "Egypt", "Morocco", "Senegal", "Zambia", "Zimbabwe",
+  "Cameroon", "Ivory Coast", "United States", "United Kingdom", "France", "Canada",
+  "Germany", "India", "China", "Belgium", "Netherlands", "Other",
+];
+const FACILITATOR_GOALS = [
+  "Improve student engagement", "Build better course materials",
+  "Track student progress more effectively", "Grade more efficiently",
+  "Communicate better with students/parents", "Explore new teaching methods",
+];
+const LANGUAGES_PRESET = ["English", "French", "Kinyarwanda", "Kiswahili", "Portuguese", "Spanish", "Arabic"];
+
 // ---- INIT ----
 let myCourses = [];
 let activeCourseId = null;
@@ -46,8 +59,13 @@ function fillUser() {
   document.getElementById('setFirstName').value = u.first_name || '';
   document.getElementById('setLastName').value = u.last_name || '';
   document.getElementById('setEmail').value = u.email || '';
-  document.getElementById('setSchool').value = u.school || '';
+  document.getElementById('setCountry').value = u.country || '';
+  document.getElementById('setCity').value = u.city || '';
+  document.getElementById('setNationality').value = u.nationality || '';
   document.getElementById('setBio').value = u.bio || '';
+  document.getElementById('setCountryList').innerHTML = COMMON_COUNTRIES.map(c => `<option value="${c}">`).join('');
+  initMultiPicker('setLanguages', LANGUAGES_PRESET, u.languages_spoken || []);
+  initMultiPicker('setGoals', FACILITATOR_GOALS, u.goals || []);
   if (document.getElementById('fPwEmail')) {
     document.getElementById('fPwEmail').value = u.email || '';
   }
@@ -90,7 +108,7 @@ function goTo(sec) {
   const l = document.querySelector(`.menu li[data-sec="${sec}"]`);
   if (s) s.classList.add('active');
   if (l) l.classList.add('active');
-  document.getElementById('pageTitle').textContent = l ? l.querySelector('.lbl').textContent : sec;
+  document.getElementById('pageTitle').textContent = l ? l.querySelector('.lbl').textContent : sec.charAt(0).toUpperCase() + sec.slice(1);
 
   if (sec === 'dashboard')     loadDashboard();
   else if (sec === 'subjects')     loadCourses();
@@ -280,15 +298,15 @@ function renderCourseGrid() {
     <div class="course-card" onclick="openCourseDetail(${c.id})">
       <div class="cc-photo" style="${bg ? `background-image:url('${esc(bg)}')` : ''}">
         <span class="cc-code-badge">${esc(c.course_code || c.subject || 'Subject')}</span>
-        <button class="cc-setup-btn" title="Course Setup" onclick="event.stopPropagation();openCourseSetup(${c.id})">⚙️</button>
+        <button class="cc-setup-btn" title="Course Setup" onclick="event.stopPropagation();openCourseSetup(${c.id})"><svg class="icon-sm"><use href="#ic-settings"></use></svg></button>
       </div>
       <div class="cc-body">
         <h3>${esc(c.title)}</h3>
         <p>${esc(c.description || 'No description')}</p>
         <div class="cc-meta">
-          <span>👥 ${c.student_count || 0} Students</span>
-          <span>✅ ${c.active_assignment_count || 0} Active</span>
-          ${c.grading_due ? '<span class="cc-warn">⚠ Grading Due</span>' : ''}
+          <span>${c.student_count || 0} Students</span>
+          <span>${c.active_assignment_count || 0} Active</span>
+          ${c.grading_due ? '<span class="cc-warn">Grading Due</span>' : ''}
         </div>
         ${progress !== null ? `
         <div class="cc-progress-row">
@@ -296,8 +314,8 @@ function renderCourseGrid() {
         </div>
         <div class="cc-progress-bar-wrap"><div class="cc-progress-bar" style="width:${progress}%"></div></div>` : ''}
         <div class="cc-meta" style="margin-top:8px">
-          <span>${c.is_public ? '🌐 Public' : '🔒 Private'}</span>
-          ${c.invite_code ? `<span class="cc-invite-code" title="Click to copy invite code" onclick="event.stopPropagation();copyInviteCode('${c.invite_code}')">🔑 ${esc(c.invite_code)}</span>` : ''}
+          <span>${c.is_public ? 'Public' : 'Private'}</span>
+          ${c.invite_code ? `<span class="cc-invite-code" title="Click to copy invite code" onclick="event.stopPropagation();copyInviteCode('${c.invite_code}')">${esc(c.invite_code)}</span>` : ''}
         </div>
       </div>
     </div>`;
@@ -326,8 +344,8 @@ async function openCourseDetail(id) {
       <div class="cc-meta">
         <span>Subject: ${esc(c.subject || '')}</span>
         <span>Grade: ${esc(c.grade_level || '')}</span>
-        <span>${c.is_public ? '🌐 Public' : '🔒 Private'}</span>
-        <span>👥 ${(c.enrollments || []).length} enrolled</span>
+        <span>${c.is_public ? 'Public' : 'Private'}</span>
+        <span>${(c.enrollments || []).length} enrolled</span>
       </div>
     `;
     renderOverviewTab(c);
@@ -362,7 +380,7 @@ async function openCourseDetail(id) {
             </div>
             <p style="font-size:11px;color:#888;margin-top:4px">${e.progress_percent || 0}% graded</p>
             ${e.pass_status === 'passed'
-              ? '<span style="font-size:11px;font-weight:600;color:#1a5c3a;background:#e8f5ee;border-radius:20px;padding:2px 8px">✓ Passed</span>'
+              ? '<span style="font-size:11px;font-weight:600;color:#1a5c3a;background:#e8f5ee;border-radius:20px;padding:2px 8px">Passed</span>'
               : e.pass_status === 'retake'
               ? '<span style="font-size:11px;font-weight:600;color:#b45309;background:#fff3e0;border-radius:20px;padding:2px 8px">↩ Retake</span>'
               : ''}
@@ -399,7 +417,7 @@ function renderOverviewTab(c) {
       ${modules.length
         ? modules.map(m => `
             <div class="ov-module-link" onclick="switchFTab('modules');openModuleDetail(${m.id})">
-              <span>📘 ${esc(m.title)}</span>
+              <span>${esc(m.title)}</span>
               <span style="color:var(--text-sub)">→</span>
             </div>`).join('')
         : '<p style="color:#aaa;font-size:13px">No modules yet.</p>'}
@@ -438,16 +456,16 @@ async function showAssignmentDetailModal(a) {
         ${a.due_date ? `<span class="asgn-tag due">Due: ${fmtDate(a.due_date)}</span>` : ''}
         <span class="asgn-tag">Max: ${a.max_score}</span>
         ${a.time_limit_minutes ? `<span class="asgn-tag">⏱ ${a.time_limit_minutes} min</span>` : ''}
-        <span class="asgn-tag">🔁 ${a.max_attempts || 1} attempt${(a.max_attempts||1) === 1 ? '' : 's'}</span>
-        ${a.course_title ? `<span class="asgn-tag">📚 ${esc(a.course_title)}</span>` : ''}
+        <span class="asgn-tag">${a.max_attempts || 1} attempt${(a.max_attempts||1) === 1 ? '' : 's'}</span>
+        ${a.course_title ? `<span class="asgn-tag">${esc(a.course_title)}</span>` : ''}
       </div>
     </div>
     <div class="detail-body">${a.description ? formatRichText(a.description) : '<p>No description provided.</p>'}</div>
     ${hasAttachments ? `
       <div class="detail-section-title">Attachments</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">🔗 Link</a>` : ''}
-        ${a.attachment_path ? `<a href="${r2FileUrl(a.attachment_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">📎 PDF</a>` : ''}
+        ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">Link</a>` : ''}
+        ${a.attachment_path ? `<a href="${r2FileUrl(a.attachment_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">PDF</a>` : ''}
         ${attachments.map(att => `<a href="${r2FileUrl(att.file_path)}" target="_blank" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join('')}
       </div>` : ''}
     <div class="detail-section-title">Questions</div>
@@ -473,7 +491,7 @@ function renderQuestionsReadOnly(questions) {
       </div>
       <div class="qv-text">${esc(q.text)}</div>
       ${(q.options || []).length ? (q.options || []).map(o => `
-        <div class="qv-option ${o.is_correct ? 'correct' : ''}">${o.is_correct ? '✓' : '•'} ${esc(o.text)}${o.match_value ? ` → ${esc(o.match_value)}` : ''}</div>
+        <div class="qv-option ${o.is_correct ? 'correct' : ''}">${o.is_correct ? '<svg class="icon-sm"><use href="#ic-check"></use></svg>' : '•'} ${esc(o.text)}${o.match_value ? ` → ${esc(o.match_value)}` : ''}</div>
       `).join('') : ''}
     </div>`).join('');
 }
@@ -521,8 +539,8 @@ async function loadCourseMaterials() {
             <div class="res-icon">${fileIcon(r.title)}</div>
             <div class="res-title">${esc(r.title)}</div>
             <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-              <button class="res-dl" onclick="openPdf('${esc(r.url)}','${esc(r.title)}')">📖 View</button>
-              <button class="res-dl danger" onclick="deleteCourseMaterial('${esc(r.id.replace('db_',''))}', this)">✕ Remove</button>
+              <button class="res-dl" onclick="openPdf('${esc(r.url)}','${esc(r.title)}')">View</button>
+              <button class="res-dl danger" onclick="deleteCourseMaterial('${esc(r.id.replace('db_',''))}', this)">Remove</button>
             </div>
           </div>`).join('')}</div>`
       : '<p style="color:#aaa;font-size:13px">No materials yet — upload a PDF or attach one from the library.</p>';
@@ -583,7 +601,7 @@ function renderLibraryPicker() {
   if (!list.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px">No matching books.</p>'; return; }
   el.innerHTML = list.slice(0, 100).map(b => `
     <div class="attach-file-row">
-      <span>📄 ${esc(b.title)} <small style="color:#aaa">${esc(b.subject || '')}${b.grade_level ? ' · ' + esc(b.grade_level) : ''}</small></span>
+      <span>${esc(b.title)} <small style="color:#aaa">${esc(b.subject || '')}${b.grade_level ? ' · ' + esc(b.grade_level) : ''}</small></span>
       <button type="button" class="btn-sm" onclick="attachLibraryItem('${esc(b.file_path).replace(/'/g,"\\'")}', this)">+ Attach</button>
     </div>`).join('');
 }
@@ -594,7 +612,7 @@ async function attachLibraryItem(key, btn) {
   try {
     await apiPost('/resources/library/attach', { key, course_id: activeCourseId });
     showToast('Attached to course materials!');
-    btn.textContent = '✓ Attached';
+    btn.textContent = 'Attached';
   } catch (e) {
     btn.disabled = false; btn.textContent = '+ Attach';
     showToast('Could not attach.', 'error');
@@ -629,8 +647,8 @@ function renderAnnouncements() {
           </div>
           <p class="ann-card2-body">${esc(a.content)}</p>
           <div class="ann-stats-row">
-            <button class="ann-stat-chip" onclick="toggleAnnPanel(${a.id},'readers')">📖 ${a.read_count} read</button>
-            <button class="ann-stat-chip" onclick="toggleAnnPanel(${a.id},'comments')">💬 ${a.comment_count} comment${a.comment_count===1?'':'s'}</button>
+            <button class="ann-stat-chip" onclick="toggleAnnPanel(${a.id},'readers')">${a.read_count} read</button>
+            <button class="ann-stat-chip" onclick="toggleAnnPanel(${a.id},'comments')">${a.comment_count} comment${a.comment_count===1?'':'s'}</button>
           </div>
           <div class="ann-names-panel" id="ann-readers-${a.id}">
             ${a.readers.length ? a.readers.map(r => esc(r.student_name)).join(', ') : 'No one has read this yet.'}
@@ -890,7 +908,7 @@ function openCreateCourse() {
   document.getElementById('ccMaterials').value = '';
   document.getElementById('ccPickedFiles').innerHTML = '';
   document.getElementById('ccThumbFile').value = '';
-  document.getElementById('ccThumbPreview').innerHTML = '<span>📷 Click to upload a cover image</span>';
+  document.getElementById('ccThumbPreview').innerHTML = '<span>Click to upload a cover image</span>';
   document.getElementById('ccThumbPreview').style.backgroundImage = '';
   const dl = document.getElementById('ccSubjectList');
   if (dl && typeof SUBJECT_THEME !== 'undefined') dl.innerHTML = Object.keys(SUBJECT_THEME).map(s => `<option value="${esc(s)}">`).join('');
@@ -919,7 +937,7 @@ async function openCourseSetup(courseId) {
   document.getElementById('ccThumbFile').value = '';
   const theme = resolveSubjectTheme(c.subject);
   const bg = c.thumbnail_path || theme.img || '';
-  document.getElementById('ccThumbPreview').innerHTML = bg ? '' : '<span>📷 Click to upload a cover image</span>';
+  document.getElementById('ccThumbPreview').innerHTML = bg ? '' : '<span>Click to upload a cover image</span>';
   document.getElementById('ccThumbPreview').style.backgroundImage = bg ? `url('${bg}')` : '';
   const dl = document.getElementById('ccSubjectList');
   if (dl && typeof SUBJECT_THEME !== 'undefined') dl.innerHTML = Object.keys(SUBJECT_THEME).map(s => `<option value="${esc(s)}">`).join('');
@@ -1295,8 +1313,8 @@ function renderAsgnTable(tab) {
         </td>
         <td><span class="status-pill ${pill.cls}">${pill.label}</span></td>
         <td class="asgn-actions-col">
-          <button class="btn-icon" title="View Submissions" onclick="viewSubmissions(${a.id}, '${esc(a.title)}')">👁</button>
-          <button class="btn-icon" title="Edit" onclick="openEditAssignment(${a.id})">✏️</button>
+          <button class="btn-icon" title="View Submissions" onclick="viewSubmissions(${a.id}, '${esc(a.title)}')"><svg class="icon-sm"><use href="#ic-eye"></use></svg></button>
+          <button class="btn-icon" title="Edit" onclick="openEditAssignment(${a.id})"><svg class="icon-sm"><use href="#ic-edit"></use></svg></button>
         </td>
       </tr>`;
   }).join('');
@@ -1331,12 +1349,12 @@ function r2FileUrl(key) {
 
 function fileIcon(filename) {
   const ext = (filename || '').split('.').pop().toLowerCase();
-  if (ext === 'pdf') return '📄';
-  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
-  if (['doc','docx'].includes(ext)) return '📝';
-  if (['ppt','pptx'].includes(ext)) return '📽️';
-  if (['xls','xlsx'].includes(ext)) return '📊';
-  return '📎';
+  if (ext === 'pdf') return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '<svg class="icon-sm"><use href="#ic-image"></use></svg>';
+  if (['doc','docx'].includes(ext)) return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+  if (['ppt','pptx'].includes(ext)) return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+  if (['xls','xlsx'].includes(ext)) return '<svg class="icon-sm"><use href="#ic-file"></use></svg>';
+  return '<svg class="icon-sm"><use href="#ic-link"></use></svg>';
 }
 
 const STATUS_COLORS = {
@@ -1354,12 +1372,12 @@ function asgnCard(a, showSubs) {
         <div class="asgn-meta">
           <span class="asgn-tag" style="${STATUS_COLORS[status] || ''}">${status}</span>
           <span class="asgn-tag type">${esc(a.assignment_type || a.type || '')}</span>
-          ${a.question_count ? `<span class="asgn-tag">❓ ${a.question_count} question${a.question_count === 1 ? '' : 's'}</span>` : ''}
+          ${a.question_count ? `<span class="asgn-tag">${a.question_count} question${a.question_count === 1 ? '' : 's'}</span>` : ''}
           ${a.due_date ? `<span class="asgn-tag due">Due: ${fmtDate(a.due_date)}</span>` : ''}
           <span class="asgn-tag">Max: ${a.max_score}</span>
-          ${a.course_title ? `<span class="asgn-tag">📚 ${esc(a.course_title)}</span>` : ''}
-          ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">🔗 Link</a>` : ''}
-          ${a.attachment_path ? `<a href="${r2FileUrl(a.attachment_path)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">📎 PDF</a>` : ''}
+          ${a.course_title ? `<span class="asgn-tag">${esc(a.course_title)}</span>` : ''}
+          ${a.attachment_url ? `<a href="${esc(a.attachment_url)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#e8f0fe;color:#2f6df6">Link</a>` : ''}
+          ${a.attachment_path ? `<a href="${r2FileUrl(a.attachment_path)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">PDF</a>` : ''}
           ${attachments.map(att => `<a href="${r2FileUrl(att.file_path)}" target="_blank" onclick="event.stopPropagation()" class="asgn-tag" style="background:#f3e8ff;color:#6c00c9">${fileIcon(att.filename)} ${esc(att.filename)}</a>`).join('')}
         </div>
       </div>
@@ -1490,15 +1508,15 @@ function renderCurrentAttachments(a) {
   const curEl = document.getElementById('editCurrentAttach');
   const rows = [];
   if (a.attachment_path) {
-    rows.push(`<div class="attach-file-row"><a href="${r2FileUrl(a.attachment_path)}" target="_blank">📄 Legacy PDF attachment</a></div>`);
+    rows.push(`<div class="attach-file-row"><a href="${r2FileUrl(a.attachment_path)}" target="_blank">Legacy PDF attachment</a></div>`);
   }
   if (a.attachment_url) {
-    rows.push(`<div class="attach-file-row"><a href="${esc(a.attachment_url)}" target="_blank">🔗 ${esc(a.attachment_url)}</a></div>`);
+    rows.push(`<div class="attach-file-row"><a href="${esc(a.attachment_url)}" target="_blank">${esc(a.attachment_url)}</a></div>`);
   }
   (a.attachments || []).forEach(att => {
     rows.push(`<div class="attach-file-row">
       <a href="${r2FileUrl(att.file_path)}" target="_blank">${fileIcon(att.filename)} ${esc(att.filename)}</a>
-      <button type="button" class="attach-remove-btn" onclick="deleteAssignmentAttachment(${a.id}, ${att.id}, this)" title="Remove">✕</button>
+      <button type="button" class="attach-remove-btn" onclick="deleteAssignmentAttachment(${a.id}, ${att.id}, this)" title="Remove"><svg class="icon-sm"><use href="#ic-close"></use></svg></button>
     </div>`);
   });
   curEl.innerHTML = rows.length ? rows.join('') : '<span style="color:#aaa">No current attachments</span>';
@@ -1694,7 +1712,7 @@ function renderQuestionBuilder() {
           <button type="button" class="qb-icon-btn" onclick="qbMoveQuestion(${qi},-1)" title="Move up" ${qi === 0 ? 'disabled' : ''}>↑</button>
           <button type="button" class="qb-icon-btn" onclick="qbMoveQuestion(${qi},1)" title="Move down" ${qi === _editingQuestions.length - 1 ? 'disabled' : ''}>↓</button>
           <button type="button" class="qb-icon-btn" onclick="qbDuplicateQuestion(${qi})" title="Duplicate">⧉</button>
-          <button type="button" class="qb-icon-btn danger" onclick="qbDeleteQuestion(${qi})" title="Delete">🗑</button>
+          <button type="button" class="qb-icon-btn danger" onclick="qbDeleteQuestion(${qi})" title="Delete"><svg class="icon-sm"><use href="#ic-trash"></use></svg></button>
         </div>
       </div>
       <textarea class="qb-text" rows="2" placeholder="Question text…" oninput="qbUpdateField(${qi},'text',this.value)">${esc(q.text)}</textarea>
@@ -1718,7 +1736,7 @@ function _qbOptionsHtml(q, qi) {
         <input type="text" placeholder="Item" value="${esc(o.text || '')}" oninput="qbUpdateOptionText(${qi},${oi},'text',this.value)">
         <span class="qb-match-arrow">→</span>
         <input type="text" placeholder="Correct match" value="${esc(o.match_value || '')}" oninput="qbUpdateOptionText(${qi},${oi},'match_value',this.value)">
-        <button type="button" class="qb-icon-btn danger" onclick="qbRemoveOption(${qi},${oi})" title="Remove pair">✕</button>
+        <button type="button" class="qb-icon-btn danger" onclick="qbRemoveOption(${qi},${oi})" title="Remove pair"><svg class="icon-sm"><use href="#ic-close"></use></svg></button>
       </div>`).join('');
     return rows + `<button type="button" class="btn-sm btn-outline" onclick="qbAddOption(${qi})">+ Add Pair</button>`;
   }
@@ -1731,7 +1749,7 @@ function _qbOptionsHtml(q, qi) {
         onchange="${isMulti ? `qbToggleCorrectMulti(${qi},${oi},this.checked)` : `qbSetCorrectSingle(${qi},${oi})`}">
       <input type="text" placeholder="Option ${oi + 1}" value="${esc(o.text || '')}"
         oninput="qbUpdateOptionText(${qi},${oi},'text',this.value)" ${isFixed ? 'readonly' : ''}>
-      ${isFixed ? '' : `<button type="button" class="qb-icon-btn danger" onclick="qbRemoveOption(${qi},${oi})" title="Remove option">✕</button>`}
+      ${isFixed ? '' : `<button type="button" class="qb-icon-btn danger" onclick="qbRemoveOption(${qi},${oi})" title="Remove option"><svg class="icon-sm"><use href="#ic-close"></use></svg></button>`}
     </div>`).join('');
   return rows + (isFixed ? '' : `<button type="button" class="btn-sm btn-outline" onclick="qbAddOption(${qi})">+ Add Option</button>`);
 }
@@ -1768,7 +1786,7 @@ function submissionCard(s, asgn) {
   const student = s.student_name || `Student #${s.student_id}`;
   let preview = '';
   if (s.submission_type === 'link' && s.content) {
-    preview = `<a href="${esc(s.content)}" target="_blank" onclick="event.stopPropagation()" class="sub-link-btn">🔗 Open Link / Drive</a>`;
+    preview = `<a href="${esc(s.content)}" target="_blank" onclick="event.stopPropagation()" class="sub-link-btn">Open Link / Drive</a>`;
   } else if ((s.submission_type === 'pdf' || s.submission_type === 'file') && s.file_path) {
     preview = `<button class="sub-link-btn" onclick="event.stopPropagation();openPdf('${r2ServeUrl(s.file_path)}','Submission – ${esc(student)}')">${fileIcon(s.file_path)} View File</button>`;
   } else if (s.content) {
@@ -1780,13 +1798,13 @@ function submissionCard(s, asgn) {
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div class="asgn-left">
           <h3>${esc(student)} ${s.attempt_number > 1 ? `<small style="color:#aaa;font-weight:normal">(attempt ${s.attempt_number})</small>` : ''}</h3>
-          ${asgn.title ? `<p style="font-size:12px;color:var(--text-sub);margin-top:2px">📝 ${esc(asgn.title)}</p>` : ''}
+          ${asgn.title ? `<p style="font-size:12px;color:var(--text-sub);margin-top:2px">${esc(asgn.title)}</p>` : ''}
           ${preview}
           <p style="font-size:12px;color:var(--text-sub);margin-top:4px">Submitted: ${fmtDate(s.submitted_at)}</p>
           ${s.grade !== null && s.grade !== undefined
             ? `<p style="color:var(--success);font-weight:600;margin-top:4px">Grade: ${s.grade} / ${asgn.max_score || 100}</p>`
             : '<p style="color:var(--warning);font-size:12px;margin-top:4px">Not graded yet</p>'}
-          ${s.feedback ? `<p style="font-size:12px;margin-top:3px;font-style:italic">💬 ${esc(s.feedback)}</p>` : ''}
+          ${s.feedback ? `<p style="font-size:12px;margin-top:3px;font-style:italic">${esc(s.feedback)}</p>` : ''}
         </div>
         <div class="asgn-right">
           <button class="btn-sm" onclick="event.stopPropagation();openGradeModal(${s.id})">
@@ -1802,15 +1820,15 @@ function answerReviewRow(a) {
   const objective = a.is_correct !== null && a.is_correct !== undefined;
   const badge = objective
     ? (a.is_correct
-        ? `<span style="color:#1a8a5a">✓ ${a.points_awarded}/${a.question_points}</span>`
-        : `<span style="color:#c0392b">✗ ${a.points_awarded ?? 0}/${a.question_points}</span>`)
+        ? `<span style="color:#1a8a5a">${a.points_awarded}/${a.question_points}</span>`
+        : `<span style="color:#c0392b">${a.points_awarded ?? 0}/${a.question_points}</span>`)
     : (a.points_awarded !== null && a.points_awarded !== undefined
         ? `<span style="color:#1a8a5a">${a.points_awarded}/${a.question_points}</span>`
         : `<span style="color:#c47f00">Needs grading</span>`);
 
   let answerHtml = '';
   if (a.answer_text) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${esc(a.answer_text)}</p>`;
-  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('${r2ServeUrl(a.file_path)}','Answer')">📎 View uploaded file</button>`;
+  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('${r2ServeUrl(a.file_path)}','Answer')">View uploaded file</button>`;
   else if (a.selected_option_ids) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">Selected option(s): ${a.selected_option_ids.join(', ')}</p>`;
   else if (a.matching_answers) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${Object.entries(a.matching_answers).map(([k,v]) => `${esc(k)} → ${esc(v)}`).join('; ')}</p>`;
 
@@ -1839,15 +1857,15 @@ function answerReviewRowReadonly(a) {
   const objective = a.is_correct !== null && a.is_correct !== undefined;
   const badge = objective
     ? (a.is_correct
-        ? `<span style="color:#1a8a5a">✓ ${a.points_awarded}/${a.question_points}</span>`
-        : `<span style="color:#c0392b">✗ ${a.points_awarded ?? 0}/${a.question_points}</span>`)
+        ? `<span style="color:#1a8a5a">${a.points_awarded}/${a.question_points}</span>`
+        : `<span style="color:#c0392b">${a.points_awarded ?? 0}/${a.question_points}</span>`)
     : (a.points_awarded !== null && a.points_awarded !== undefined
         ? `<span style="color:#1a8a5a">${a.points_awarded}/${a.question_points}</span>`
         : `<span style="color:#c47f00">Needs grading</span>`);
 
   let answerHtml = '';
   if (a.answer_text) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${esc(a.answer_text)}</p>`;
-  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('${r2ServeUrl(a.file_path)}','Answer')">📎 View uploaded file</button>`;
+  else if (a.file_path) answerHtml = `<button class="btn-sm" style="margin:4px 0" onclick="openPdf('${r2ServeUrl(a.file_path)}','Answer')">View uploaded file</button>`;
   else if (a.selected_option_ids) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">Selected option(s): ${a.selected_option_ids.join(', ')}</p>`;
   else if (a.matching_answers) answerHtml = `<p style="font-size:12.5px;color:#555;margin:4px 0">${Object.entries(a.matching_answers).map(([k,v]) => `${esc(k)} → ${esc(v)}`).join('; ')}</p>`;
   else answerHtml = `<p style="font-size:12.5px;color:#aaa;margin:4px 0;font-style:italic">No answer given</p>`;
@@ -1906,7 +1924,7 @@ function openGradeModal(subId) {
   } else {
     html += `<div class="grade-rubric-label">Student Submission</div>`;
     if (s.submission_type === 'link' && s.content) {
-      html += `<a href="${esc(s.content)}" target="_blank" class="sub-link-btn">🔗 Open Link / Drive</a>`;
+      html += `<a href="${esc(s.content)}" target="_blank" class="sub-link-btn">Open Link / Drive</a>`;
     } else if ((s.submission_type === 'pdf' || s.submission_type === 'file') && s.file_path) {
       html += `<button class="sub-link-btn" onclick="openPdf('${r2ServeUrl(s.file_path)}','Submission – ${esc(student)}')">${fileIcon(s.file_path)} View File</button>`;
     } else if (s.content) {
@@ -1975,13 +1993,13 @@ function renderStudents(students) {
         <td>
           <div class="st-name-cell">
             <div class="st-avatar">${init}</div>
-            <div><strong>${esc(s.first_name)} ${esc(s.last_name)}</strong>${s.at_risk ? '<span class="cc-warn" style="margin-left:6px">⚠ At Risk</span>' : ''}<p>${esc(s.email || '')}</p></div>
+            <div><strong>${esc(s.first_name)} ${esc(s.last_name)}</strong>${s.at_risk ? '<span class="cc-warn" style="margin-left:6px">At Risk</span>' : ''}<p>${esc(s.email || '')}</p></div>
           </div>
         </td>
         <td>${courses.length ? courses.map(c => `<span class="cc-badge" style="margin:2px">${esc(c.title)}</span>`).join('') : '<span class="cs-empty" style="padding:0">—</span>'}</td>
         <td>${grade != null ? `<span class="st-grade ${gradeCls}">${Math.round(grade)}% <small>${TREND_ICON[s.trend] || '→'}</small></span>` : '<span class="cs-empty" style="padding:0">—</span>'}</td>
         <td>${s.last_activity ? fmtRelativeDateTime(s.last_activity) : '—'}</td>
-        <td onclick="event.stopPropagation()"><button class="btn-sm" onclick="openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">✉ Message</button></td>
+        <td onclick="event.stopPropagation()"><button class="btn-sm" onclick="openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">Message</button></td>
       </tr>`;
   }).join('');
 }
@@ -2012,7 +2030,7 @@ function openStudentDetail(studentId) {
         </div>
         <p style="font-size:11px;color:#888;margin-top:4px">${c.progress}% complete</p>
       </div>`).join('') : '<p style="font-size:13px;color:#888">Not enrolled in any of your subjects.</p>'}
-    <button class="btn-primary" style="width:100%;margin-top:10px" onclick="closeModal('modalStudentDetail');openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">✉ Message ${esc(s.first_name)}</button>
+    <button class="btn-primary" style="width:100%;margin-top:10px" onclick="closeModal('modalStudentDetail');openComposeToUser(${s.id},'${esc(s.first_name+' '+s.last_name)}')">Message ${esc(s.first_name)}</button>
   `;
   document.getElementById('modalStudentDetail').classList.remove('hidden');
 }
@@ -2070,7 +2088,7 @@ function renderInviteList(students, enrolledIds) {
         <div style="font-size:12px;color:#888">${esc(u.email||'')}</div>
       </div>
       ${enrolled
-        ? '<span style="font-size:12px;color:#1a5c3a;background:#e8f5ee;padding:3px 10px;border-radius:20px">✓ Enrolled</span>'
+        ? '<span style="font-size:12px;color:#1a5c3a;background:#e8f5ee;padding:3px 10px;border-radius:20px">Enrolled</span>'
         : `<button class="btn-sm" id="addbtn-${u.id}" onclick="addStudentToCourse(${u.id},this)">+ Add</button>`}
     </div>`;
   }).join('');
@@ -2081,7 +2099,7 @@ async function addStudentToCourse(studentId, btn) {
   btn.disabled = true; btn.textContent = 'Adding…';
   try {
     await apiPost(`/courses/${activeCourseId}/add-student`, { student_id: studentId });
-    btn.textContent = '✓ Enrolled';
+    btn.textContent = 'Enrolled';
     btn.style.background = 'var(--success,#27ae60)';
     btn.style.cursor = 'default';
     _enrolledIds.add(studentId);
@@ -2219,13 +2237,13 @@ function renderProgressDetailTable() {
         <td>
           <div class="st-name-cell">
             <div class="st-avatar">${init}</div>
-            <div><strong>${esc(s.first_name)} ${esc(s.last_name)}</strong>${s.at_risk ? ' <span class="cc-warn">⚠</span>' : ''}<p>ID: #${s.student_id}</p></div>
+            <div><strong>${esc(s.first_name)} ${esc(s.last_name)}</strong>${s.at_risk ? ' <span class="cc-warn"><svg class="icon-sm"><use href="#ic-warning"></use></svg></span>' : ''}<p>ID: #${s.student_id}</p></div>
           </div>
         </td>
         <td>${focus ? esc(focus.title) : '—'}</td>
         <td>${focus ? `<div class="asgn-subs-cell"><span>${focus.progress_percent || 0}%</span><div class="asgn-subs-bar-wrap"><div class="asgn-subs-bar graded" style="width:${focus.progress_percent||0}%"></div></div></div>` : '—'}</td>
         <td>${grade != null ? `<span class="st-grade ${gradeCls}">${Math.round(grade)}%</span>` : '—'}</td>
-        <td onclick="event.stopPropagation()"><button class="btn-sm" onclick="openComposeToUser(${s.student_id},'${esc(s.first_name+' '+s.last_name)}')">✉</button></td>
+        <td onclick="event.stopPropagation()"><button class="btn-sm" onclick="openComposeToUser(${s.student_id},'${esc(s.first_name+' '+s.last_name)}')"><svg class="icon-sm"><use href="#ic-mail"></use></svg></button></td>
       </tr>`;
   }).join('');
 
@@ -2271,10 +2289,10 @@ let _resView = 'grid';
 let _resVisibleCount = 12;
 const RES_PAGE_SIZE = 12;
 const RES_TYPE_META = {
-  textbook: { label: 'Textbook', icon: '📘' },
-  teacher_guide: { label: 'Teacher Guide', icon: '📗' },
-  past_paper: { label: 'Past Paper', icon: '📄' },
-  uploaded: { label: 'Uploaded', icon: '📎' },
+  textbook: { label: 'Textbook', icon: '' },
+  teacher_guide: { label: 'Teacher Guide', icon: '' },
+  past_paper: { label: 'Past Paper', icon: '' },
+  uploaded: { label: 'Uploaded', icon: '' },
 };
 
 function fmtFileSize(bytes) {
@@ -2315,7 +2333,7 @@ function renderResourceFilters() {
   const typeEl = document.getElementById('resTypeFilters');
   typeEl.innerHTML = Object.keys(typeCounts).sort().map(t => {
     const meta = RES_TYPE_META[t] || { label: t };
-    return `<label class="res-filter-check"><input type="checkbox" onchange="toggleResFilter('type','${esc(t)}',this.checked)"><span>${meta.icon || ''} ${esc(meta.label)}</span><small>${typeCounts[t]}</small></label>`;
+    return `<label class="res-filter-check"><input type="checkbox" onchange="toggleResFilter('type','${esc(t)}',this.checked)"><span>${esc(meta.label)}</span><small>${typeCounts[t]}</small></label>`;
   }).join('');
 }
 
@@ -2374,7 +2392,7 @@ function renderResourceGrid() {
 
 function resCard2(r) {
   const url = r.url || r.file_path;
-  const meta = RES_TYPE_META[r.type] || { label: r.type || 'Resource', icon: '📄' };
+  const meta = RES_TYPE_META[r.type] || { label: r.type || 'Resource', icon: '' };
   const size = fmtFileSize(r.file_size_bytes);
   const theme = resolveSubjectTheme(r.subject);
   const thumbStyle = theme.img
@@ -2390,8 +2408,8 @@ function resCard2(r) {
         <div class="res-foot">
           <span class="res-size">${size}</span>
           <div class="res-actions">
-            <button class="btn-icon" title="View" onclick="openPdf('${esc(url)}','${esc(r.title)}')">👁</button>
-            <a class="btn-icon" title="Download" href="${esc(url)}" target="_blank" download>⬇</a>
+            <button class="btn-icon" title="View" onclick="openPdf('${esc(url)}','${esc(r.title)}')"><svg class="icon-sm"><use href="#ic-eye"></use></svg></button>
+            <a class="btn-icon" title="Download" href="${esc(url)}" target="_blank" download><svg class="icon-sm"><use href="#ic-download"></use></svg></a>
           </div>
         </div>
       </div>
@@ -2421,7 +2439,7 @@ async function uploadResource() {
 
   try {
     await apiPost('/resources/upload', fd);
-    msgEl.textContent = '✓ Resource uploaded successfully!';
+    msgEl.textContent = 'Resource uploaded successfully!';
     showToast('Resource uploaded and now accessible to everyone!');
     document.getElementById('upTitle').value = '';
     document.getElementById('upSubject').value = '';
@@ -2700,7 +2718,11 @@ async function saveProfile(e) {
     first_name: document.getElementById('setFirstName').value.trim(),
     last_name:  document.getElementById('setLastName').value.trim(),
     email:      document.getElementById('setEmail').value.trim(),
-    school:     document.getElementById('setSchool').value.trim(),
+    country:    document.getElementById('setCountry').value.trim(),
+    city:       document.getElementById('setCity').value.trim(),
+    nationality: document.getElementById('setNationality').value.trim(),
+    languages_spoken: getMultiPickerValues('setLanguages'),
+    goals:            getMultiPickerValues('setGoals'),
     bio:        document.getElementById('setBio').value.trim(),
   };
   try {
@@ -2745,7 +2767,7 @@ async function facilitatorVerifyOTP() {
   msg.textContent = 'Verifying…'; msg.classList.remove('hidden');
   try {
     await apiPost('/auth/verify-otp', { email, code, new_password: newPw });
-    msg.textContent = '✓ Password updated!';
+    msg.textContent = 'Password updated!';
     showToast('Password updated successfully!');
     setTimeout(resetFPwSteps, 3000);
   } catch(e) {
@@ -2773,7 +2795,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 // SUBJECT_THEME key (e.g. "Mathematics/Algeria") — fall back to a fuzzy match so the
 // real subject photo still resolves instead of silently showing no image.
 function resolveSubjectTheme(subject) {
-  const fallback = (typeof DEFAULT_SUBJECT_THEME !== 'undefined') ? DEFAULT_SUBJECT_THEME : { icon: '📘', img: '', credit: '' };
+  const fallback = (typeof DEFAULT_SUBJECT_THEME !== 'undefined') ? DEFAULT_SUBJECT_THEME : { icon: '', img: '', credit: '' };
   if (typeof SUBJECT_THEME === 'undefined' || !subject) return fallback;
   if (SUBJECT_THEME[subject]) return SUBJECT_THEME[subject];
   const needle = subject.toLowerCase();

@@ -4,30 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard – Abahizi</title>
-<link rel="stylesheet" href="student.css?v=20">
+<link rel="stylesheet" href="student.css?v=23">
 </head>
 <body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-send" viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8-16-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M5 7h14M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-8 0v12a1 1 0 001 1h6a1 1 0 001-1V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-link" viewBox="0 0 24 24"><path d="M9 15l6-6M8 12l-2.5 2.5a3.5 3.5 0 004.95 4.95L13 17m3-5l2.5-2.5a3.5 3.5 0 00-4.95-4.95L11 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-save" viewBox="0 0 24 24"><path d="M5 5h11l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M8 5v4h7V5M8 14h8v6H8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+  <symbol id="ic-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 4.2A10.8 10.8 0 0112 4c6.5 0 10 7 10 7a17.9 17.9 0 01-3.1 4.1M6.6 6.6C4 8.3 2 12 2 12s3.5 7 10 7c1.4 0 2.7-.3 3.9-.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M14 3v4h4" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="8.5" cy="9.5" r="1.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M21 16l-5.5-5.5a2 2 0 00-2.8 0L4 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 000-3L18 6a2.1 2.1 0 00-3 0L4.5 16.5V20z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-warning" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M12 10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="ic-folder" viewBox="0 0 24 24"><path d="M3 7a1 1 0 011-1h5l2 2h9a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+</svg>
+
 <div class="layout">
 
   <!-- TOP NAVIGATION -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
-      <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
+      <button class="toggle-btn" id="toggleSidebar"><svg class="icon"><use href="#ic-menu"></use></svg></button>
       <span class="sb-logo">Abahizi</span>
     </div>
     <ul class="menu">
-      <li class="active" data-sec="dashboard">  <span class="ico">🏠</span><span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
-      <li data-sec="courses">     <span class="ico">📚</span><span class="lbl" data-i18n="nav.courses">Courses</span></li>
-      <li data-sec="assignments"> <span class="ico">📄</span><span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
-      <li data-sec="progress">    <span class="ico">📈</span><span class="lbl" data-i18n="nav.progress">Progress</span></li>
-      <li data-sec="resources">   <span class="ico">📖</span><span class="lbl" data-i18n="nav.resources">Resources</span></li>
-      <li data-sec="messages">    <span class="ico">✉️</span><span class="lbl" data-i18n="nav.messages">Messages</span></li>
-      <li data-sec="notifications"><span class="ico">🔔</span><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
-      <li data-sec="canvas">      <span class="ico">✏️</span><span class="lbl" data-i18n="nav.canvas">Virtual Notebook</span></li>
-      <li data-sec="settings">    <span class="ico">⚙️</span><span class="lbl" data-i18n="nav.settings">Settings</span></li>
+      <li class="active" data-sec="dashboard">  <span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
+      <li data-sec="courses">     <span class="lbl" data-i18n="nav.courses">Courses</span></li>
+      <li data-sec="assignments"> <span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
+      <li data-sec="progress">    <span class="lbl" data-i18n="nav.progress">Progress</span></li>
+      <li data-sec="resources">   <span class="lbl" data-i18n="nav.resources">Resources</span></li>
+      <li data-sec="messages">    <span class="lbl" data-i18n="nav.messages">Messages</span></li>
+      <li data-sec="notifications"><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
+      <li data-sec="canvas">      <span class="lbl" data-i18n="nav.canvas">Virtual Notebook</span></li>
     </ul>
     <div class="nav-right">
-      <div class="nav-search"><span>🔍</span><input type="text" placeholder="Search…" disabled></div>
+      <div class="nav-search"><svg class="icon"><use href="#ic-search"></use></svg><input type="text" placeholder="Search…" disabled></div>
       <div class="profile-trigger" onclick="document.getElementById('profileDropdown').classList.toggle('open')">
         <img src="../Assets/avatars/student-male avatar.avif" id="tbAvatar" class="tb-avatar" alt="">
         <span id="tbName" class="tb-name">—</span>
@@ -42,11 +67,12 @@
         </div>
         <div class="sb-foot">
           <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
-            <option value="en">🌐 English</option>
-            <option value="fr">🌐 French</option>
-            <option value="rw">🌐 Kinyarwanda</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="rw">Kinyarwanda</option>
           </select>
-          <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
+          <button class="logout-btn" onclick="goTo('settings');document.getElementById('profileDropdown').classList.remove('open')" data-i18n="nav.settings">Settings</button>
+          <button class="logout-btn" id="logoutBtn"><span data-i18n="nav.logout">Logout</span></button>
         </div>
       </div>
     </div>
@@ -61,14 +87,14 @@
     <!-- DASHBOARD -->
     <section class="sec active" id="sec-dashboard">
       <div class="welcome">
-        <h1 id="welcomeMsg" data-i18n="dashboard.welcome">Welcome back! 👋</h1>
+        <h1 id="welcomeMsg" data-i18n="dashboard.welcome">Welcome back!</h1>
         <p id="welcomeSub" data-i18n="dashboard.welcomeSub">Here's your academic overview for today.</p>
       </div>
       <div class="stat-cards">
-        <div class="stat blue" data-icon="📚"><div><h3 id="stCourses">0</h3><p data-i18n="dashboard.activeCourses">Active Courses</p></div></div>
-        <div class="stat green" data-icon="📄"><div><h3 id="stPending">0</h3><p data-i18n="dashboard.upcomingAssignments">Upcoming Assignments</p></div></div>
-        <div class="stat orange" data-icon="✅"><div><h3 id="stSubmitted">0</h3><p data-i18n="dashboard.submitted">Submitted</p></div></div>
-        <div class="stat purple" data-icon="🔔"><div><h3 id="stNotifs">0</h3><p data-i18n="dashboard.notifications">Notifications</p></div></div>
+        <div class="stat blue"><div><h3 id="stCourses">0</h3><p data-i18n="dashboard.activeCourses">Active Courses</p></div></div>
+        <div class="stat green"><div><h3 id="stPending">0</h3><p data-i18n="dashboard.upcomingAssignments">Upcoming Assignments</p></div></div>
+        <div class="stat orange"><div><h3 id="stSubmitted">0</h3><p data-i18n="dashboard.submitted">Submitted</p></div></div>
+        <div class="stat purple"><div><h3 id="stNotifs">0</h3><p data-i18n="dashboard.notifications">Notifications</p></div></div>
       </div>
 
       <div class="dash-section-head">
@@ -80,7 +106,7 @@
       <div class="dash-grid dash-grid-main">
         <div class="panel panel-wide">
           <div class="panel-head-row panel-clickable" onclick="goTo('assignments')">
-            <h3>Upcoming Assignments &amp; Tests</h3><span class="panel-arrow">→</span>
+            <h3>Upcoming Assignments &amp; Tests</h3>
           </div>
           <div class="dash-table-wrap">
             <table class="dash-table">
@@ -91,24 +117,24 @@
         </div>
         <div class="dash-side">
           <div class="panel gpa-panel panel-clickable" onclick="goTo('progress')">
-            <div class="gpa-panel-head"><span>Current Average</span><span class="gpa-icon">🎓</span></div>
+            <div class="gpa-panel-head"><span>Current Average</span></div>
             <div class="gpa-num" id="dAvgScore">—</div>
             <p class="gpa-sub" id="dAvgSub">Average across your subjects</p>
           </div>
           <div class="panel panel-clickable" onclick="openStudyTimeModal()">
-            <div class="panel-head-row" style="padding:0 0 4px"><h3>Study Time (This Week)</h3><span class="panel-arrow">→</span></div>
+            <div class="panel-head-row" style="padding:0 0 4px"><h3>Study Time (This Week)</h3></div>
             <div class="study-chart" id="dStudyChart"></div>
             <p class="study-note" id="dStudyNote">Loading…</p>
           </div>
           <div class="panel panel-clickable" onclick="goTo('notifications')">
-            <div class="panel-head-row" style="padding:0 0 4px"><h3>🔔 Notifications</h3><span class="panel-arrow">→</span></div>
+            <div class="panel-head-row" style="padding:0 0 4px"><h3>Notifications</h3></div>
             <ul class="plist" id="dNotifs"><li class="empty">Loading…</li></ul>
           </div>
         </div>
       </div>
 
       <div class="panel" style="margin-top:16px">
-        <h3>📖 Quick Resources</h3>
+        <h3>Quick Resources</h3>
         <div class="qr-grid" id="dResources"></div>
       </div>
     </section>
@@ -123,10 +149,10 @@
         <aside class="mc-sidebar">
           <div class="mc-nav-label">Navigation</div>
           <div class="tabs mc-nav">
-            <button class="tab active" data-tab="enrolled"><span class="mc-nav-ico">🎓</span> <span data-i18n="courses.enrolled">Enrolled Courses</span></button>
-            <button class="tab" data-tab="browse"><span class="mc-nav-ico">🧭</span> <span data-i18n="courses.browse">Browse Catalog</span></button>
-            <button class="tab" data-tab="public"><span class="mc-nav-ico">🌐</span> <span data-i18n="courses.public">Public Courses</span></button>
-            <button class="tab" data-tab="invitations"><span class="mc-nav-ico">✉️</span> <span data-i18n="courses.invitations">Invitations</span> <span class="badge" id="inviteBadge" style="display:none"></span></button>
+            <button class="tab active" data-tab="enrolled"><span data-i18n="courses.enrolled">Enrolled Courses</span></button>
+            <button class="tab" data-tab="browse"><span data-i18n="courses.browse">Browse Catalog</span></button>
+            <button class="tab" data-tab="public"><span data-i18n="courses.public">Public Courses</span></button>
+            <button class="tab" data-tab="invitations"><span data-i18n="courses.invitations">Invitations</span> <span class="badge" id="inviteBadge" style="display:none"></span></button>
           </div>
           <div class="mc-filters hidden" id="mcFilters">
             <div class="mc-filters-head"><span>Filters</span><a onclick="resetCourseFilters()">Reset</a></div>
@@ -146,7 +172,7 @@
             <div class="cgrid" id="browseGrid"><p class="empty" data-i18n="common.loading">Loading…</p></div>
             <div class="join-code-banner">
               <div>
-                <h4>🔑 <span data-i18n="courses.joinPrivate">Join a Private Course</span></h4>
+                <h4><span data-i18n="courses.joinPrivate">Join a Private Course</span></h4>
                 <p data-i18n="courses.joinPrivateSub">Have an invite code? Enter it here to gain access.</p>
               </div>
               <div class="join-code-row">
@@ -176,15 +202,15 @@
           <nav class="cd-sidenav" id="cdTabBar">
             <div class="cd-course-label" id="cdSideTitle">Course</div>
             <div class="cd-nav-list">
-              <button class="cdtab active" data-tab="home"          data-color="home">        <span class="cdtab-icon">🏠</span><span class="cdtab-lbl" data-i18n="cd.home">Home</span></button>
-              <button class="cdtab"        data-tab="syllabus"      data-color="syllabus">    <span class="cdtab-icon">📅</span><span class="cdtab-lbl" data-i18n="cd.syllabus">Syllabus</span></button>
-              <button class="cdtab"        data-tab="modules"       data-color="modules">     <span class="cdtab-icon">📘</span><span class="cdtab-lbl" data-i18n="cd.modules">Modules</span></button>
-              <button class="cdtab"        data-tab="assignments"   data-color="assignments"> <span class="cdtab-icon">📝</span><span class="cdtab-lbl" data-i18n="cd.assignments">Assignments</span></button>
-              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-icon">📊</span><span class="cdtab-lbl" data-i18n="cd.grades">Grades</span><span class="cdtab-badge" id="cdBadgeGrades"></span></button>
-              <button class="cdtab"        data-tab="people"        data-color="people">      <span class="cdtab-icon">👥</span><span class="cdtab-lbl" data-i18n="cd.people">People</span></button>
-              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-icon">💬</span><span class="cdtab-lbl" data-i18n="cd.discussions">Discussions</span><span class="cdtab-badge" id="cdBadgeDiscussions"></span></button>
-              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-icon">📢</span><span class="cdtab-lbl" data-i18n="cd.announcements">Announcements</span><span class="cdtab-badge" id="cdBadgeAnnouncements"></span></button>
-              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-icon">✉️</span><span class="cdtab-lbl" data-i18n="cd.courseChat">Course Chat</span><span class="cdtab-badge" id="cdBadgeChats"></span></button>
+              <button class="cdtab active" data-tab="home"          data-color="home">        <span class="cdtab-lbl" data-i18n="cd.home">Home</span></button>
+              <button class="cdtab"        data-tab="syllabus"      data-color="syllabus">    <span class="cdtab-lbl" data-i18n="cd.syllabus">Syllabus</span></button>
+              <button class="cdtab"        data-tab="modules"       data-color="modules">     <span class="cdtab-lbl" data-i18n="cd.modules">Modules</span></button>
+              <button class="cdtab"        data-tab="assignments"   data-color="assignments"> <span class="cdtab-lbl" data-i18n="cd.assignments">Assignments</span></button>
+              <button class="cdtab"        data-tab="grades"        data-color="grades">      <span class="cdtab-lbl" data-i18n="cd.grades">Grades</span><span class="cdtab-badge" id="cdBadgeGrades"></span></button>
+              <button class="cdtab"        data-tab="people"        data-color="people">      <span class="cdtab-lbl" data-i18n="cd.people">People</span></button>
+              <button class="cdtab"        data-tab="discussions"   data-color="discussions"> <span class="cdtab-lbl" data-i18n="cd.discussions">Discussions</span><span class="cdtab-badge" id="cdBadgeDiscussions"></span></button>
+              <button class="cdtab"        data-tab="announcements" data-color="announcements"><span class="cdtab-lbl" data-i18n="cd.announcements">Announcements</span><span class="cdtab-badge" id="cdBadgeAnnouncements"></span></button>
+              <button class="cdtab"        data-tab="chats"         data-color="chats">       <span class="cdtab-lbl" data-i18n="cd.courseChat">Course Chat</span><span class="cdtab-badge" id="cdBadgeChats"></span></button>
             </div>
           </nav>
 
@@ -201,7 +227,7 @@
             <!-- ANNOUNCEMENTS -->
             <div class="cdpane" id="cdpane-announcements">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>📢 <span data-i18n="cd.announcements">Announcements</span></h3></div>
+                <div class="cdpane-header"><h3><span data-i18n="cd.announcements">Announcements</span></h3></div>
                 <div id="cdAnnList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
               </div>
             </div>
@@ -223,7 +249,7 @@
             <div class="cdpane" id="cdpane-discussions">
               <div class="cdpane-inner">
                 <div class="cdpane-header">
-                  <h3>💬 <span data-i18n="cd.discussions">Discussions</span></h3>
+                  <h3><span data-i18n="cd.discussions">Discussions</span></h3>
                   <button class="btn-sm" onclick="document.getElementById('discNewForm').classList.toggle('hidden')" data-i18n="cd.newDiscussion">+ New Discussion</button>
                 </div>
                 <div class="disc-new hidden" id="discNewForm">
@@ -241,7 +267,7 @@
             <!-- GRADES -->
             <div class="cdpane" id="cdpane-grades">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>📊 <span data-i18n="cd.grades">Grades</span></h3></div>
+                <div class="cdpane-header"><h3><span data-i18n="cd.grades">Grades</span></h3></div>
                 <div id="cdGradeList"><p class="empty" data-i18n="common.loading">Loading…</p></div>
               </div>
             </div>
@@ -249,11 +275,11 @@
             <!-- SYLLABUS -->
             <div class="cdpane" id="cdpane-syllabus">
               <div class="cdpane-inner" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
-                <div class="cdpane-header" style="padding:20px 28px 16px;border-radius:12px 12px 0 0;flex-shrink:0"><h3>📅 <span data-i18n="cd.syllabus">Syllabus &amp; Books</span></h3></div>
+                <div class="cdpane-header" style="padding:20px 28px 16px;border-radius:12px 12px 0 0;flex-shrink:0"><h3><span data-i18n="cd.syllabus">Syllabus &amp; Books</span></h3></div>
                 <div class="syl-split">
                   <div class="syl-list" id="cdSylList"><p class="empty" style="padding:16px" data-i18n="common.loading">Loading…</p></div>
                   <div class="syl-detail" id="cdSylDetail" style="display:flex;flex-direction:column">
-                    <div class="syl-detail-empty" data-i18n="cd.selectWeekOrBook">← Select a week or book</div>
+                    <div class="syl-detail-empty" data-i18n="cd.selectWeekOrBook">Select a week or book</div>
                   </div>
                 </div>
               </div>
@@ -262,7 +288,7 @@
             <!-- MODULES -->
             <div class="cdpane" id="cdpane-modules">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>📘 <span data-i18n="cd.modules">Modules</span></h3></div>
+                <div class="cdpane-header"><h3><span data-i18n="cd.modules">Modules</span></h3></div>
                 <ul class="module-list" id="studentModuleList"></ul>
               </div>
             </div>
@@ -270,7 +296,7 @@
             <!-- PEOPLE & GROUPS -->
             <div class="cdpane" id="cdpane-people">
               <div class="cdpane-inner">
-                <div class="cdpane-header"><h3>👥 <span data-i18n="cd.peopleGroups">People &amp; Groups</span></h3></div>
+                <div class="cdpane-header"><h3><span data-i18n="cd.peopleGroups">People &amp; Groups</span></h3></div>
                 <div class="people-subtabs">
                   <button class="ptab active" data-ptab="members" onclick="switchPeopleTab('members')" data-i18n="cd.members">Members</button>
                   <button class="ptab" data-ptab="groups" onclick="switchPeopleTab('groups')" data-i18n="cd.groups">Groups</button>
@@ -287,7 +313,7 @@
             <!-- COURSE CHAT -->
             <div class="cdpane" id="cdpane-chats">
               <div class="cdpane-inner cd-chat-panel">
-                <div class="cdpane-header" style="flex-shrink:0"><h3>✉️ <span data-i18n="cd.courseChat">Course Chat</span></h3></div>
+                <div class="cdpane-header" style="flex-shrink:0"><h3><span data-i18n="cd.courseChat">Course Chat</span></h3></div>
                 <div id="cdChatMessages" class="cd-chat-messages"></div>
                 <div class="cd-chat-input">
                   <textarea id="cdChatText" placeholder="Write a message… (Enter to post, Shift+Enter for new line)" rows="2" data-i18n-placeholder="cd.writeMessagePlaceholder"></textarea>
@@ -332,18 +358,18 @@
 
       <!-- Assignment Detail Panel -->
       <div class="assignment-detail-panel hidden" id="assignmentDetailPanel">
-        <button class="back-btn" onclick="closeAssignmentDetail()" data-i18n="cd.backToAssignments">← Back to Assignments</button>
+        <button class="back-btn" onclick="closeAssignmentDetail()" data-i18n="cd.backToAssignments">Back to Assignments</button>
         <div id="assignmentDetailContent"></div>
         <div id="quizContainer" style="display:none"></div>
         <div class="adetail-grid" id="adetailGrid">
           <div class="adetail-submit">
-            <h3 data-i18n="cd.yourSubmission">📤 Your Submission</h3>
+            <h3 data-i18n="cd.yourSubmission">Your Submission</h3>
             <div id="existingSubmission" style="display:none" class="existing-sub"></div>
             <div id="submitForm">
               <div class="sub-type-row">
-                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')"><span class="stb-icon">📝</span><span data-i18n="cd.textTab">Text Entry</span></button>
-                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')"><span class="stb-icon">🔗</span><span data-i18n="cd.linkDriveTab">Website URL</span></button>
-                <button class="sub-type-btn" data-type="file" onclick="selectSubType(this,'file')"><span class="stb-icon">📎</span><span data-i18n="cd.uploadPdfTab">File Upload</span></button>
+                <button class="sub-type-btn active" data-type="text" onclick="selectSubType(this,'text')"><span data-i18n="cd.textTab">Text Entry</span></button>
+                <button class="sub-type-btn" data-type="link" onclick="selectSubType(this,'link')"><span data-i18n="cd.linkDriveTab">Website URL</span></button>
+                <button class="sub-type-btn" data-type="file" onclick="selectSubType(this,'file')"><span data-i18n="cd.uploadPdfTab">File Upload</span></button>
               </div>
               <div id="sub-text-area" class="sub-area">
                 <label data-i18n="cd.yourAnswer">Your Answer</label>
@@ -358,8 +384,7 @@
                 <div class="file-drop">
                   <input type="file" id="submitFile" class="file-picker-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.rtf,.odt,.jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.mp3,.wav,.m4a,.ogg,.aac,.mp4,.mov,.avi,.webm,.mkv" onchange="updateFileName('submitFile','submitFileName')">
                   <label for="submitFile" class="file-drop-inner">
-                    <span class="file-drop-icon">📤</span>
-                    <span class="file-drop-text">Click to choose a file</span>
+                                        <span class="file-drop-text">Click to choose a file</span>
                     <span class="file-picker-name" id="submitFileName">No file chosen</span>
                   </label>
                 </div>
@@ -368,7 +393,7 @@
             </div>
           </div>
           <div class="adetail-resources">
-            <h3 data-i18n="cd.courseResources">📖 Course Resources</h3>
+            <h3 data-i18n="cd.courseResources">Course Resources</h3>
             <div id="courseResourcesForAssignment"><p class="empty">Loading resources…</p></div>
           </div>
         </div>
@@ -391,10 +416,10 @@
         <aside class="mc-sidebar">
           <div class="mc-nav-label" data-i18n="resources.browse">Browse</div>
           <div class="tabs mc-nav">
-            <button class="tab active" data-tab="subjects"><span class="mc-nav-ico">🧭</span> <span data-i18n="resources.browseBySubject">Browse by Subject</span></button>
-            <button class="tab" data-tab="textbooks"><span class="mc-nav-ico">📘</span> <span data-i18n="resources.textbooks">Textbooks</span></button>
-            <button class="tab" data-tab="pastpapers"><span class="mc-nav-ico">📝</span> <span data-i18n="resources.pastPapers">Past Papers</span></button>
-            <button class="tab" data-tab="uploaded"><span class="mc-nav-ico">📤</span> <span data-i18n="resources.uploaded">Uploaded</span></button>
+            <button class="tab active" data-tab="subjects"><span data-i18n="resources.browseBySubject">Browse by Subject</span></button>
+            <button class="tab" data-tab="textbooks"><span data-i18n="resources.textbooks">Textbooks</span></button>
+            <button class="tab" data-tab="pastpapers"><span data-i18n="resources.pastPapers">Past Papers</span></button>
+            <button class="tab" data-tab="uploaded"><span data-i18n="resources.uploaded">Uploaded</span></button>
           </div>
           <div class="mc-filters" id="resFilters">
             <div class="mc-filters-head"><span data-i18n="common.filters">Filters</span><a onclick="resetResourceFilters()" data-i18n="common.reset">Reset</a></div>
@@ -441,18 +466,17 @@
         <!-- Right: conversation thread -->
         <div class="chat-main" id="chatMain">
           <div class="chat-empty-state" id="chatEmptyState">
-            <div style="font-size:48px;margin-bottom:12px">💬</div>
             <p>Select a conversation or start a new one</p>
           </div>
           <div class="chat-thread hidden" id="chatThread">
             <div class="chat-thread-head" id="chatThreadHead">
-              <button class="btn-back-chat" onclick="closeThread()">←</button>
+              <button class="btn-back-chat" onclick="closeThread()"><svg class="icon"><use href="#ic-chevron-left"></use></svg></button>
               <div class="chat-partner-info" id="chatPartnerInfo"></div>
             </div>
             <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-bar">
               <textarea id="chatInput" rows="1" placeholder="Type a message…" onkeydown="chatKeyDown(event)"></textarea>
-              <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+              <button class="chat-send-btn" onclick="sendChatMessage()"><svg class="icon"><use href="#ic-send"></use></svg></button>
             </div>
           </div>
         </div>
@@ -462,7 +486,7 @@
         <div class="modal" style="max-width:420px">
           <div class="modal-head">
             <h3>New Message</h3>
-            <button class="modal-close" onclick="closeModal('modalNewChat')">✕</button>
+            <button class="modal-close" onclick="closeModal('modalNewChat')"><svg class="icon"><use href="#ic-close"></use></svg></button>
           </div>
           <div class="modal-body">
             <div class="form-row">
@@ -486,82 +510,109 @@
 
     <!-- CANVAS -->
     <section class="sec" id="sec-canvas">
-      <div class="canvas-head">
-        <h2>✏️ <span data-i18n="title.canvas">Virtual Notebook</span></h2>
-        <div class="canvas-btns">
-          <button class="btn-p" onclick="createBook()">+ New Book</button>
-          <button class="btn-s" onclick="saveNote()">💾 <span data-i18n="common.save">Save</span></button>
-          <span id="saveIndicator" style="color:#27ae60;font-size:13px;margin-left:8px;opacity:0;transition:opacity .5s"></span>
-        </div>
-      </div>
-      <div class="canvas-layout">
-        <!-- Left: books list -->
-        <div class="canvas-books">
-          <h4>Books</h4>
-          <ul id="booksList"></ul>
-        </div>
-        <!-- Right: page editor -->
-        <div class="canvas-editor">
-          <!-- Page nav -->
-          <div class="page-nav" id="pageNav">
-            <button class="pnav-btn" onclick="prevPage()" id="btnPrevPage">&#8592;</button>
-            <span id="pageIndicator">— / —</span>
-            <button class="pnav-btn" onclick="nextPage()" id="btnNextPage">&#8594;</button>
-            <button class="btn-tiny danger" onclick="deletePage()" title="Delete this page" id="btnDeletePage">🗑 Delete page</button>
-            <button class="btn-tiny" onclick="addPageToBook()" title="Add page" id="btnAddPage">+ Add page</button>
+      <div class="nb-layout">
+        <!-- Left: notebooks & pages -->
+        <aside class="nb-sidebar">
+          <div class="nb-sidebar-head">
+            <h3>Notebooks</h3>
+            <button class="nb-icon-btn" onclick="createBook()" title="New notebook"><svg class="icon-sm"><use href="#ic-plus"></use></svg></button>
           </div>
-          <input type="text" id="noteTitle" class="note-title" placeholder="Page title…">
-          <!-- Symbol bar with categories -->
-          <div class="sym-bar">
-            <span class="sym-cat">Greek</span>
-            <span title="Pi"      onclick="ins('π')">π</span><span title="Sigma"  onclick="ins('Σ')">Σ</span>
-            <span title="Delta"   onclick="ins('Δ')">Δ</span><span title="Alpha"  onclick="ins('α')">α</span>
-            <span title="Beta"    onclick="ins('β')">β</span><span title="Theta"  onclick="ins('θ')">θ</span>
-            <span title="Omega"   onclick="ins('Ω')">Ω</span><span title="Lambda" onclick="ins('λ')">λ</span>
-            <span title="Mu"      onclick="ins('μ')">μ</span><span title="Phi"    onclick="ins('φ')">φ</span>
-            <span title="Gamma"   onclick="ins('γ')">γ</span><span title="Eta"    onclick="ins('η')">η</span>
-            <span title="Kappa"   onclick="ins('κ')">κ</span><span title="Nu"     onclick="ins('ν')">ν</span>
-            <span title="Rho"     onclick="ins('ρ')">ρ</span><span title="Tau"    onclick="ins('τ')">τ</span>
-            <span title="Psi"     onclick="ins('ψ')">ψ</span><span title="Chi"    onclick="ins('χ')">χ</span>
-            <span title="Epsilon" onclick="ins('ε')">ε</span><span title="Zeta"   onclick="ins('ζ')">ζ</span>
-            <span class="sym-sep"></span>
-            <span class="sym-cat">Math</span>
-            <span title="Infinity"    onclick="ins('∞')">∞</span><span title="Sqrt"   onclick="ins('√')">√</span>
-            <span title="±"           onclick="ins('±')">±</span><span title="≈"       onclick="ins('≈')">≈</span>
-            <span title="≠"           onclick="ins('≠')">≠</span><span title="≤"       onclick="ins('≤')">≤</span>
-            <span title="≥"           onclick="ins('≥')">≥</span><span title="×"       onclick="ins('×')">×</span>
-            <span title="÷"           onclick="ins('÷')">÷</span><span title="²"       onclick="ins('²')">²</span>
-            <span title="³"           onclick="ins('³')">³</span><span title="∑"       onclick="ins('∑')">∑</span>
-            <span title="∏"           onclick="ins('∏')">∏</span><span title="∫"       onclick="ins('∫')">∫</span>
-            <span title="∂"           onclick="ins('∂')">∂</span><span title="∇"       onclick="ins('∇')">∇</span>
-            <span title="∈"           onclick="ins('∈')">∈</span><span title="∉"       onclick="ins('∉')">∉</span>
-            <span title="⊂"           onclick="ins('⊂')">⊂</span><span title="⊃"       onclick="ins('⊃')">⊃</span>
-            <span title="∪"           onclick="ins('∪')">∪</span><span title="∩"       onclick="ins('∩')">∩</span>
-            <span title="∀"           onclick="ins('∀')">∀</span><span title="∃"       onclick="ins('∃')">∃</span>
-            <span title="⇒"           onclick="ins('⇒')">⇒</span><span title="⟺"       onclick="ins('⟺')">⟺</span>
-            <span class="sym-sep"></span>
-            <span class="sym-cat">Physics</span>
-            <span title="Degree"  onclick="ins('°')">°</span><span title="Angstrom" onclick="ins('Å')">Å</span>
-            <span title="→"       onclick="ins('→')">→</span><span title="←"        onclick="ins('←')">←</span>
-            <span title="↑"       onclick="ins('↑')">↑</span><span title="↓"        onclick="ins('↓')">↓</span>
-            <span title="⇌"       onclick="ins('⇌')">⇌</span><span title="⊕"        onclick="ins('⊕')">⊕</span>
-            <span title="⊗"       onclick="ins('⊗')">⊗</span><span title="ħ"        onclick="ins('ħ')">ħ</span>
-            <span title="μ₀"      onclick="ins('μ₀')">μ₀</span><span title="ε₀"     onclick="ins('ε₀')">ε₀</span>
-            <span class="sym-sep"></span>
-            <span class="sym-cat">Chem</span>
-            <span title="₀" onclick="ins('₀')">₀</span><span title="₁" onclick="ins('₁')">₁</span>
-            <span title="₂" onclick="ins('₂')">₂</span><span title="₃" onclick="ins('₃')">₃</span>
-            <span title="₄" onclick="ins('₄')">₄</span><span title="₅" onclick="ins('₅')">₅</span>
-            <span title="₆" onclick="ins('₆')">₆</span><span title="₇" onclick="ins('₇')">₇</span>
-            <span title="₈" onclick="ins('₈')">₈</span><span title="₉" onclick="ins('₉')">₉</span>
-            <span title="⁺" onclick="ins('⁺')">⁺</span><span title="⁻" onclick="ins('⁻')">⁻</span>
-            <span title="→" onclick="ins(' → ')"> → </span>
-            <span title="⇌" onclick="ins(' ⇌ ')"> ⇌ </span>
-            <span title="Δ"  onclick="ins('Δ')">Δ</span>
+          <ul id="booksList" class="nb-books"></ul>
+        </aside>
+        <!-- Right: editor -->
+        <div class="nb-editor-wrap">
+          <div class="nb-toolbar">
+            <div class="nb-toolbar-group">
+              <button class="nb-tb-btn" onclick="execFormat('bold')" title="Bold"><strong>B</strong></button>
+              <button class="nb-tb-btn" onclick="execFormat('italic')" title="Italic"><em>I</em></button>
+              <button class="nb-tb-btn" onclick="execFormat('underline')" title="Underline"><u>U</u></button>
+            </div>
+            <select class="nb-style-sel" onchange="execFormat('formatBlock', this.value); this.selectedIndex=0">
+              <option value="" selected disabled>Normal Text</option>
+              <option value="p">Normal Text</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+            </select>
+            <div class="nb-toolbar-group">
+              <button class="nb-tb-btn" onclick="execFormat('insertUnorderedList')" title="Bullet list"><svg class="icon-sm"><use href="#ic-menu"></use></svg></button>
+              <button class="nb-tb-btn" onclick="execFormat('insertOrderedList')" title="Numbered list">1.</button>
+            </div>
+            <div class="nb-toolbar-group">
+              <button class="nb-tb-btn" onclick="insertNoteImage()" title="Insert image"><svg class="icon-sm"><use href="#ic-image"></use></svg></button>
+              <button class="nb-tb-btn" onclick="insertNoteLink()" title="Insert link"><svg class="icon-sm"><use href="#ic-link"></use></svg></button>
+            </div>
+            <div class="nb-toolbar-spacer"></div>
+            <span id="saveIndicator" class="nb-save-indicator"></span>
+            <button class="nb-save-btn" onclick="saveNote()"><svg class="icon-sm"><use href="#ic-save"></use></svg> <span data-i18n="common.save">Save</span></button>
           </div>
-          <textarea id="noteContent" class="note-body" placeholder="Start writing…"></textarea>
+          <div class="nb-page-card">
+            <div class="nb-title-row">
+              <input type="text" id="noteTitle" class="note-title" placeholder="Page title…">
+              <button class="nb-icon-btn" onclick="deletePage()" title="Delete this page" id="btnDeletePage"><svg class="icon-sm"><use href="#ic-trash"></use></svg></button>
+            </div>
+            <div id="noteContent" class="note-body" contenteditable="true" data-placeholder="Start writing…"></div>
+          </div>
           <input type="hidden" id="currentNoteId">
           <input type="hidden" id="currentBookId">
+
+          <!-- Floating symbols panel -->
+          <div class="nb-symbols" id="nbSymbols">
+            <div class="nb-symbols-head" onclick="document.getElementById('nbSymbols').classList.toggle('collapsed')">
+              <span>Symbols</span>
+              <svg class="icon-sm nb-symbols-chevron"><use href="#ic-chevron-left"></use></svg>
+            </div>
+            <div class="nb-symbols-body">
+              <div class="nb-sym-tabs">
+                <button class="nb-sym-tab active" data-symcat="greek" onclick="setSymCat('greek')">Greek</button>
+                <button class="nb-sym-tab" data-symcat="math" onclick="setSymCat('math')">Math</button>
+                <button class="nb-sym-tab" data-symcat="physics" onclick="setSymCat('physics')">Physics</button>
+                <button class="nb-sym-tab" data-symcat="chem" onclick="setSymCat('chem')">Chem</button>
+              </div>
+              <div class="nb-sym-grid" id="symGreek">
+                <span title="Pi" onclick="ins('π')">π</span><span title="Sigma" onclick="ins('Σ')">Σ</span>
+                <span title="Delta" onclick="ins('Δ')">Δ</span><span title="Alpha" onclick="ins('α')">α</span>
+                <span title="Beta" onclick="ins('β')">β</span><span title="Theta" onclick="ins('θ')">θ</span>
+                <span title="Omega" onclick="ins('Ω')">Ω</span><span title="Lambda" onclick="ins('λ')">λ</span>
+                <span title="Mu" onclick="ins('μ')">μ</span><span title="Phi" onclick="ins('φ')">φ</span>
+                <span title="Gamma" onclick="ins('γ')">γ</span><span title="Eta" onclick="ins('η')">η</span>
+                <span title="Kappa" onclick="ins('κ')">κ</span><span title="Nu" onclick="ins('ν')">ν</span>
+                <span title="Rho" onclick="ins('ρ')">ρ</span><span title="Tau" onclick="ins('τ')">τ</span>
+                <span title="Psi" onclick="ins('ψ')">ψ</span><span title="Chi" onclick="ins('χ')">χ</span>
+                <span title="Epsilon" onclick="ins('ε')">ε</span><span title="Zeta" onclick="ins('ζ')">ζ</span>
+              </div>
+              <div class="nb-sym-grid hidden" id="symMath">
+                <span title="Infinity" onclick="ins('∞')">∞</span><span title="Sqrt" onclick="ins('√')">√</span>
+                <span title="±" onclick="ins('±')">±</span><span title="≈" onclick="ins('≈')">≈</span>
+                <span title="≠" onclick="ins('≠')">≠</span><span title="≤" onclick="ins('≤')">≤</span>
+                <span title="≥" onclick="ins('≥')">≥</span><span title="×" onclick="ins('×')">×</span>
+                <span title="÷" onclick="ins('÷')">÷</span><span title="²" onclick="ins('²')">²</span>
+                <span title="³" onclick="ins('³')">³</span><span title="∑" onclick="ins('∑')">∑</span>
+                <span title="∏" onclick="ins('∏')">∏</span><span title="∫" onclick="ins('∫')">∫</span>
+                <span title="∂" onclick="ins('∂')">∂</span><span title="∇" onclick="ins('∇')">∇</span>
+                <span title="∈" onclick="ins('∈')">∈</span><span title="∉" onclick="ins('∉')">∉</span>
+                <span title="⊂" onclick="ins('⊂')">⊂</span><span title="⊃" onclick="ins('⊃')">⊃</span>
+                <span title="∪" onclick="ins('∪')">∪</span><span title="∩" onclick="ins('∩')">∩</span>
+                <span title="∀" onclick="ins('∀')">∀</span><span title="∃" onclick="ins('∃')">∃</span>
+                <span title="⇒" onclick="ins('⇒')">⇒</span><span title="⟺" onclick="ins('⟺')">⟺</span>
+              </div>
+              <div class="nb-sym-grid hidden" id="symPhysics">
+                <span title="Degree" onclick="ins('°')">°</span><span title="Angstrom" onclick="ins('Å')">Å</span>
+                <span title="→" onclick="ins('→')">→</span><span title="←" onclick="ins('←')">←</span>
+                <span title="↑" onclick="ins('↑')">↑</span><span title="↓" onclick="ins('↓')">↓</span>
+                <span title="⇌" onclick="ins('⇌')">⇌</span><span title="⊕" onclick="ins('⊕')">⊕</span>
+                <span title="⊗" onclick="ins('⊗')">⊗</span><span title="ħ" onclick="ins('ħ')">ħ</span>
+                <span title="μ₀" onclick="ins('μ₀')">μ₀</span><span title="ε₀" onclick="ins('ε₀')">ε₀</span>
+              </div>
+              <div class="nb-sym-grid hidden" id="symChem">
+                <span title="₀" onclick="ins('₀')">₀</span><span title="₁" onclick="ins('₁')">₁</span>
+                <span title="₂" onclick="ins('₂')">₂</span><span title="₃" onclick="ins('₃')">₃</span>
+                <span title="₄" onclick="ins('₄')">₄</span><span title="₅" onclick="ins('₅')">₅</span>
+                <span title="₆" onclick="ins('₆')">₆</span><span title="₇" onclick="ins('₇')">₇</span>
+                <span title="₈" onclick="ins('₈')">₈</span><span title="₉" onclick="ins('₉')">₉</span>
+                <span title="⁺" onclick="ins('⁺')">⁺</span><span title="⁻" onclick="ins('⁻')">⁻</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -575,8 +626,16 @@
           <form id="profileForm">
             <label data-i18n="common.firstName">First Name</label><input type="text" id="sFirst">
             <label data-i18n="common.lastName">Last Name</label><input type="text" id="sLast">
-            <label data-i18n="common.school">School</label><input type="text" id="sSchool">
-            <label data-i18n="common.grade">Grade</label><input type="text" id="sGrade">
+            <label><span data-i18n="common.school">School</span> <span style="font-weight:normal;color:#999">(if currently studying)</span></label><input type="text" id="sSchool">
+            <label data-i18n="common.grade">Grade Level</label><input type="text" id="sGrade">
+            <label>Country</label><input type="text" id="sCountry" list="sCountryList" autocomplete="off">
+            <datalist id="sCountryList"></datalist>
+            <label>City</label><input type="text" id="sCity">
+            <label>Nationality</label><input type="text" id="sNationality">
+            <label>Languages Spoken</label>
+            <div id="sLanguages"></div>
+            <label>Goals</label>
+            <div id="sGoals"></div>
             <label data-i18n="common.bio">Bio</label><textarea id="sBio" rows="3"></textarea>
             <button type="submit" class="btn-p" style="margin-top:14px" data-i18n="common.saveChanges">Save Changes</button>
           </form>
@@ -605,7 +664,7 @@
             <label data-i18n="common.confirmPassword">Confirm Password</label>
             <input type="password" id="pwConfirm" placeholder="Repeat new password">
             <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn-s" onclick="resetPwSteps()">← <span data-i18n="common.back">Back</span></button>
+              <button class="btn-s" onclick="resetPwSteps()"><span data-i18n="common.back">Back</span></button>
               <button class="btn-p" style="flex:1" onclick="verifyOTP()">Update Password</button>
             </div>
             <p class="form-msg" id="pwMsg2"></p>
@@ -631,8 +690,8 @@
     <div class="modal-head">
       <h3 id="pdfViewerTitle">Document</h3>
       <div style="display:flex;gap:8px;align-items:center">
-        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">⬇ <span data-i18n="common.download">Download</span></a>
-        <button class="modal-close" onclick="closeModal('modalPdfViewer')">✕</button>
+        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline"><span data-i18n="common.download">Download</span></a>
+        <button class="modal-close" onclick="closeModal('modalPdfViewer')"><svg class="icon"><use href="#ic-close"></use></svg></button>
       </div>
     </div>
     <iframe id="pdfViewerFrame" src="" style="flex:1;border:none;width:100%"></iframe>
@@ -644,7 +703,7 @@
   <div class="modal" style="max-width:480px">
     <div class="modal-head">
       <h3 id="notifDetailTitle">Notification</h3>
-      <button class="modal-close" onclick="closeModal('modalNotifDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalNotifDetail')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <p id="notifDetailMsg" style="line-height:1.6;color:#333"></p>
@@ -659,7 +718,7 @@
   <div class="modal" style="max-width:640px">
     <div class="modal-head">
       <h3>Study Time</h3>
-      <button class="modal-close" onclick="closeModal('modalStudyTime')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalStudyTime')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <div class="st-period-row">
@@ -686,7 +745,7 @@
   <div class="modal pd-modal-box" style="width:560px">
     <div class="modal-head">
       <h3 id="pdTitle">Subject</h3>
-      <button class="modal-close" onclick="closeModal('modalProgressDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalProgressDetail')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body" id="pdBody"><p class="empty">Loading…</p></div>
   </div>
@@ -694,7 +753,8 @@
 
 <script src="../js/api.js?v=3"></script>
 <script src="../js/i18n.js?v=5"></script>
-<script src="../js/subjectThemes.js?v=1"></script>
-<script src="student.js?v=23"></script>
+<script src="../js/subjectThemes.js?v=2"></script>
+<script src="../js/multiPicker.js?v=1"></script>
+<script src="student.js?v=27"></script>
 </body>
 </html>

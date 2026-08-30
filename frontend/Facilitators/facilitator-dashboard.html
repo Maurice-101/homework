@@ -4,31 +4,53 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Facilitator Dashboard – Abahizi</title>
-<link rel="stylesheet" href="facilitator.css?v=18">
+<link rel="stylesheet" href="facilitator.css?v=21">
 </head>
 <body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-send" viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8-16-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M5 7h14M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-8 0v12a1 1 0 001 1h6a1 1 0 001-1V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-link" viewBox="0 0 24 24"><path d="M9 15l6-6M8 12l-2.5 2.5a3.5 3.5 0 004.95 4.95L13 17m3-5l2.5-2.5a3.5 3.5 0 00-4.95-4.95L11 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-save" viewBox="0 0 24 24"><path d="M5 5h11l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M8 5v4h7V5M8 14h8v6H8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+  <symbol id="ic-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 4.2A10.8 10.8 0 0112 4c6.5 0 10 7 10 7a17.9 17.9 0 01-3.1 4.1M6.6 6.6C4 8.3 2 12 2 12s3.5 7 10 7c1.4 0 2.7-.3 3.9-.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M14 3v4h4" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="8.5" cy="9.5" r="1.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M21 16l-5.5-5.5a2 2 0 00-2.8 0L4 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 000-3L18 6a2.1 2.1 0 00-3 0L4.5 16.5V20z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="ic-warning" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/><path d="M12 10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></symbol>
+</svg>
+
 <div class="layout">
 
   <!-- TOP NAVIGATION -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
-      <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
+      <button class="toggle-btn" id="toggleSidebar"><svg class="icon"><use href="#ic-menu"></use></svg></button>
       <span class="sb-logo">Abahizi</span>
     </div>
     <ul class="menu">
-      <li class="active" data-sec="dashboard">    <span class="ico">🏠</span><span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
-      <li data-sec="subjects">                    <span class="ico">📚</span><span class="lbl" data-i18n="nav.subjects">My Subjects</span></li>
-      <li data-sec="assignments">                 <span class="ico">📄</span><span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
-      <li data-sec="students">                    <span class="ico">👥</span><span class="lbl" data-i18n="nav.students">My Students</span></li>
-      <li data-sec="progress">                    <span class="ico">📈</span><span class="lbl" data-i18n="nav.progress">Progress</span></li>
-      <li data-sec="resources">                   <span class="ico">📖</span><span class="lbl" data-i18n="nav.resources">Resources</span></li>
-      <li data-sec="messages">                    <span class="ico">✉️</span><span class="lbl" data-i18n="nav.messages">Messages</span></li>
-      <li data-sec="notifications">               <span class="ico">🔔</span><span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
-      <li data-sec="settings">                    <span class="ico">⚙️</span><span class="lbl" data-i18n="nav.settings">Settings</span></li>
+      <li class="active" data-sec="dashboard">    <span class="lbl" data-i18n="nav.dashboard">Dashboard</span></li>
+      <li data-sec="subjects">                    <span class="lbl" data-i18n="nav.subjects">My Subjects</span></li>
+      <li data-sec="assignments">                 <span class="lbl" data-i18n="nav.assignments">Assignments</span></li>
+      <li data-sec="students">                    <span class="lbl" data-i18n="nav.students">My Students</span></li>
+      <li data-sec="progress">                    <span class="lbl" data-i18n="nav.progress">Progress</span></li>
+      <li data-sec="resources">                   <span class="lbl" data-i18n="nav.resources">Resources</span></li>
+      <li data-sec="messages">                    <span class="lbl" data-i18n="nav.messages">Messages</span></li>
+      <li data-sec="notifications">               <span class="lbl"><span data-i18n="nav.notifications">Notifications</span> <span class="badge" id="notifBadge"></span></span></li>
     </ul>
     <div class="nav-right">
-      <span class="tb-icon" onclick="goTo('notifications')">🔔</span>
-      <span class="tb-icon" onclick="goTo('messages')">✉️</span>
       <div class="profile-trigger" onclick="document.getElementById('profileDropdown').classList.toggle('open')">
         <span id="tbInitials" class="sb-initials" style="width:32px;height:32px;font-size:12px">--</span>
         <span id="tbName" class="tb-name">—</span>
@@ -45,11 +67,12 @@
         </div>
         <div class="sb-foot">
           <select class="lang-sel" id="langSel" onchange="setLang(this.value)">
-            <option value="en">🌐 English</option>
-            <option value="fr">🌐 French</option>
-            <option value="rw">🌐 Kinyarwanda</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="rw">Kinyarwanda</option>
           </select>
-          <button class="logout-btn" id="logoutBtn">⬅ <span data-i18n="nav.logout">Logout</span></button>
+          <button class="logout-btn" onclick="goTo('settings');document.getElementById('profileDropdown').classList.remove('open')" data-i18n="nav.settings">Settings</button>
+          <button class="logout-btn" id="logoutBtn"><span data-i18n="nav.logout">Logout</span></button>
         </div>
       </div>
     </div>
@@ -69,26 +92,26 @@
           <p id="welcomeSub">Here's what's happening with your subjects today.</p>
           <button class="btn-primary" style="margin-top:14px" onclick="startGrading()">Start Grading</button>
         </div>
-        <div class="welcome-deco"><span>🎓</span></div>
+
       </div>
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl" data-i18n="nav.subjects">Total Subjects</span><div class="stat-icon">📚</div></div>
+          <div class="stat-card-top"><span class="stat-lbl" data-i18n="nav.subjects">Total Subjects</span></div>
           <span class="stat-num" id="statCourses">0</span>
           <span class="stat-trend up" id="statCoursesTrend">Active this term</span>
         </div>
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl" data-i18n="nav.students">Total Students</span><div class="stat-icon">👥</div></div>
+          <div class="stat-card-top"><span class="stat-lbl" data-i18n="nav.students">Total Students</span></div>
           <span class="stat-num" id="statStudents">0</span>
           <span class="stat-trend up" id="statStudentsTrend">—</span>
         </div>
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl" data-i18n="facilitator.pendingGrading">Pending Grading</span><div class="stat-icon warn">⚠️</div></div>
+          <div class="stat-card-top"><span class="stat-lbl" data-i18n="facilitator.pendingGrading">Pending Grading</span></div>
           <span class="stat-num" id="statPending">0</span>
           <span class="stat-trend warn" id="statPendingTrend">—</span>
         </div>
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl">Avg. Performance</span><div class="stat-icon">📊</div></div>
+          <div class="stat-card-top"><span class="stat-lbl">Avg. Performance</span></div>
           <span class="stat-num" id="statPerformance">—</span>
           <span class="stat-trend up" id="statPerformanceTrend">—</span>
         </div>
@@ -116,8 +139,8 @@
         <div class="quick-actions">
           <button class="qa-btn" onclick="goTo('subjects'); openCreateCourse()" data-i18n="facilitator.newSubject">+ New Subject</button>
           <button class="qa-btn" onclick="goTo('assignments'); openCreateAssignment()" data-i18n="facilitator.newAssignment">+ New Assignment</button>
-          <button class="qa-btn" onclick="goTo('messages')" data-i18n="facilitator.messageStudents">✉ Message Students</button>
-          <button class="qa-btn" onclick="goTo('resources')" data-i18n="facilitator.browseResources">📖 Browse Resources</button>
+          <button class="qa-btn" onclick="goTo('messages')" data-i18n="facilitator.messageStudents">Message Students</button>
+          <button class="qa-btn" onclick="goTo('resources')" data-i18n="facilitator.browseResources">Browse Resources</button>
         </div>
       </div>
     </section>
@@ -151,19 +174,19 @@
       <!-- Course Detail Panel (tabbed) -->
       <div class="detail-panel hidden" id="courseDetail">
         <div class="cd-topbar" style="padding:12px 16px;border-bottom:2px solid #e5e8ef;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#fff;z-index:5">
-          <button class="back-btn" onclick="closeDetail()">← Back to Subjects</button>
+          <button class="back-btn" onclick="closeDetail()">Back to Subjects</button>
           <div id="courseDetailContent" style="flex:1"></div>
         </div>
         <!-- Facilitator course tabs -->
         <nav style="display:flex;gap:2px;padding:0 12px;border-bottom:2px solid #e5e8ef;background:#f8f9fd;overflow-x:auto;white-space:nowrap;flex-shrink:0">
-          <button class="cdtab active" data-ftab="overview" onclick="switchFTab('overview')">📋 Overview</button>
-          <button class="cdtab" data-ftab="modules" onclick="switchFTab('modules')">📘 Modules</button>
-          <button class="cdtab" data-ftab="assignments" onclick="switchFTab('assignments')">📝 Assignments</button>
-          <button class="cdtab" data-ftab="announcements" onclick="switchFTab('announcements')">📢 Announcements</button>
-          <button class="cdtab" data-ftab="syllabus" onclick="switchFTab('syllabus')">📅 Syllabus</button>
-          <button class="cdtab" data-ftab="students" onclick="switchFTab('students')">👥 Students</button>
-          <button class="cdtab" data-ftab="groups" onclick="switchFTab('groups')">🗂️ Groups</button>
-          <button class="cdtab" data-ftab="materials" onclick="switchFTab('materials')">📖 Materials</button>
+          <button class="cdtab active" data-ftab="overview" onclick="switchFTab('overview')">Overview</button>
+          <button class="cdtab" data-ftab="modules" onclick="switchFTab('modules')">Modules</button>
+          <button class="cdtab" data-ftab="assignments" onclick="switchFTab('assignments')">Assignments</button>
+          <button class="cdtab" data-ftab="announcements" onclick="switchFTab('announcements')">Announcements</button>
+          <button class="cdtab" data-ftab="syllabus" onclick="switchFTab('syllabus')">Syllabus</button>
+          <button class="cdtab" data-ftab="students" onclick="switchFTab('students')">Students</button>
+          <button class="cdtab" data-ftab="groups" onclick="switchFTab('groups')">Groups</button>
+          <button class="cdtab" data-ftab="materials" onclick="switchFTab('materials')">Materials</button>
         </nav>
         <!-- Overview -->
         <div class="fpane active" id="fpane-overview" style="padding:18px">
@@ -234,12 +257,12 @@
             <h4 style="margin:0 0 10px;font-size:14px">Upload PDF</h4>
             <div class="file-picker">
               <input type="file" id="matUploadFiles" class="file-picker-input" multiple accept=".pdf" onchange="renderPickedFiles('matUploadFiles','matPickedFiles')">
-              <label for="matUploadFiles" class="file-picker-btn"><span class="fp-icon">📎</span> Choose Files</label>
+              <label for="matUploadFiles" class="file-picker-btn">Choose Files</label>
             </div>
             <div id="matPickedFiles" class="picked-files"></div>
             <div style="display:flex;gap:8px;margin-top:10px">
               <button class="btn-sm" onclick="uploadCourseMaterials()">Upload</button>
-              <button class="btn-sm btn-outline" onclick="openAttachLibraryModal()">📚 Attach from Library</button>
+              <button class="btn-sm btn-outline" onclick="openAttachLibraryModal()">Attach from Library</button>
             </div>
           </div>
           <div id="fMaterialsList"><p style="color:#aaa;font-size:13px">Loading…</p></div>
@@ -322,27 +345,27 @@
           <h2 data-i18n="facilitator.studentProgress">Progress &amp; Analytics</h2>
           <p class="sec-sub">Track class performance, subject trends, and individual student progress.</p>
         </div>
-        <button class="btn-primary" onclick="exportProgressReport()">⬇ Export Report</button>
+        <button class="btn-primary" onclick="exportProgressReport()">Export Report</button>
       </div>
 
       <div class="stats-grid" id="paMetrics">
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl">Average Class Grade</span><div class="stat-icon">🎓</div></div>
+          <div class="stat-card-top"><span class="stat-lbl">Average Class Grade</span></div>
           <span class="stat-num" id="paAvgGrade">—</span>
           <span class="stat-trend" id="paAvgGradeTrend">—</span>
         </div>
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl">Assignment Completion</span><div class="stat-icon">✅</div></div>
+          <div class="stat-card-top"><span class="stat-lbl">Assignment Completion</span></div>
           <span class="stat-num" id="paCompletion">—</span>
           <span class="stat-trend" id="paCompletionTrend">—</span>
         </div>
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl">At-Risk Students</span><div class="stat-icon warn">⚠️</div></div>
+          <div class="stat-card-top"><span class="stat-lbl">At-Risk Students</span></div>
           <span class="stat-num" id="paAtRisk">—</span>
           <span class="stat-trend" id="paAtRiskTrend">Below 55% pass threshold</span>
         </div>
         <div class="stat-card">
-          <div class="stat-card-top"><span class="stat-lbl">Avg. Grading Time</span><div class="stat-icon">⏱️</div></div>
+          <div class="stat-card-top"><span class="stat-lbl">Avg. Grading Time</span></div>
           <span class="stat-num" id="paGradingTime">—</span>
           <span class="stat-trend" id="paGradingTimeTrend">—</span>
         </div>
@@ -382,7 +405,7 @@
       <div class="sec-header"><h2 data-i18n="resources.title">Resources &amp; Library</h2></div>
       <!-- Upload Panel -->
       <div class="upload-panel">
-        <h3 data-i18n="facilitator.uploadResource">📤 Upload Resource</h3>
+        <h3 data-i18n="facilitator.uploadResource">Upload Resource</h3>
         <div class="upload-form-row">
           <input type="text" id="upTitle" placeholder="Resource title" style="flex:2">
           <input type="text" id="upSubject" placeholder="Subject">
@@ -394,7 +417,7 @@
           </select>
           <div class="file-picker" style="flex:1.5;min-width:220px">
             <input type="file" id="upFile" class="file-picker-input" accept=".pdf" onchange="updateFileName('upFile','upFileName')">
-            <label for="upFile" class="file-picker-btn"><span class="fp-icon">📎</span> Choose File</label>
+            <label for="upFile" class="file-picker-btn">Choose File</label>
             <span class="file-picker-name" id="upFileName">No file chosen</span>
           </div>
           <button class="btn-primary" onclick="uploadResource()" data-i18n="facilitator.uploadPdf">Upload PDF</button>
@@ -418,8 +441,8 @@
                 <option value="title">Sort by: Title A-Z</option>
               </select>
               <div class="res-view-toggle">
-                <button class="res-view-btn active" id="resViewGridBtn" onclick="setResourceView('grid')">▦</button>
-                <button class="res-view-btn" id="resViewListBtn" onclick="setResourceView('list')">☰</button>
+                <button class="res-view-btn active" id="resViewGridBtn" onclick="setResourceView('grid')"><svg class="icon"><use href="#ic-grid"></use></svg></button>
+                <button class="res-view-btn" id="resViewListBtn" onclick="setResourceView('list')"><svg class="icon"><use href="#ic-menu"></use></svg></button>
               </div>
             </div>
           </div>
@@ -448,18 +471,18 @@
         <!-- Right: conversation thread -->
         <div class="chat-main" id="chatMain">
           <div class="chat-empty-state" id="chatEmptyState">
-            <div style="font-size:48px;margin-bottom:12px">💬</div>
+
             <p>Select a conversation or start a new one</p>
           </div>
           <div class="chat-thread hidden" id="chatThread">
             <div class="chat-thread-head" id="chatThreadHead">
-              <button class="btn-back-chat" onclick="closeThread()">←</button>
+              <button class="btn-back-chat" onclick="closeThread()"><svg class="icon"><use href="#ic-chevron-left"></use></svg></button>
               <div class="chat-partner-info" id="chatPartnerInfo"></div>
             </div>
             <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-bar">
               <textarea id="chatInput" rows="1" placeholder="Type a message…" onkeydown="chatKeyDown(event)"></textarea>
-              <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+              <button class="chat-send-btn" onclick="sendChatMessage()"><svg class="icon"><use href="#ic-send"></use></svg></button>
             </div>
           </div>
         </div>
@@ -487,7 +510,7 @@
         <div class="modal" style="max-width:420px">
           <div class="modal-head">
             <h3>New Message</h3>
-            <button class="modal-close" onclick="closeModal('modalNewChat')">✕</button>
+            <button class="modal-close" onclick="closeModal('modalNewChat')"><svg class="icon"><use href="#ic-close"></use></svg></button>
           </div>
           <div class="modal-body">
             <div class="form-row">
@@ -528,9 +551,22 @@
               <label data-i18n="common.email">Email</label>
               <input type="email" id="setEmail" required>
             </div>
+            <div class="cs-row-2">
+              <div class="form-row"><label>Country</label><input type="text" id="setCountry" list="setCountryList" autocomplete="off"></div>
+              <div class="form-row"><label>City</label><input type="text" id="setCity"></div>
+            </div>
+            <datalist id="setCountryList"></datalist>
             <div class="form-row">
-              <label data-i18n="common.school">School</label>
-              <input type="text" id="setSchool">
+              <label>Nationality</label>
+              <input type="text" id="setNationality">
+            </div>
+            <div class="form-row">
+              <label>Languages Spoken</label>
+              <div id="setLanguages"></div>
+            </div>
+            <div class="form-row">
+              <label>Professional Goals</label>
+              <div id="setGoals"></div>
             </div>
             <div class="form-row">
               <label data-i18n="common.bio">Bio</label>
@@ -555,7 +591,7 @@
             <div class="form-row"><label data-i18n="common.password">New Password</label><input type="password" id="fPwNew" placeholder="Min. 8 characters"></div>
             <div class="form-row"><label data-i18n="common.confirmPassword">Confirm Password</label><input type="password" id="fPwConfirm"></div>
             <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn-outline" onclick="resetFPwSteps()">← <span data-i18n="common.back">Back</span></button>
+              <button class="btn-outline" onclick="resetFPwSteps()"><span data-i18n="common.back">Back</span></button>
               <button class="btn-primary" style="flex:1" onclick="facilitatorVerifyOTP()">Update Password</button>
             </div>
             <p class="save-msg hidden" id="fPwMsg2"></p>
@@ -572,15 +608,15 @@
   <div class="modal cs-wizard-modal">
     <div class="modal-head">
       <h3 id="csWizardTitle">Course Setup</h3>
-      <button class="modal-close" onclick="closeModal('modalCreateCourse')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalCreateCourse')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="cs-wizard-body">
       <nav class="cs-wizard-nav">
-        <button class="cs-nav-btn active" data-cstab="basic" onclick="switchCSTab('basic')"><span>ℹ️</span> Basic Info</button>
-        <button class="cs-nav-btn" data-cstab="curriculum" onclick="switchCSTab('curriculum')"><span>📋</span> Curriculum</button>
-        <button class="cs-nav-btn" data-cstab="team" onclick="switchCSTab('team')"><span>👤</span> Instructor & Team</button>
-        <button class="cs-nav-btn" data-cstab="meetings" onclick="switchCSTab('meetings')"><span>📅</span> 1-on-1 Meetings</button>
-        <button class="cs-nav-btn" data-cstab="settings" onclick="switchCSTab('settings')"><span>⚙️</span> Settings</button>
+        <button class="cs-nav-btn active" data-cstab="basic" onclick="switchCSTab('basic')">Basic Info</button>
+        <button class="cs-nav-btn" data-cstab="curriculum" onclick="switchCSTab('curriculum')">Curriculum</button>
+        <button class="cs-nav-btn" data-cstab="team" onclick="switchCSTab('team')">Instructor & Team</button>
+        <button class="cs-nav-btn" data-cstab="meetings" onclick="switchCSTab('meetings')">1-on-1 Meetings</button>
+        <button class="cs-nav-btn" data-cstab="settings" onclick="switchCSTab('settings')">Settings</button>
       </nav>
       <div class="cs-wizard-content">
         <!-- Basic Info -->
@@ -614,7 +650,7 @@
           <div class="form-row">
             <label>Course Thumbnail</label>
             <div class="cs-thumb-picker" id="ccThumbPreview" onclick="document.getElementById('ccThumbFile').click()">
-              <span>📷 Click to upload a cover image</span>
+              <span>Click to upload a cover image</span>
             </div>
             <input type="file" id="ccThumbFile" accept="image/*" class="hidden" onchange="pickCourseThumbnail(this)">
           </div>
@@ -622,7 +658,7 @@
             <label>Course Materials <small>(optional — PDF, select multiple)</small></label>
             <div class="file-picker">
               <input type="file" id="ccMaterials" class="file-picker-input" multiple accept=".pdf" onchange="renderPickedFiles('ccMaterials','ccPickedFiles')">
-              <label for="ccMaterials" class="file-picker-btn"><span class="fp-icon">📎</span> Choose Files</label>
+              <label for="ccMaterials" class="file-picker-btn">Choose Files</label>
             </div>
             <div id="ccPickedFiles" class="picked-files"></div>
           </div>
@@ -709,7 +745,7 @@
     <div class="cs-wizard-footer">
       <button class="btn-outline" onclick="closeModal('modalCreateCourse')">Cancel</button>
       <button class="btn-outline" onclick="saveCourseSetup('draft')">Save Draft</button>
-      <button class="btn-primary" onclick="saveCourseSetup('active')">🚀 Publish Course</button>
+      <button class="btn-primary" onclick="saveCourseSetup('active')">Publish Course</button>
     </div>
   </div>
 </div>
@@ -719,7 +755,7 @@
   <div class="modal">
     <div class="modal-head">
       <h3>Create Assignment</h3>
-      <button class="modal-close" onclick="closeModal('modalCreateAssignment')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalCreateAssignment')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-row"><label>Title</label><input type="text" id="caTitle"></div>
@@ -761,7 +797,7 @@
   <div class="modal" style="max-width:720px">
     <div class="modal-head">
       <h3>Edit Assignment</h3>
-      <button class="modal-close" onclick="closeModal('modalEditAssignment')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalEditAssignment')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="editAsgnId">
@@ -827,7 +863,7 @@
   <div class="modal modal-wide">
     <div class="modal-head">
       <h3>Grade Submission</h3>
-      <button class="modal-close" onclick="closeModal('modalGrade')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalGrade')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <p id="gradeStudentName" style="font-weight:600;margin-bottom:8px"></p>
@@ -845,7 +881,7 @@
   <div class="modal modal-wide">
     <div class="modal-head">
       <h3 id="submissionsTitle">Submissions</h3>
-      <button class="modal-close" onclick="closeModal('modalSubmissions')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalSubmissions')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body" id="submissionsBody"><div class="empty-state">Loading…</div></div>
   </div>
@@ -856,7 +892,7 @@
   <div class="modal" style="max-width:440px">
     <div class="modal-head">
       <h3>Add Student to Course</h3>
-      <button class="modal-close" onclick="closeModal('modalInviteStudent')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalInviteStudent')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <p style="font-size:13px;color:var(--text-sub);margin-bottom:12px">Search and add students directly — they will be enrolled immediately.</p>
@@ -874,7 +910,7 @@
   <div class="modal modal-wide">
     <div class="modal-head">
       <h3>Assignment Details</h3>
-      <button class="modal-close" onclick="closeModal('modalAssignmentDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalAssignmentDetail')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body" id="adBody"></div>
   </div>
@@ -885,7 +921,7 @@
   <div class="modal">
     <div class="modal-head">
       <h3>Module Details</h3>
-      <button class="modal-close" onclick="closeModal('modalModuleDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalModuleDetail')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body" id="mdBody"></div>
   </div>
@@ -896,7 +932,7 @@
   <div class="modal" style="max-width:440px">
     <div class="modal-head">
       <h3>Manage Group Members</h3>
-      <button class="modal-close" onclick="closeModal('modalAddGroupMember')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalAddGroupMember')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-row">
@@ -913,7 +949,7 @@
   <div class="modal" style="max-width:460px">
     <div class="modal-head">
       <h3>Student Details</h3>
-      <button class="modal-close" onclick="closeModal('modalStudentDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalStudentDetail')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body" id="sdBody"></div>
   </div>
@@ -925,8 +961,8 @@
     <div class="modal-head">
       <h3 id="pdfViewerTitle">Document</h3>
       <div style="display:flex;gap:8px;align-items:center">
-        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">⬇ Download</a>
-        <button class="modal-close" onclick="closeModal('modalPdfViewer')">✕</button>
+        <a id="pdfDownloadLink" href="#" download class="btn-sm btn-outline">Download</a>
+        <button class="modal-close" onclick="closeModal('modalPdfViewer')"><svg class="icon"><use href="#ic-close"></use></svg></button>
       </div>
     </div>
     <iframe id="pdfViewerFrame" src="" style="flex:1;border:none;width:100%"></iframe>
@@ -938,7 +974,7 @@
   <div class="modal" style="max-width:480px">
     <div class="modal-head">
       <h3 id="notifDetailTitle">Notification</h3>
-      <button class="modal-close" onclick="closeModal('modalNotifDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalNotifDetail')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <p id="notifDetailMsg" style="line-height:1.6;color:#333"></p>
@@ -952,7 +988,7 @@
   <div class="modal">
     <div class="modal-head">
       <h3>Compose Message</h3>
-      <button class="modal-close" onclick="closeModal('modalCompose')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalCompose')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <p id="composeToName" style="font-size:13px;color:var(--primary);margin-bottom:8px"></p>
@@ -968,8 +1004,8 @@
 <div class="modal-overlay hidden" id="modalAttachLibrary">
   <div class="modal" style="max-width:600px">
     <div class="modal-head">
-      <h3>📚 Attach from Cloudflare Library</h3>
-      <button class="modal-close" onclick="closeModal('modalAttachLibrary')">✕</button>
+      <h3>Attach from Cloudflare Library</h3>
+      <button class="modal-close" onclick="closeModal('modalAttachLibrary')"><svg class="icon"><use href="#ic-close"></use></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-row">
@@ -985,7 +1021,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="../js/api.js?v=2"></script>
 <script src="../js/i18n.js?v=2"></script>
-<script src="../js/subjectThemes.js?v=2"></script>
-<script src="facilitator.js?v=22"></script>
+<script src="../js/subjectThemes.js?v=3"></script>
+<script src="../js/multiPicker.js?v=1"></script>
+<script src="facilitator.js?v=26"></script>
 </body>
 </html>

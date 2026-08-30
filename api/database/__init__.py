@@ -63,6 +63,11 @@ def _migrate():
             "ALTER TABLE resources ADD COLUMN file_size_bytes INTEGER",
             "CREATE TABLE IF NOT EXISTS course_team_members (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER NOT NULL REFERENCES courses(id), user_id INTEGER NOT NULL REFERENCES users(id), role VARCHAR(20) DEFAULT 'ta', added_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "CREATE TABLE IF NOT EXISTS course_meetings (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER NOT NULL REFERENCES courses(id), facilitator_id INTEGER NOT NULL REFERENCES users(id), student_id INTEGER REFERENCES users(id), scheduled_at DATETIME NOT NULL, duration_minutes INTEGER DEFAULT 30, status VARCHAR(20) DEFAULT 'scheduled', notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "ALTER TABLE users ADD COLUMN country VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN city VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN nationality VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN languages_spoken TEXT",
+            "ALTER TABLE users ADD COLUMN goals TEXT",
         ]
     else:
         # PostgreSQL syntax
@@ -151,6 +156,11 @@ def _migrate():
                 notes TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )""",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS nationality VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS languages_spoken TEXT",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS goals TEXT",
         ]
 
     with engine.connect() as conn:

@@ -14,8 +14,38 @@ function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
     const showing = input.type === "text";
     input.type = showing ? "password" : "text";
-    btn.textContent = showing ? "👁" : "🙈";
+    btn.innerHTML = `<svg class="icon-sm"><use href="#${showing ? "ic-eye" : "ic-eye-off"}"></use></svg>`;
     btn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+}
+
+const COMMON_COUNTRIES = [
+  "Rwanda", "Kenya", "Uganda", "Tanzania", "Burundi", "DR Congo", "Nigeria", "Ghana",
+  "South Africa", "Ethiopia", "Egypt", "Morocco", "Senegal", "Zambia", "Zimbabwe",
+  "Cameroon", "Ivory Coast", "United States", "United Kingdom", "France", "Canada",
+  "Germany", "India", "China", "Belgium", "Netherlands", "Other",
+];
+const STUDENT_GOALS = [
+  "Improve grades", "Prepare for university/college", "Pass national exams",
+  "Get help with homework", "Explore career options", "Build better study habits",
+];
+const FACILITATOR_GOALS = [
+  "Improve student engagement", "Build better course materials",
+  "Track student progress more effectively", "Grade more efficiently",
+  "Communicate better with students/parents", "Explore new teaching methods",
+];
+const LANGUAGES_PRESET = ["English", "French", "Kinyarwanda", "Kiswahili", "Portuguese", "Spanish", "Arabic"];
+
+document.getElementById("countryList").innerHTML =
+  COMMON_COUNTRIES.map(c => `<option value="${c}">`).join("");
+initMultiPicker("regLanguages", LANGUAGES_PRESET, []);
+initMultiPicker("regGoals", STUDENT_GOALS, []);
+
+function onRegRoleChange() {
+  const role = document.getElementById("regRole").value;
+  const isStudent = role === "student";
+  document.getElementById("regStudentFields").style.display = isStudent ? "" : "none";
+  document.getElementById("regGoalsLabel").textContent = isStudent ? "Goals" : "Professional Goals";
+  setMultiPickerPresets("regGoals", isStudent ? STUDENT_GOALS : FACILITATOR_GOALS);
 }
 
 function switchTab(tab) {
@@ -60,14 +90,20 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     btn.disabled = true;
     btn.textContent = t("auth.creatingAccount");
     try {
+        const role = document.getElementById("regRole").value;
         const data = await apiPost("/auth/register", {
             first_name:    document.getElementById("regFirst").value.trim(),
             last_name:     document.getElementById("regLast").value.trim(),
             email_address: document.getElementById("regEmail").value.trim(),
             password:      pass,
-            role:          document.getElementById("regRole").value,
-            school:        document.getElementById("regSchool").value.trim() || null,
-            grade:         document.getElementById("regGrade").value.trim()  || null,
+            role:          role,
+            school:        role === "student" ? (document.getElementById("regSchool").value.trim() || null) : null,
+            grade:         role === "student" ? (document.getElementById("regGrade").value.trim()  || null) : null,
+            country:       document.getElementById("regCountry").value.trim() || null,
+            city:          document.getElementById("regCity").value.trim() || null,
+            nationality:   document.getElementById("regNationality").value.trim() || null,
+            languages_spoken: getMultiPickerValues("regLanguages"),
+            goals:            getMultiPickerValues("regGoals"),
         });
         saveAuth(data.access_token, data.user);
         redirect(data.user.role);
